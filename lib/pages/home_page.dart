@@ -1596,12 +1596,49 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                   const SizedBox(height: 6.0),
-                  const Text(
-                    'This document contains schema.org context fields. You can validate it directly on Google\'s Rich Results Test tool to boost SEO rankings! \n https://search.google.com/test/rich-results',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      height: 1.3,
-                      color: Colors.grey,
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        height: 1.3,
+                        color: Colors.grey,
+                        fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                      ),
+                      children: [
+                        const TextSpan(
+                          text: 'This document contains schema.org context fields. You can validate it directly on Google\'s Rich Results Test tool to boost SEO rankings!\n\n',
+                        ),
+                        WidgetSpan(
+                          child: InkWell(
+                            onTap: () async {
+                              final url = Uri.parse('https://search.google.com/test/rich-results');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.open_in_new,
+                                  size: 11.0,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 4.0),
+                                Text(
+                                  'https://search.google.com/test/rich-results',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
