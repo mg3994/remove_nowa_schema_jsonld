@@ -1,4 +1,4 @@
-package com.mg3994.jsonld
+package com.antinna.jsonld
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

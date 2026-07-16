@@ -19,6 +19,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   final TextEditingController _importController = TextEditingController();
 
   final TextEditingController _searchClassController = TextEditingController();
@@ -160,10 +162,147 @@ class _HomePageState extends State<HomePage> {
     final appState = AppState.of(context);
     final isWide = MediaQuery.of(context).size.width >= 1100;
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: Drawer(
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: Image.asset(
+                      'assets/antinna_copyrights.png',
+                      width: 64.0,
+                      height: 64.0,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 16.0),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'JSON LD',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.0,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        Text(
+                          'Visual Editor',
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(height: 4.0),
+                        Text(
+                          'v1.0.0 • by Antinna',
+                          style: TextStyle(
+                            fontSize: 10.0,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('About JSON LD Visual Editor'),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                _showAboutApp();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: const Text('Privacy Policy'),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                _showPrivacyPolicy();
+              },
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Connect with Antinna',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.0,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                children: [
+                  const SocialCard(
+                    platform: 'GitHub',
+                    profileName: 'Antinna',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://github.com/antinna',
+                  ),
+                  const SocialCard(
+                    platform: 'YouTube',
+                    profileName: 'Antinna',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://www.youtube.com/antinna',
+                  ),
+                  const SocialCard(
+                    platform: ' X (Twitter)',
+                    profileName: 'antinna_yt',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://x.com/antinna_yt',
+                  ),
+                  const SocialCard(
+                    platform: 'Instagram',
+                    profileName: 'antinna.yt',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://www.instagram.com/antinna.yt/',
+                  ),
+                  const SocialCard(
+                    platform: 'Facebook',
+                    profileName: 'Antinna Profile',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://www.facebook.com/profile.php?id=100083138576317',
+                  ),
+                  const SocialCard(
+                    platform: 'Substack',
+                    profileName: 'Antinna Newsletter',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://antinna.substack.com/',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         title: Row(
           children: [
-            const Icon(Icons.hub_outlined, size: 28.0),
+            IconButton(
+              icon: const Icon(Icons.hub_outlined, size: 28.0),
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              tooltip: 'Open Settings & Socials',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
             const SizedBox(width: 12.0),
             Expanded(
               child: Column(
@@ -2651,6 +2790,134 @@ class _HomePageState extends State<HomePage> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAboutApp() {
+    showAboutDialog(
+      context: context,
+      applicationName: 'JSON LD Visual Editor',
+      applicationVersion: '1.0.0',
+      applicationIcon: Image.asset(
+        'assets/antinna_copyrights.png',
+        width: 48.0,
+        height: 48.0,
+      ),
+      applicationLegalese: '© 2026 Antinna. All rights reserved.',
+      children: [
+        const SizedBox(height: 12.0),
+        const Text(
+          'JSON LD Visual Editor is a professional visual Schema IDE and utility designed to easily construct, edit, and validate Schema.org structured data offline. Generate microdata, boost your website SEO, and manage markup documents instantly.',
+          style: TextStyle(fontSize: 13.0, height: 1.4),
+        ),
+      ],
+    );
+  }
+
+  void _showPrivacyPolicy() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/antinna_copyrights.png',
+              width: 28.0,
+              height: 28.0,
+            ),
+            const SizedBox(width: 8.0),
+            const Text('Privacy Policy'),
+          ],
+        ),
+        content: const SizedBox(
+          width: 500.0,
+          height: 400.0,
+          child: SingleChildScrollView(
+            child: Text(
+              'Privacy Policy for JSON LD Visual Editor\n\n'
+              'Last updated: July 2026\n\n'
+              'Antinna ("us", "we", or "our") operates the JSON LD Visual Editor application. This Privacy Policy informs you of our policies regarding the collection, use, and disclosure of personal data when you use our App.\n\n'
+              '1. Information Collection and Use\n'
+              'We do not collect, store, transmit, or share any personally identifiable information (PII) or personal data. The JSON LD Visual Editor runs completely offline on your device. All files, documents, and specifications you create, edit, or import are stored locally on your device\'s private database and are never sent to any external servers.\n\n'
+              '2. External Connections\n'
+              'Our application makes secure external network requests to schema.org to dynamically fetch the latest semantic schema specifications. No personal details, unique identifiers, or usage statistics are transmitted during this synchronization.\n\n'
+              '3. Links to Other Sites\n'
+              'Our application contains links to external social media sites (including GitHub, YouTube, Instagram, X/Twitter, Facebook, and search.google.com) that are not operated by us. We strongly advise you to review the Privacy Policy of every site you visit.\n\n'
+              '4. Children\'s Privacy\n'
+              'Our Service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from children.\n\n'
+              '5. Changes to This Privacy Policy\n'
+              'We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy within this App.\n\n'
+              'Contact Us\n'
+              'If you have any questions about this Privacy Policy, please contact us via our social channels.',
+              style: TextStyle(fontSize: 12.0, height: 1.4),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SocialCard extends StatelessWidget {
+  final String platform;
+  final String profileName;
+  final String imageAsset;
+  final String url;
+
+  const SocialCard({
+    super.key,
+    required this.platform,
+    required this.profileName,
+    required this.imageAsset,
+    required this.url,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0.0,
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outlineVariant,
+          width: 0.8,
+        ),
+      ),
+      child: ListTile(
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(6.0),
+          child: Image.asset(
+            imageAsset,
+            width: 32.0,
+            height: 32.0,
+            fit: BoxFit.cover,
+          ),
+        ),
+        title: Text(
+          platform,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.0),
+        ),
+        subtitle: Text(
+          profileName,
+          style: const TextStyle(fontSize: 11.0, color: Colors.grey),
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: const Icon(Icons.open_in_new, size: 14.0),
+        onTap: () async {
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        },
       ),
     );
   }
