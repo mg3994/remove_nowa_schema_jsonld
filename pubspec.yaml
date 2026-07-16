@@ -1,0 +1,30 @@
+name: jsonld
+description: A new Nowa project.
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  nowa_runtime: ^0.1.3
+  provider: ^6.1.5
+  shared_preferences: ^2.5.4
+  dio: ^5.9.1
+  go_router: ^17.1.0
+  nowa_mobile_ads: ^0.0.9
+  google_mobile_ads: ^5.3.1
+  url_launcher: ^6.3.2
+  drift: ^2.20.0
+  drift_flutter: ^0.2.0
+  path_provider: ^2.1.3
+  sqlite3_flutter_libs: ^0.5.24
+  http: ^1.2.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  drift_dev: ^2.20.0
+  build_runner: ^2.4.9
+flutter:
+  uses-material-design: true

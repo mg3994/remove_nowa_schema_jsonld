@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html style="background-color: #121214; color-scheme: dark;">
+<head>
+<!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Schema.org JSON-LD Visual Editor">
+  <meta name="theme-color" content="#121214">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Schema Editor">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Schema.org Visual Editor</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      background-color: #121214;
+      background: radial-gradient(circle at center, #1e1e24 0%, #121214 100%);
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #ffffff;
+      color-scheme: dark;
+    }
+
+    .loader-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .node-hub {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin-bottom: 24px;
+    }
+
+    .center-node {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      background-color: #6200ee;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 20px #6200ee;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .orbit {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      animation: rotate 10s infinite linear;
+    }
+
+    .orbit-node {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #03dac6;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #03dac6;
+    }
+
+    .node-1 { top: -5px; left: calc(50% - 5px); }
+    .node-2 { bottom: -5px; left: calc(50% - 5px); }
+    .node-3 { left: -5px; top: calc(50% - 5px); }
+    .node-4 { right: -5px; top: calc(50% - 5px); }
+
+    .loader-text {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      background: linear-gradient(45deg, #b388ff, #03dac6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      animation: text-pulse 1.5s infinite ease-in-out alternate;
+    }
+
+    .loader-subtext {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 500;
+    }
+
+    .loader-tip {
+      margin-top: 36px;
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.7);
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 10px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 85%;
+      line-height: 1.4;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .info-icon {
+      color: #03dac6;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; }
+      50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; box-shadow: 0 0 30px #6200ee; }
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes text-pulse {
+      from { opacity: 0.7; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-container" id="loading-indicator">
+    <div class="node-hub">
+      <div class="orbit">
+        <div class="orbit-node node-1"></div>
+        <div class="orbit-node node-2"></div>
+        <div class="orbit-node node-3"></div>
+        <div class="orbit-node node-4"></div>
+      </div>
+      <div class="center-node"></div>
+    </div>
+    <div class="loader-text">Schema Visual Editor</div>
+    <div class="loader-subtext">Initializing database & workspace...</div>
+    <div class="loader-tip">
+      <span class="info-icon">ℹ</span>
+      <span>Mobile Users: If loading persists, please switch to <b>"Desktop Site"</b> view in your browser settings.</span>
+    </div>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
