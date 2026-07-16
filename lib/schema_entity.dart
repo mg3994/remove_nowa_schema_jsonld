@@ -1,8 +1,6 @@
 import 'package:jsonld/schema_value.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:jsonld/schema_service.dart';
 
-@NowaGenerated()
 class SchemaEntity {
   bool _isEnumerationValue(String value) {
     for (var list in SchemaService.instance.enumerationValues.values) {
@@ -175,7 +173,6 @@ class SchemaEntity {
       }
       final String propId = key.contains(':') ? key : 'schema:${key}';
       final List<SchemaValue> values = [];
-      @NowaGenerated()
       void parseValue(dynamic singleVal) {
         if (singleVal is Map<String, dynamic>) {
           if (singleVal.containsKey('@id')) {

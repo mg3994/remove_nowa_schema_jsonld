@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jsonld/globals/themes.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:jsonld/schema_entity.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:jsonld/schema_service.dart';
 import 'package:jsonld/schema_value.dart';
 import 'dart:convert';
@@ -13,7 +11,6 @@ import 'package:drift/drift.dart' as drift;
 import 'package:jsonld/globals/database_instance.dart';
 import 'package:jsonld/database/database.dart';
 
-@NowaGenerated()
 class AppState extends ChangeNotifier {
   AppState();
 
@@ -71,10 +68,6 @@ class AppState extends ChangeNotifier {
     _debounceTimer?.cancel();
     super.dispose();
   }
-
-  InterstitialAd? _interstitialAd;
-
-  bool _isInterstitialAdLoading = false;
 
   void changeTheme(ThemeData theme) {
     _theme = theme;
@@ -140,7 +133,6 @@ class AppState extends ChangeNotifier {
       await persistDocument(doc2, immediate: true);
     }
     generateJsonLdOutput();
-    loadInterstitialAd();
     notifyListeners();
   }
 
@@ -210,7 +202,6 @@ class AppState extends ChangeNotifier {
     _selectedDocumentIndex = _documents.length - 1;
     persistDocument(doc);
     generateJsonLdOutput();
-    showInterstitialAd();
     notifyListeners();
   }
 
@@ -221,7 +212,6 @@ class AppState extends ChangeNotifier {
       _selectedDocumentIndex = _documents.length - 1;
       persistDocument(doc);
       generateJsonLdOutput();
-      showInterstitialAd();
       notifyListeners();
     }
   }
@@ -360,7 +350,6 @@ class AppState extends ChangeNotifier {
         _selectedDocumentIndex = _documents.length - 1;
         persistDocument(imported, immediate: true);
         generateJsonLdOutput();
-        showInterstitialAd();
         notifyListeners();
         return true;
       }
@@ -368,64 +357,6 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error importing JSON-LD: ${e}');
       return false;
-    }
-  }
-
-  void loadInterstitialAd() {
-    if (_interstitialAd != null || _isInterstitialAdLoading) {
-      return;
-    }
-    if (defaultTargetPlatform != TargetPlatform.android &&
-        defaultTargetPlatform != TargetPlatform.iOS) {
-      return;
-    }
-    _isInterstitialAdLoading = true;
-    String adUnitId = '';
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      adUnitId = 'ca-app-pub-3940256099942544/1033173712';
-    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      adUnitId = 'ca-app-pub-3940256099942544/4411468910';
-    }
-    InterstitialAd.load(
-      adUnitId: adUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialAdLoading = false;
-          debugPrint('InterstitialAd loaded.');
-        },
-        onAdFailedToLoad: (error) {
-          _interstitialAd = null;
-          _isInterstitialAdLoading = false;
-          debugPrint('InterstitialAd failed to load: ${error}');
-        },
-      ),
-    );
-  }
-
-  void showInterstitialAd() {
-    if (defaultTargetPlatform != TargetPlatform.android &&
-        defaultTargetPlatform != TargetPlatform.iOS) {
-      return;
-    }
-    final ad = _interstitialAd;
-    if (ad != null) {
-      ad.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _interstitialAd = null;
-          loadInterstitialAd();
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _interstitialAd = null;
-          loadInterstitialAd();
-        },
-      );
-      ad.show();
-    } else {
-      loadInterstitialAd();
     }
   }
 

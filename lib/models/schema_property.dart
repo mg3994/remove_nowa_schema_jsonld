@@ -1,6 +1,3 @@
-import 'package:nowa_runtime/nowa_runtime.dart';
-
-@NowaGenerated()
 class SchemaProperty {
   const SchemaProperty({
     required this.id,

@@ -1,12 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:jsonld/models/schema_class.dart';
 import 'package:jsonld/models/schema_property.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:flutter/material.dart';
 import 'package:jsonld/main.dart';
 import 'dart:convert';
 
-@NowaGenerated()
 class SchemaService {
   SchemaService._internal();
 

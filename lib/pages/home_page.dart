@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:jsonld/globals/app_state.dart';
 import 'package:jsonld/schema_service.dart';
 import 'package:jsonld/globals/themes.dart';
-import 'package:jsonld/components/banner_ad_widget.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:jsonld/schema_entity.dart';
@@ -11,9 +9,7 @@ import 'package:jsonld/schema_value.dart';
 import 'package:jsonld/models/schema_property.dart';
 import 'package:jsonld/globals/download_helper.dart' as dl;
 
-@NowaGenerated()
 class HomePage extends StatefulWidget {
-  @NowaGenerated({'loader': 'auto-constructor'})
   const HomePage({super.key});
 
   @override
@@ -22,7 +18,6 @@ class HomePage extends StatefulWidget {
   }
 }
 
-@NowaGenerated()
 class _HomePageState extends State<HomePage> {
   final TextEditingController _importController = TextEditingController();
 
@@ -310,7 +305,6 @@ class _HomePageState extends State<HomePage> {
                 }
               },
             ),
-      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
     );
   }
 
