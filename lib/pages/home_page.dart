@@ -170,47 +170,69 @@ class _HomePageState extends State<HomePage> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primaryContainer,
               ),
-              child: Row(
+               child: Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12.0),
-                    child: Image.asset(
-                      'assets/antinna_copyrights.png',
-                      width: 64.0,
-                      height: 64.0,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 16.0),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'JSON LD',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18.0,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
+                   Row(
+                     children: [
+                       ClipRRect(
+                         borderRadius: BorderRadius.circular(12.0),
+                         child: Image.asset(
+                            'assets/json_ld.png',
+                           width: 64.0,
+                           height: 64.0,
+                           fit: BoxFit.cover,
                         ),
-                        Text(
-                          'Visual Editor',
-                          style: TextStyle(
-                            fontSize: 14.0,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
+                       ),
+                       const SizedBox(width: 16.0),
+                       Expanded(
+                         child: Column(
+                           mainAxisAlignment: MainAxisAlignment.center,
+                           crossAxisAlignment: CrossAxisAlignment.start,
+                           children: [
+                             Text(
+                               'JSON LD',
+                               style: TextStyle(
+                                 fontWeight: FontWeight.bold,
+                                 fontSize: 18.0,
+                                 color: Theme.of(context).colorScheme.onPrimaryContainer,
+                               ),
+                             ),
+                             Text(
+                               'Visual Editor',
+                               style: TextStyle(
+                                 fontSize: 14.0,
+                                 color: Theme.of(context).colorScheme.onPrimaryContainer,
+                               ),
+                             ),
+                             const SizedBox(height: 4.0),
+                             Text(
+                               'v1.0.0 • by Antinna',
+                               style: TextStyle(
+                                 fontSize: 10.0,
+                                 color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7),
+                               ),
+                             ),
+                           ],
                         ),
-                        const SizedBox(height: 4.0),
-                        Text(
-                          'v1.0.0 • by Antinna',
-                          style: TextStyle(
-                            fontSize: 10.0,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7),
-                          ),
+                       ),
+                     ],
+                   ),
+                   Positioned(
+                     top: 0,
+                     right: 0,
+                     child: Material(
+                       color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.1),
+                       shape: const CircleBorder(),
+                       child: IconButton(
+                         icon: Icon(
+                           Icons.close,
+                           color: Theme.of(context).colorScheme.onPrimaryContainer,
+                           size: 20.0,
                         ),
-                      ],
+                         onPressed: () {
+                           _scaffoldKey.currentState?.closeDrawer();
+                         },
+                       ),
                     ),
                   ),
                 ],
@@ -218,7 +240,7 @@ class _HomePageState extends State<HomePage> {
             ),
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: const Text('About JSON LD Visual Editor'),
+               title: const Text('About App'),
               onTap: () {
                 Navigator.pop(context); // close drawer
                 _showAboutApp();
@@ -254,37 +276,37 @@ class _HomePageState extends State<HomePage> {
                   const SocialCard(
                     platform: 'GitHub',
                     profileName: 'Antinna',
-                    imageAsset: 'assets/antinna_copyrights.png',
+                    imageAsset: 'assets/json_ld.png',
                     url: 'https://github.com/antinna',
                   ),
                   const SocialCard(
                     platform: 'YouTube',
                     profileName: 'Antinna',
-                    imageAsset: 'assets/antinna_copyrights.png',
+                    imageAsset: 'assets/json_ld.png',
                     url: 'https://www.youtube.com/antinna',
                   ),
                   const SocialCard(
                     platform: ' X (Twitter)',
                     profileName: 'antinna_yt',
-                    imageAsset: 'assets/antinna_copyrights.png',
+                    imageAsset: 'assets/json_ld.png',
                     url: 'https://x.com/antinna_yt',
                   ),
                   const SocialCard(
                     platform: 'Instagram',
                     profileName: 'antinna.yt',
-                    imageAsset: 'assets/antinna_copyrights.png',
+                    imageAsset: 'assets/json_ld.png',
                     url: 'https://www.instagram.com/antinna.yt/',
                   ),
                   const SocialCard(
                     platform: 'Facebook',
                     profileName: 'Antinna Profile',
-                    imageAsset: 'assets/antinna_copyrights.png',
+                    imageAsset: 'assets/json_ld.png',
                     url: 'https://www.facebook.com/profile.php?id=100083138576317',
                   ),
                   const SocialCard(
                     platform: 'Substack',
                     profileName: 'Antinna Newsletter',
-                    imageAsset: 'assets/antinna_copyrights.png',
+                    imageAsset: 'assets/json_ld.png',
                     url: 'https://antinna.substack.com/',
                   ),
                 ],
@@ -294,6 +316,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       appBar: AppBar(
+         automaticallyImplyLeading: false,
         title: Row(
           children: [
             IconButton(
@@ -2800,7 +2823,7 @@ class _HomePageState extends State<HomePage> {
       applicationName: 'JSON LD Visual Editor',
       applicationVersion: '1.0.0',
       applicationIcon: Image.asset(
-        'assets/antinna_copyrights.png',
+        'assets/json_ld.png',
         width: 48.0,
         height: 48.0,
       ),
@@ -2822,7 +2845,7 @@ class _HomePageState extends State<HomePage> {
         title: Row(
           children: [
             Image.asset(
-              'assets/antinna_copyrights.png',
+              'assets/json_ld.png',
               width: 28.0,
               height: 28.0,
             ),
