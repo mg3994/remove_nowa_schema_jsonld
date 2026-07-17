@@ -790,6 +790,8 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Text(
                       root!.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -797,6 +799,8 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 4.0),
                     Text(
                       'Visual Builder • ${root?.type}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12.0,
                         color: Colors.grey,
@@ -805,6 +809,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
+              const SizedBox(width: 8.0),
               ElevatedButton.icon(
                 icon: const Icon(Icons.add_circle_outline, size: 18.0),
                 label: const Text('Add Property'),
@@ -1391,13 +1396,15 @@ class _HomePageState extends State<HomePage> {
                                   isSubclass ? Icons.subdirectory_arrow_right : Icons.playlist_add_circle_outlined,
                                   color: isSubclass ? Colors.orange : Colors.blue,
                                 ),
-                                title: Row(
+                                title: Wrap(
+                                  spacing: 6.0,
+                                  runSpacing: 4.0,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
                                       'Create "${label}"',
                                       style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(width: 6.0),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                                       decoration: BoxDecoration(
@@ -2393,13 +2400,15 @@ class _HomePageState extends State<HomePage> {
                                   isSubclass ? Icons.subdirectory_arrow_right : Icons.playlist_add_circle_outlined,
                                   color: isSubclass ? Colors.orange : Colors.blue,
                                 ),
-                                title: Row(
+                                title: Wrap(
+                                  spacing: 6.0,
+                                  runSpacing: 4.0,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
                                       'Create "${label}"',
                                       style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(width: 6.0),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                                       decoration: BoxDecoration(
@@ -2529,158 +2538,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showCreateDocDialog(AppState appState) {
-    _docNameController.clear();
-    final classSearchController = TextEditingController();
-    String selectedClassId = 'schema:Person';
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          final query = classSearchController.text.toLowerCase();
-          final allClasses = SchemaService.instance.classes.values.toList();
-          allClasses.sort((a, b) => a.label.compareTo(b.label));
-
-          final filteredClasses = allClasses.where((cls) {
-            final label = cls.label.toLowerCase();
-            final comment = cls.comment.toLowerCase();
-            final id = cls.id.toLowerCase();
-            return label.contains(query) || comment.contains(query) || id.contains(query);
-          }).toList();
-
-          return AlertDialog(
-            title: const Text('Create New Schema Document'),
-            content: SizedBox(
-              width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height > 600 ? 520.0 : MediaQuery.of(context).size.height * 0.75,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Document Name',
-                    style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6.0),
-                  TextField(
-                    controller: _docNameController,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Company Header Markup',
-                      isDense: true,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  const Text(
-                    'Select Starting Class / Schema Type',
-                    style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6.0),
-                  TextField(
-                    controller: classSearchController,
-                    onChanged: (val) {
-                      setDialogState(() {});
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Search types (e.g. Article, Organization)...',
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.search, size: 20.0),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: classSearchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 16.0),
-                              onPressed: () {
-                                classSearchController.clear();
-                                setDialogState(() {});
-                              },
-                            )
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(height: 10.0),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: filteredClasses.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No matching Schema.org classes found',
-                                style: TextStyle(color: Colors.grey, fontSize: 12.0),
-                              ),
-                            )
-                          : ListView.builder(
-                              itemCount: filteredClasses.length,
-                              itemBuilder: (context, idx) {
-                                final cls = filteredClasses[idx];
-                                final isSelected = cls.id == selectedClassId;
-                                return Container(
-                                  color: isSelected
-                                      ? Theme.of(context).colorScheme.primaryContainer
-                                      : null,
-                                  child: ListTile(
-                                    dense: true,
-                                    title: Text(
-                                      cls.label,
-                                      style: TextStyle(
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      cls.comment.isNotEmpty
-                                          ? cls.comment
-                                          : 'No description available',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11.0),
-                                    ),
-                                    trailing: isSelected
-                                        ? Icon(
-                                            Icons.check_circle,
-                                            color: Theme.of(context).colorScheme.primary,
-                                            size: 18.0,
-                                          )
-                                        : null,
-                                    onTap: () {
-                                      setDialogState(() {
-                                        selectedClassId = cls.id;
-                                      });
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  classSearchController.dispose();
-                  Navigator.pop(context);
-                },
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final name = _docNameController.text.trim();
-                  appState.createNewDocument(
-                    name.isEmpty ? 'Untitled Document' : name,
-                    selectedClassId,
-                  );
-                  classSearchController.dispose();
-                  Navigator.pop(context);
-                },
-                child: const Text('Create'),
-              ),
-            ],
-          );
-        },
-      ),
+      builder: (context) => _CreateDocDialog(appState: appState),
     );
   }
 
@@ -3192,6 +3052,179 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CreateDocDialog extends StatefulWidget {
+  final AppState appState;
+
+  const _CreateDocDialog({Key? key, required this.appState}) : super(key: key);
+
+  @override
+  State<_CreateDocDialog> createState() => _CreateDocDialogState();
+}
+
+class _CreateDocDialogState extends State<_CreateDocDialog> {
+  late final TextEditingController _docNameController;
+  late final TextEditingController _classSearchController;
+  String _selectedClassId = 'schema:Person';
+
+  @override
+  void initState() {
+    super.initState();
+    _docNameController = TextEditingController();
+    _classSearchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _docNameController.dispose();
+    _classSearchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _classSearchController.text.toLowerCase();
+    final allClasses = SchemaService.instance.classes.values.toList();
+    allClasses.sort((a, b) => a.label.compareTo(b.label));
+
+    final filteredClasses = allClasses.where((cls) {
+      final label = cls.label.toLowerCase();
+      final comment = cls.comment.toLowerCase();
+      final id = cls.id.toLowerCase();
+      return label.contains(query) || comment.contains(query) || id.contains(query);
+    }).toList();
+
+    return AlertDialog(
+      title: const Text('Create New Schema Document'),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height > 600 ? 520.0 : MediaQuery.of(context).size.height * 0.75,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Document Name',
+              style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6.0),
+            TextField(
+              controller: _docNameController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'e.g., Company Header Markup',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            const Text(
+              'Select Starting Class / Schema Type',
+              style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6.0),
+            TextField(
+              controller: _classSearchController,
+              onChanged: (val) {
+                setState(() {});
+              },
+              decoration: InputDecoration(
+                hintText: 'Search types (e.g. Article, Organization)...',
+                isDense: true,
+                prefixIcon: const Icon(Icons.search, size: 20.0),
+                border: const OutlineInputBorder(),
+                suffixIcon: _classSearchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 16.0),
+                        onPressed: () {
+                          _classSearchController.clear();
+                          setState(() {});
+                        },
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 10.0),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+                child: filteredClasses.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No matching Schema.org classes found',
+                          style: TextStyle(color: Colors.grey, fontSize: 12.0),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredClasses.length,
+                        itemBuilder: (context, idx) {
+                          final cls = filteredClasses[idx];
+                          final isSelected = cls.id == _selectedClassId;
+                          return Container(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primaryContainer
+                                : null,
+                            child: ListTile(
+                              dense: true,
+                              title: Text(
+                                cls.label,
+                                style: TextStyle(
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                              subtitle: Text(
+                                cls.comment.isNotEmpty
+                                    ? cls.comment
+                                    : 'No description available',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11.0),
+                              ),
+                              trailing: isSelected
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      color: Theme.of(context).colorScheme.primary,
+                                      size: 18.0,
+                                    )
+                                  : null,
+                              onTap: () {
+                                setState(() {
+                                  _selectedClassId = cls.id;
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final name = _docNameController.text.trim();
+            widget.appState.createNewDocument(
+              name.isEmpty ? 'Untitled Document' : name,
+              _selectedClassId,
+            );
+            Navigator.pop(context);
+          },
+          child: const Text('Create'),
+        ),
+      ],
     );
   }
 }
