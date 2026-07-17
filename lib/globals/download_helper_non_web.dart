@@ -1,43 +1,67 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:downloadsfolder/downloadsfolder.dart';
 
 /// Downloads a JSON-LD schema file safely and in full compliance with modern
-/// Google Play Store scoped storage policies.
+/// Google Play Store scoped storage policies, preferring the 'JSONLD' subdirectory.
 Future<String?> downloadFile(String content, String filename) async {
-  Directory? directory;
+  try {
+    // 1. Get the public Downloads folder using downloadsfolder package
+    final downloadDir = await getDownloadDirectory();
+    final jsonLdSubDir = Directory('${downloadDir.path}/JSONLD');
 
-  if (Platform.isAndroid) {
-    // 1. Try public Download folder on Android. Under Scoped Storage (Android 10+),
-    // apps can create and write files directly inside the shared /storage/emulated/0/Download
-    // directory without requiring broad READ/WRITE_EXTERNAL_STORAGE permissions.
-    final publicDownloadDir = Directory('/storage/emulated/0/Download');
-    try {
-      if (publicDownloadDir.existsSync()) {
-        final file = File('${publicDownloadDir.path}/$filename');
-        await file.writeAsString(content);
-        return file.path;
-      }
-    } catch (e) {
-      // If direct public storage access fails on some Android configurations,
-      // fallback to the modern app-specific Scoped Storage downloads directory.
+    // Create the 'JSONLD' subdirectory if it doesn't exist
+    if (!await jsonLdSubDir.exists()) {
+      await jsonLdSubDir.create(recursive: true);
     }
 
-    // 2. Try app-specific Scoped Storage external downloads directory
-    // (requires zero runtime permissions and is fully Play Console policy compliant).
+    // Attempt to write directly to the 'JSONLD' subdirectory in the public Downloads
+    final targetFile = File('${jsonLdSubDir.path}/$filename');
+    await targetFile.writeAsString(content);
+    return targetFile.path;
+  } catch (e) {
+    // If direct write/creation fails (e.g., due to Android 11+ Scoped Storage restrictions),
+    // fallback to using the downloadsfolder package's safe copy API to save it to public Downloads.
     try {
-      final extDirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
-      if (extDirs != null && extDirs.isNotEmpty) {
-        directory = extDirs.first;
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/$filename');
+      await tempFile.writeAsString(content);
+
+      final success = await copyFileIntoDownloadFolder(tempFile.path, filename);
+      if (success == true) {
+        final downloadDir = await getDownloadDirectory();
+        return '${downloadDir.path}/$filename';
       }
-    } catch (e) {
-      // Ignored, fallback to internal storage
+    } catch (e2) {
+      // Ignored, fallback to standard path_provider folders
     }
   }
 
-  // 3. Fallback for iOS/macOS/Linux or if external storage is inaccessible
+  // 2. Fallback to standard app-specific external files directories
+  Directory? directory;
+  if (Platform.isAndroid) {
+    try {
+      final extDirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
+      if (extDirs != null && extDirs.isNotEmpty) {
+        directory = Directory('${extDirs.first.path}/JSONLD');
+        if (!await directory.exists()) {
+          await directory.create(recursive: true);
+        }
+      }
+    } catch (e) {
+      // Ignored
+    }
+  }
+
   if (directory == null) {
     try {
-      directory = await getDownloadsDirectory();
+      final baseDir = await getDownloadsDirectory();
+      if (baseDir != null) {
+        directory = Directory('${baseDir.path}/JSONLD');
+        if (!await directory.exists()) {
+          await directory.create(recursive: true);
+        }
+      }
     } catch (e) {
       // Ignored
     }

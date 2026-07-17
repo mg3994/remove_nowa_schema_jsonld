@@ -2659,34 +2659,31 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildLeftSidebar(AppState appState) {
     final allCategoryClasses = SchemaService.instance.classes.values.toList();
+    final lowercaseClassQuery = _classSearchQuery.trim().toLowerCase();
     final filteredClasses = allCategoryClasses.where((cls) {
-      if (_classSearchQuery.isEmpty) {
+      if (lowercaseClassQuery.isEmpty) {
         return true;
       }
-      return cls.label.toLowerCase().contains(
-            _classSearchQuery.toLowerCase(),
-          ) ||
-          cls.id.toLowerCase().contains(_classSearchQuery.toLowerCase());
+      return cls.label.toLowerCase().contains(lowercaseClassQuery) ||
+          cls.id.toLowerCase().contains(lowercaseClassQuery);
     }).toList();
+    final lowercaseMarkupQuery = _markupSearchQuery.trim().toLowerCase();
     final filteredDocuments = appState.documents.where((doc) {
-      if (_markupSearchQuery.isEmpty) {
+      if (lowercaseMarkupQuery.isEmpty) {
         return true;
       }
-      return doc.name.toLowerCase().contains(
-            _markupSearchQuery.toLowerCase(),
-          ) ||
-          doc.type.toLowerCase().contains(_markupSearchQuery.toLowerCase());
+      return doc.name.toLowerCase().contains(lowercaseMarkupQuery) ||
+          doc.type.toLowerCase().contains(lowercaseMarkupQuery);
     }).toList();
     return Container(
       color:
           Theme.of(context).colorScheme.surfaceContainerLow ??
           Theme.of(context).colorScheme.surface.withOpacity(0.5),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
             child: Row(
               children: [
                 Text(
@@ -2871,23 +2868,19 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-            const SizedBox(height: 8.0),
-            filteredClasses.isEmpty
-                ? const SizedBox(
-                    height: 120.0,
-                    child: Center(
-                      child: Text(
-                        'No classes found.',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          fontSize: 12.0,
-                        ),
+          const SizedBox(height: 8.0),
+          Expanded(
+            child: filteredClasses.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No classes found.',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 12.0,
                       ),
                     ),
                   )
                 : ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                     itemCount: filteredClasses.length,
                     itemBuilder: (context, index) {
@@ -2933,8 +2926,8 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                   ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
