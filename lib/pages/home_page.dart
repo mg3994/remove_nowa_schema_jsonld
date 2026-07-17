@@ -342,6 +342,39 @@ class _HomePageState extends State<HomePage> {
                  ),
                ),
             ),
+             Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+               child: Card(
+                 elevation: 0.0,
+                 color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                 shape: RoundedRectangleBorder(
+                   borderRadius: BorderRadius.circular(12.0),
+                   side: BorderSide(
+                     color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                     width: 1.0,
+                   ),
+                 ),
+                 child: ListTile(
+                   leading: Container(
+                     padding: const EdgeInsets.all(8.0),
+                     decoration: BoxDecoration(
+                       color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                       shape: BoxShape.circle,
+                     ),
+                     child: Icon(Icons.gavel_outlined, color: Theme.of(context).colorScheme.primary),
+                   ),
+                   title: const Text(
+                     'Terms & Conditions',
+                     style: TextStyle(fontWeight: FontWeight.bold),
+                   ),
+                   trailing: const Icon(Icons.chevron_right, size: 18.0),
+                   onTap: () {
+                     Navigator.pop(context); // close drawer
+                     _showTermsAndConditions();
+                   },
+                 ),
+               ),
+            ),
              const Divider(indent: 16.0, endIndent: 16.0, height: 24.0),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -421,7 +454,7 @@ class _HomePageState extends State<HomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Schema.org Visual Editor',
+                    'Json LD Visual Editor',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18.0,
@@ -2961,6 +2994,57 @@ class _HomePageState extends State<HomePage> {
               'We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy within this App.\n\n'
               'Contact Us\n'
               'If you have any questions about this Privacy Policy, please contact us via our social channels.',
+              style: TextStyle(fontSize: 12.0, height: 1.4),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTermsAndConditions() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/json_ld.png',
+              width: 28.0,
+              height: 28.0,
+            ),
+            const SizedBox(width: 8.0),
+            const Text('Terms & Conditions'),
+          ],
+        ),
+        content: const SizedBox(
+          width: 500.0,
+          height: 400.0,
+          child: SingleChildScrollView(
+            child: Text(
+              'Terms & Conditions for JSON LD Visual Editor\n\n'
+              'Last updated: July 2026\n\n'
+              'Please read these Terms and Conditions ("Terms", "Terms and Conditions") carefully before using the JSON LD Visual Editor application (the "Service") operated by Antinna ("us", "we", or "our").\n\n'
+              '1. Acceptance of Terms\n'
+              'By accessing or using the Service, you agree to be bound by these Terms. If you disagree with any part of the terms, then you may not access the Service.\n\n'
+              '2. Use of Service & Offline Capabilities\n'
+              'JSON LD Visual Editor operates as a localized schema builder to organize metadata properties offline. You are entirely responsible for the structure, correctness, and storage of any schemas created or exported from this App. Any external standard specifications are retrieved dynamically from public sources (schema.org) for your convenience.\n\n'
+              '3. Intellectual Property\n'
+              'The Service and its original content (excluding standard Schema.org concepts and user-generated schemas), features, and functionality are and will remain the exclusive property of Antinna and its licensors. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Antinna.\n\n'
+              '4. Third-Party Links\n'
+              'Our Service may contain links to third-party web sites or services that are not owned or controlled by Antinna. We have no control over, and assume no responsibility for, the content, privacy policies, or practices of any third-party websites or services.\n\n'
+              '5. Limitation of Liability\n'
+              'In no event shall Antinna be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.\n\n'
+              '6. Changes to Terms\n'
+              'We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will post any updates within this App.\n\n'
+              'Contact Us\n'
+              'If you have any questions about these Terms, please contact us via our social channels.',
               style: TextStyle(fontSize: 12.0, height: 1.4),
             ),
           ),

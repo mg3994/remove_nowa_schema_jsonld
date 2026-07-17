@@ -17,6 +17,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     // Verify that the main visual editor title is displayed.
-    expect(find.text('Schema.org Visual Editor'), findsOneWidget);
+    expect(find.text('Json LD Visual Editor'), findsOneWidget);
   });
 }
