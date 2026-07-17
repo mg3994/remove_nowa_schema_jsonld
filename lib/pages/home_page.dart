@@ -2681,11 +2681,12 @@ class _HomePageState extends State<HomePage> {
       color:
           Theme.of(context).colorScheme.surfaceContainerLow ??
           Theme.of(context).colorScheme.surface.withOpacity(0.5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
             child: Row(
               children: [
                 Text(
@@ -2870,19 +2871,23 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-          const SizedBox(height: 8.0),
-          Expanded(
-            child: filteredClasses.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No classes found.',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12.0,
+            const SizedBox(height: 8.0),
+            filteredClasses.isEmpty
+                ? const SizedBox(
+                    height: 120.0,
+                    child: Center(
+                      child: Text(
+                        'No classes found.',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          fontSize: 12.0,
+                        ),
                       ),
                     ),
                   )
                 : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                     itemCount: filteredClasses.length,
                     itemBuilder: (context, index) {
@@ -2928,8 +2933,8 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                   ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
