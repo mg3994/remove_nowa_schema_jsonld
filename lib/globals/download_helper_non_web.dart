@@ -1,10 +1,24 @@
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
-void downloadFile(String content, String filename) async {
-  final base64Content = base64Encode(utf8.encode(content));
-  final uri = Uri.parse('data:application/json;charset=utf-8;base64,$base64Content');
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri);
+Future<String?> downloadFile(String content, String filename) async {
+  Directory? directory;
+  try {
+    directory = await getDownloadsDirectory();
+  } catch (e) {
+    // getDownloadsDirectory might not be supported on all platforms or configurations
   }
+
+  if (directory == null) {
+    try {
+      directory = await getApplicationDocumentsDirectory();
+    } catch (e) {
+      // fallback to temporary directory if documents directory is somehow inaccessible
+      directory = await getTemporaryDirectory();
+    }
+  }
+
+  final file = File('${directory.path}/$filename');
+  await file.writeAsString(content);
+  return file.path;
 }

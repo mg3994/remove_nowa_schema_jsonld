@@ -889,7 +889,10 @@ class _HomePageState extends State<HomePage> {
           isRoot ? Icons.hub : Icons.subdirectory_arrow_right,
           color: Theme.of(context).colorScheme.primary,
         ),
-        title: Row(
+        title: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6.0,
+          runSpacing: 4.0,
           children: [
             Text(
               '${keyName}: ',
@@ -1023,16 +1026,19 @@ class _HomePageState extends State<HomePage> {
                   size: 20.0,
                 ),
                 const SizedBox(width: 8.0),
-                Text(
-                  isRoot
-                      ? 'Root Entity: @type = ${typeLabel}'
-                      : 'Nested Object: @type = ${typeLabel}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+                Expanded(
+                  child: Text(
+                    isRoot
+                        ? 'Root Entity: @type = ${typeLabel}'
+                        : 'Nested Object: @type = ${typeLabel}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8.0),
                 if (!isRoot)
                   IconButton(
                     icon: const Icon(
@@ -1126,106 +1132,109 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8.0,
+            runSpacing: 4.0,
             children: [
-              Expanded(
-                child: Tooltip(
-                  message: comment,
-                  child: Row(
-                    children: [
-                      Text(
-                        propName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.5,
-                        ),
-                      ),
-                      const SizedBox(width: 4.0),
-                      Icon(
-                        Icons.info_outline,
-                        size: 13.0,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (ranges.isNotEmpty) ...[
-                const SizedBox(width: 8.0),
-                Row(
+              Tooltip(
+                message: comment,
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: ranges.take(2).map((range) {
-                    final isPrim =
-                        range == 'schema:Text' ||
-                        range == 'schema:URL' ||
-                        range == 'schema:Number' ||
-                        range == 'schema:Boolean' ||
-                        range == 'schema:Integer' ||
-                        range == 'schema:Date' ||
-                        range == 'schema:DateTime';
-                    final shortLabel = range.startsWith('schema:')
-                        ? range.substring(7)
-                        : range;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                      child: ActionChip(
-                        padding: EdgeInsets.zero,
-                        label: Text(
-                          isPrim ? shortLabel : '+${shortLabel}',
-                          style: TextStyle(
-                            fontSize: 9.0,
-                            fontWeight: FontWeight.bold,
-                            color: isPrim
-                                ? Theme.of(
-                                    context,
-                                  ).colorScheme.onSecondaryContainer
-                                : Colors.white,
-                          ),
-                        ),
-                        backgroundColor: isPrim
-                            ? Theme.of(context).colorScheme.secondaryContainer
-                            : Theme.of(context).colorScheme.primary,
-                        onPressed: () {
-                          if (isPrim) {
-                            final initialVal = range == 'schema:Boolean'
-                                ? false
-                                : '';
-                            appState.addPropertyToEntity(
-                              entity,
-                              propId,
-                              initialVal,
-                            );
-                          } else {
-                            final nested = SchemaEntity(
-                              id: 'nest_${DateTime.now().microsecondsSinceEpoch}',
-                              type: range,
-                              properties: {},
-                            );
-                            appState.addPropertyToEntity(
-                              entity,
-                              propId,
-                              nested,
-                            );
-                          }
-                        },
+                  children: [
+                    Text(
+                      propName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
                       ),
-                    );
-                  }).toList(),
+                    ),
+                    const SizedBox(width: 4.0),
+                    Icon(
+                      Icons.info_outline,
+                      size: 13.0,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ],
                 ),
-              ],
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline, size: 16.0),
-                tooltip: 'Add compliant value',
-                onPressed: () {
-                  _onAddValuePressed(appState, entity, propId);
-                },
               ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 16.0),
-                tooltip: 'Remove field',
-                onPressed: () {
-                  appState.removePropertyFromEntity(entity, propId);
-                },
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (ranges.isNotEmpty)
+                    ...ranges.take(2).map((range) {
+                      final isPrim =
+                          range == 'schema:Text' ||
+                          range == 'schema:URL' ||
+                          range == 'schema:Number' ||
+                          range == 'schema:Boolean' ||
+                          range == 'schema:Integer' ||
+                          range == 'schema:Date' ||
+                          range == 'schema:DateTime';
+                      final shortLabel = range.startsWith('schema:')
+                          ? range.substring(7)
+                          : range;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                        child: ActionChip(
+                          padding: EdgeInsets.zero,
+                          label: Text(
+                            isPrim ? shortLabel : '+${shortLabel}',
+                            style: TextStyle(
+                              fontSize: 9.0,
+                              fontWeight: FontWeight.bold,
+                              color: isPrim
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.onSecondaryContainer
+                                  : Colors.white,
+                            ),
+                          ),
+                          backgroundColor: isPrim
+                              ? Theme.of(context).colorScheme.secondaryContainer
+                              : Theme.of(context).colorScheme.primary,
+                          onPressed: () {
+                            if (isPrim) {
+                              final initialVal = range == 'schema:Boolean'
+                                  ? false
+                                  : '';
+                              appState.addPropertyToEntity(
+                                entity,
+                                propId,
+                                initialVal,
+                              );
+                            } else {
+                              final nested = SchemaEntity(
+                                id: 'nest_${DateTime.now().microsecondsSinceEpoch}',
+                                type: range,
+                                properties: {},
+                              );
+                              appState.addPropertyToEntity(
+                                entity,
+                                propId,
+                                nested,
+                              );
+                            }
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline, size: 16.0),
+                    tooltip: 'Add compliant value',
+                    onPressed: () {
+                      _onAddValuePressed(appState, entity, propId);
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 16.0),
+                    tooltip: 'Remove field',
+                    onPressed: () {
+                      appState.removePropertyFromEntity(entity, propId);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -1333,8 +1342,8 @@ class _HomePageState extends State<HomePage> {
           return AlertDialog(
             title: const Text('Add Value - Select Compliant Type'),
             content: SizedBox(
-              width: 480.0,
-              height: 440.0,
+              width: MediaQuery.of(context).size.width > 560 ? 480.0 : MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height > 600 ? 440.0 : MediaQuery.of(context).size.height * 0.6,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1802,17 +1811,32 @@ class _HomePageState extends State<HomePage> {
               IconButton(
                 icon: const Icon(Icons.download, size: 16.0),
                 tooltip: 'Download .jsonld file',
-                onPressed: () {
+                onPressed: () async {
                   final rootName = appState.rootEntity?.name ?? 'document';
                   final cleanName = rootName.replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(' ', '_');
                   final filename = '${cleanName.isNotEmpty ? cleanName : 'schema'}.jsonld';
-                  dl.downloadFile(appState.jsonLdOutput, filename);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Downloading "${filename}"... 💾'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  try {
+                    final savedPath = await dl.downloadFile(appState.jsonLdOutput, filename);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Saved "${filename}" successfully! 💾\nLocation: ${savedPath ?? "Downloads"}'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error saving file: $e'),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
               IconButton(
@@ -2081,8 +2105,8 @@ class _HomePageState extends State<HomePage> {
           return AlertDialog(
             title: Text('Configure Properties for ${typeLabel}'),
             content: SizedBox(
-              width: 520.0,
-              height: 480.0,
+              width: MediaQuery.of(context).size.width > 600 ? 520.0 : MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height > 650 ? 480.0 : MediaQuery.of(context).size.height * 0.65,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -2330,8 +2354,8 @@ class _HomePageState extends State<HomePage> {
             return AlertDialog(
               title: Text('Select Input Type for "${prop.label}"'),
               content: SizedBox(
-                width: 480.0,
-                height: 400.0,
+                width: MediaQuery.of(context).size.width > 560 ? 480.0 : MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -2506,44 +2530,156 @@ class _HomePageState extends State<HomePage> {
 
   void _showCreateDocDialog(AppState appState) {
     _docNameController.clear();
+    final classSearchController = TextEditingController();
+    String selectedClassId = 'schema:Person';
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create New Schema Document'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Give your document a descriptive name. The document will start with a default Person type, which you can easily change inside the builder.',
-              style: TextStyle(fontSize: 12.0),
-            ),
-            const SizedBox(height: 12.0),
-            TextField(
-              controller: _docNameController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'e.g., Company Header Markup',
-                isDense: true,
-                border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final query = classSearchController.text.toLowerCase();
+          final allClasses = SchemaService.instance.classes.values.toList();
+          allClasses.sort((a, b) => a.label.compareTo(b.label));
+
+          final filteredClasses = allClasses.where((cls) {
+            final label = cls.label.toLowerCase();
+            final comment = cls.comment.toLowerCase();
+            final id = cls.id.toLowerCase();
+            return label.contains(query) || comment.contains(query) || id.contains(query);
+          }).toList();
+
+          return AlertDialog(
+            title: const Text('Create New Schema Document'),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height > 600 ? 520.0 : MediaQuery.of(context).size.height * 0.75,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Document Name',
+                    style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6.0),
+                  TextField(
+                    controller: _docNameController,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., Company Header Markup',
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  const Text(
+                    'Select Starting Class / Schema Type',
+                    style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6.0),
+                  TextField(
+                    controller: classSearchController,
+                    onChanged: (val) {
+                      setDialogState(() {});
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Search types (e.g. Article, Organization)...',
+                      isDense: true,
+                      prefixIcon: const Icon(Icons.search, size: 20.0),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: classSearchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 16.0),
+                              onPressed: () {
+                                classSearchController.clear();
+                                setDialogState(() {});
+                              },
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 10.0),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: filteredClasses.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No matching Schema.org classes found',
+                                style: TextStyle(color: Colors.grey, fontSize: 12.0),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: filteredClasses.length,
+                              itemBuilder: (context, idx) {
+                                final cls = filteredClasses[idx];
+                                final isSelected = cls.id == selectedClassId;
+                                return Container(
+                                  color: isSelected
+                                      ? Theme.of(context).colorScheme.primaryContainer
+                                      : null,
+                                  child: ListTile(
+                                    dense: true,
+                                    title: Text(
+                                      cls.label,
+                                      style: TextStyle(
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      cls.comment.isNotEmpty
+                                          ? cls.comment
+                                          : 'No description available',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 11.0),
+                                    ),
+                                    trailing: isSelected
+                                        ? Icon(
+                                            Icons.check_circle,
+                                            color: Theme.of(context).colorScheme.primary,
+                                            size: 18.0,
+                                          )
+                                        : null,
+                                    onTap: () {
+                                      setDialogState(() {
+                                        selectedClassId = cls.id;
+                                      });
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = _docNameController.text.trim();
-              appState.createNewDocument(name, 'schema:Person');
-              Navigator.pop(context);
-            },
-            child: const Text('Create'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () {
+                  classSearchController.dispose();
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final name = _docNameController.text.trim();
+                  appState.createNewDocument(
+                    name.isEmpty ? 'Untitled Document' : name,
+                    selectedClassId,
+                  );
+                  classSearchController.dispose();
+                  Navigator.pop(context);
+                },
+                child: const Text('Create'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -2589,8 +2725,8 @@ class _HomePageState extends State<HomePage> {
       builder: (context) => AlertDialog(
         title: const Text('Import JSON-LD Schema'),
         content: SizedBox(
-          width: 500.0,
-          height: 350.0,
+          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 550 ? 350.0 : MediaQuery.of(context).size.height * 0.5,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -2974,10 +3110,10 @@ class _HomePageState extends State<HomePage> {
             const Text('Privacy Policy'),
           ],
         ),
-        content: const SizedBox(
-          width: 500.0,
-          height: 400.0,
-          child: SingleChildScrollView(
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
+          child: const SingleChildScrollView(
             child: Text(
               'Privacy Policy for JSON LD Visual Editor\n\n'
               'Last updated: July 2026\n\n'
@@ -3023,10 +3159,10 @@ class _HomePageState extends State<HomePage> {
             const Text('Terms & Conditions'),
           ],
         ),
-        content: const SizedBox(
-          width: 500.0,
-          height: 400.0,
-          child: SingleChildScrollView(
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
+          child: const SingleChildScrollView(
             child: Text(
               'Terms & Conditions for JSON LD Visual Editor\n\n'
               'Last updated: July 2026\n\n'
