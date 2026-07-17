@@ -47,3 +47,32 @@ Empower your SEO today with the ultimate visual Schema IDE by Antinna!
 
 ## Release Notes (v1.0.0)
 `Initial production release of JSON LD Visual Editor. Complete offline schema builder with official Schema.org specs integration.`
+
+---
+
+## 🔒 Google Play Console Compliance & Storage Permissions
+
+To guarantee a fast, seamless review process on the Google Play Console and ensure compliance with Google's strict **Scoped Storage Policies**, the app conforms to the following guidelines:
+
+### 1. Zero Dangerous Broad Permissions
+The application does **NOT** declare or use:
+* `android.permission.MANAGE_EXTERNAL_STORAGE` (highly regulated and flagged by Google Play Console).
+* Broad unrestricted storage permissions on modern Android versions.
+
+### 2. Backward Compatible Permission Model
+* `android.permission.WRITE_EXTERNAL_STORAGE` is strictly constrained using `android:maxSdkVersion="28"`:
+  ```xml
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+  ```
+  This enables seamless writing compatibility to the public `/storage/emulated/0/Download` directory on older legacy Android devices (API level 28 and below), while being entirely bypassed on Android 10+ (API 29+) where permissions are unnecessary.
+
+### 3. Modern Scoped Storage Implementation
+For Android 10+ (API 29+):
+* **Primary Path:** The app safely attempts to write exported `.jsonld` files directly into the public `/storage/emulated/0/Download` folder. On modern Android versions, creating a new media/download file is natively permitted without requiring any runtime permissions.
+* **Secondary Scoped Storage Path:** If a direct public folder write is restricted on certain custom ROMs or configurations, the app automatically falls back to saving files inside the app-specific scoped storage downloads directory (`/storage/emulated/0/Android/data/com.antinna.jsonld/files/Download`). This folder is fully accessible by the user using any standard file explorer and requires no permissions.
+
+### 4. App Content Declarations in Play Console
+When filling out the **App Content** dashboard in Google Play Console, set:
+* **Privacy Policy URL:** Link to the Hosted Privacy Policy (matching `/play_store_docs/privacy_policy.md`).
+* **Sensitive Permissions:** Declare "No" to using broad or sensitive permissions.
+* **Financial Features:** Declare "No" to financial features/services.

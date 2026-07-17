@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Declared with maxSdkVersion to strictly comply with Google Play Console policies for Android 10+ while allowing write compatibility with older Android versions -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
     
     <application
         android:label="jsonld"
