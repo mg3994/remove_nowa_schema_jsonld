@@ -166,21 +166,48 @@ class _HomePageState extends State<HomePage> {
       drawer: Drawer(
         child: Column(
           children: [
-            DrawerHeader(
+             Container(
+               padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 24.0),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
+                 gradient: LinearGradient(
+                   colors: [
+                     Theme.of(context).colorScheme.primary,
+                     Theme.of(context).colorScheme.secondary,
+                   ],
+                   begin: Alignment.topLeft,
+                   end: Alignment.bottomRight,
+                 ),
+                 boxShadow: [
+                   BoxShadow(
+                     color: Colors.black.withOpacity(0.15),
+                     blurRadius: 10,
+                     offset: const Offset(0, 4),
+                   ),
+                 ],
               ),
                child: Stack(
                 children: [
                    Row(
                      children: [
-                       ClipRRect(
-                         borderRadius: BorderRadius.circular(12.0),
-                         child: Image.asset(
-                            'assets/json_ld.png',
-                           width: 64.0,
-                           height: 64.0,
-                           fit: BoxFit.cover,
+                       Container(
+                         decoration: BoxDecoration(
+                           borderRadius: BorderRadius.circular(16.0),
+                           boxShadow: [
+                             BoxShadow(
+                               color: Colors.black.withOpacity(0.2),
+                               blurRadius: 6,
+                               offset: const Offset(0, 2),
+                             ),
+                           ],
+                         ),
+                         child: ClipRRect(
+                           borderRadius: BorderRadius.circular(16.0),
+                           child: Image.asset(
+                              'assets/json_ld.png',
+                             width: 68.0,
+                             height: 68.0,
+                             fit: BoxFit.cover,
+                           ),
                         ),
                        ),
                        const SizedBox(width: 16.0),
@@ -189,27 +216,37 @@ class _HomePageState extends State<HomePage> {
                            mainAxisAlignment: MainAxisAlignment.center,
                            crossAxisAlignment: CrossAxisAlignment.start,
                            children: [
-                             Text(
+                             const Text(
                                'JSON LD',
                                style: TextStyle(
                                  fontWeight: FontWeight.bold,
-                                 fontSize: 18.0,
-                                 color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                 fontSize: 22.0,
+                                 color: Colors.white,
+                                 letterSpacing: 1.2,
                                ),
                              ),
-                             Text(
+                             const Text(
                                'Visual Editor',
                                style: TextStyle(
-                                 fontSize: 14.0,
-                                 color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                 fontSize: 15.0,
+                                 fontWeight: FontWeight.w300,
+                                 color: Colors.white70,
                                ),
                              ),
-                             const SizedBox(height: 4.0),
-                             Text(
-                               'v1.0.0 • by Antinna',
-                               style: TextStyle(
-                                 fontSize: 10.0,
-                                 color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7),
+                             const SizedBox(height: 6.0),
+                             Container(
+                               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                               decoration: BoxDecoration(
+                                 color: Colors.white.withOpacity(0.2),
+                                 borderRadius: BorderRadius.circular(12.0),
+                               ),
+                               child: const Text(
+                                 'v1.0.0 • by Antinna',
+                                 style: TextStyle(
+                                   fontSize: 9.0,
+                                   fontWeight: FontWeight.bold,
+                                   color: Colors.white,
+                                 ),
                                ),
                              ),
                            ],
@@ -221,13 +258,13 @@ class _HomePageState extends State<HomePage> {
                      top: 0,
                      right: 0,
                      child: Material(
-                       color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.1),
+                       color: Colors.white.withOpacity(0.2),
                        shape: const CircleBorder(),
                        child: IconButton(
-                         icon: Icon(
+                         icon: const Icon(
                            Icons.close,
-                           color: Theme.of(context).colorScheme.onPrimaryContainer,
-                           size: 20.0,
+                           color: Colors.white,
+                           size: 18.0,
                         ),
                          onPressed: () {
                            _scaffoldKey.currentState?.closeDrawer();
@@ -238,23 +275,74 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-               title: const Text('About App'),
-              onTap: () {
-                Navigator.pop(context); // close drawer
-                _showAboutApp();
-              },
+             const SizedBox(height: 16.0),
+             Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+               child: Card(
+                 elevation: 0.0,
+                 color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                 shape: RoundedRectangleBorder(
+                   borderRadius: BorderRadius.circular(12.0),
+                   side: BorderSide(
+                     color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                     width: 1.0,
+                   ),
+                 ),
+                 child: ListTile(
+                   leading: Container(
+                     padding: const EdgeInsets.all(8.0),
+                     decoration: BoxDecoration(
+                       color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                       shape: BoxShape.circle,
+                     ),
+                     child: Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+                   ),
+                   title: const Text(
+                     'About App',
+                     style: TextStyle(fontWeight: FontWeight.bold),
+                   ),
+                   trailing: const Icon(Icons.chevron_right, size: 18.0),
+                   onTap: () {
+                     Navigator.pop(context); // close drawer
+                     _showAboutApp();
+                   },
+                 ),
+               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.privacy_tip_outlined),
-              title: const Text('Privacy Policy'),
-              onTap: () {
-                Navigator.pop(context); // close drawer
-                _showPrivacyPolicy();
-              },
+             Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+               child: Card(
+                 elevation: 0.0,
+                 color: Theme.of(context).colorScheme.secondary.withOpacity(0.06),
+                 shape: RoundedRectangleBorder(
+                   borderRadius: BorderRadius.circular(12.0),
+                   side: BorderSide(
+                     color: Theme.of(context).colorScheme.secondary.withOpacity(0.12),
+                     width: 1.0,
+                   ),
+                 ),
+                 child: ListTile(
+                   leading: Container(
+                     padding: const EdgeInsets.all(8.0),
+                     decoration: BoxDecoration(
+                       color: Theme.of(context).colorScheme.secondary.withOpacity(0.12),
+                       shape: BoxShape.circle,
+                     ),
+                     child: Icon(Icons.privacy_tip_outlined, color: Theme.of(context).colorScheme.secondary),
+                   ),
+                   title: const Text(
+                     'Privacy Policy',
+                     style: TextStyle(fontWeight: FontWeight.bold),
+                   ),
+                   trailing: const Icon(Icons.chevron_right, size: 18.0),
+                   onTap: () {
+                     Navigator.pop(context); // close drawer
+                     _showPrivacyPolicy();
+                   },
+                 ),
+               ),
             ),
-            const Divider(),
+             const Divider(indent: 16.0, endIndent: 16.0, height: 24.0),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Align(
@@ -276,37 +364,37 @@ class _HomePageState extends State<HomePage> {
                   const SocialCard(
                     platform: 'GitHub',
                     profileName: 'Antinna',
-                    imageAsset: 'assets/json_ld.png',
+                    imageAsset: 'assets/antinna_copyrights.png',
                     url: 'https://github.com/antinna',
                   ),
                   const SocialCard(
                     platform: 'YouTube',
                     profileName: 'Antinna',
-                    imageAsset: 'assets/json_ld.png',
+                    imageAsset: 'assets/antinna_copyrights.png',
                     url: 'https://www.youtube.com/antinna',
                   ),
                   const SocialCard(
                     platform: ' X (Twitter)',
                     profileName: 'antinna_yt',
-                    imageAsset: 'assets/json_ld.png',
+                    imageAsset: 'assets/antinna_copyrights.png',
                     url: 'https://x.com/antinna_yt',
                   ),
                   const SocialCard(
                     platform: 'Instagram',
                     profileName: 'antinna.yt',
-                    imageAsset: 'assets/json_ld.png',
+                    imageAsset: 'assets/antinna_copyrights.png',
                     url: 'https://www.instagram.com/antinna.yt/',
                   ),
                   const SocialCard(
                     platform: 'Facebook',
                     profileName: 'Antinna Profile',
-                    imageAsset: 'assets/json_ld.png',
+                    imageAsset: 'assets/antinna_copyrights.png',
                     url: 'https://www.facebook.com/profile.php?id=100083138576317',
                   ),
                   const SocialCard(
                     platform: 'Substack',
                     profileName: 'Antinna Newsletter',
-                    imageAsset: 'assets/json_ld.png',
+                    imageAsset: 'assets/antinna_copyrights.png',
                     url: 'https://antinna.substack.com/',
                   ),
                 ],
