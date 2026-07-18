@@ -43,6 +43,10 @@ class _HomePageState extends State<HomePage> {
   bool _showTreeView = false;
   bool _isFullScreenWorkspace = false;
 
+  final TransformationController _transformationController =
+      TransformationController();
+  double _canvasScale = 1.0;
+
   final ScrollController _workspaceVerticalController = ScrollController();
   final ScrollController _workspaceHorizontalController = ScrollController();
   final ScrollController _treeVerticalController = ScrollController();
@@ -51,9 +55,19 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _transformationController.addListener(_onCanvasTransform);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppState.of(context, listen: false).initSchemaService();
     });
+  }
+
+  void _onCanvasTransform() {
+    final double scale = _transformationController.value.getMaxScaleOnAxis();
+    if ((scale - _canvasScale).abs() > 0.01) {
+      setState(() {
+        _canvasScale = scale;
+      });
+    }
   }
 
   List<String> _getInheritancePath(String classId) {
@@ -836,14 +850,110 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 12.0),
           Expanded(
-            child: Scrollbar(
-              controller: _workspaceVerticalController,
-              thumbVisibility: true,
-              child: SingleChildScrollView(
-                controller: _workspaceVerticalController,
-                scrollDirection: Axis.vertical,
-                child: _buildEntityEditorCard(appState, root!, isRoot: true),
-              ),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                        width: 1.0,
+                      ),
+                    ),
+                    child: InteractiveViewer(
+                      transformationController: _transformationController,
+                      boundaryMargin: const EdgeInsets.all(1500.0),
+                      minScale: 0.15,
+                      maxScale: 2.5,
+                      child: CustomPaint(
+                        painter: GridBackgroundPainter(
+                          gridColor: Theme.of(context).colorScheme.outline.withOpacity(0.08),
+                          spacing: 30.0,
+                        ),
+                        child: Container(
+                          width: 2500.0,
+                          height: 2500.0,
+                          padding: const EdgeInsets.all(120.0),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: SizedBox(
+                              width: 1000.0,
+                              child: _buildEntityEditorCard(appState, root!, isRoot: true),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 16.0,
+                  right: 16.0,
+                  child: Card(
+                    elevation: 4.0,
+                    shadowColor: Colors.black.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.0),
+                    ),
+                    color: Theme.of(context).colorScheme.surface.withOpacity(0.92),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.zoom_out, size: 20.0),
+                            tooltip: 'Zoom Out',
+                            onPressed: () {
+                              final current = _transformationController.value;
+                              final scale = current.getMaxScaleOnAxis();
+                              if (scale > 0.2) {
+                                final next = Matrix4.identity()..scale(scale - 0.15);
+                                _transformationController.value = next;
+                              }
+                            },
+                          ),
+                          Text(
+                            '${(_canvasScale * 100).toInt()}%',
+                            style: const TextStyle(
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.zoom_in, size: 20.0),
+                            tooltip: 'Zoom In',
+                            onPressed: () {
+                              final current = _transformationController.value;
+                              final scale = current.getMaxScaleOnAxis();
+                              if (scale < 2.4) {
+                                final next = Matrix4.identity()..scale(scale + 0.15);
+                                _transformationController.value = next;
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 4.0),
+                          Container(
+                            width: 1.0,
+                            height: 20.0,
+                            color: Colors.grey.withOpacity(0.3),
+                          ),
+                          const SizedBox(width: 4.0),
+                          IconButton(
+                            icon: const Icon(Icons.center_focus_strong, size: 20.0),
+                            tooltip: 'Reset View / Fit Screen',
+                            onPressed: () {
+                              _transformationController.value = Matrix4.identity();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -2776,6 +2886,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _transformationController.removeListener(_onCanvasTransform);
+    _transformationController.dispose();
     _importController.dispose();
     _searchClassController.dispose();
     _searchPropertyController.dispose();
@@ -3194,6 +3306,32 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+class GridBackgroundPainter extends CustomPainter {
+  final Color gridColor;
+  final double spacing;
+
+  GridBackgroundPainter({
+    required this.gridColor,
+    this.spacing = 30.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = gridColor
+      ..strokeWidth = 1.0;
+
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 1.0, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _CreateDocDialog extends StatefulWidget {
