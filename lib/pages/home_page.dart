@@ -41,6 +41,7 @@ class _HomePageState extends State<HomePage> {
   String _markupSearchQuery = '';
 
   bool _showTreeView = false;
+  bool _isFullScreenWorkspace = false;
 
   final ScrollController _workspaceVerticalController = ScrollController();
   final ScrollController _workspaceHorizontalController = ScrollController();
@@ -168,7 +169,9 @@ class _HomePageState extends State<HomePage> {
     final isWide = MediaQuery.of(context).size.width >= 1100;
     return Scaffold(
       key: _scaffoldKey,
-      drawer: Drawer(
+      drawer: _isFullScreenWorkspace
+          ? null
+          : Drawer(
         child: Column(
           children: [
              Container(
@@ -441,7 +444,9 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      appBar: AppBar(
+      appBar: _isFullScreenWorkspace
+          ? null
+          : AppBar(
          automaticallyImplyLeading: false,
         title: Row(
           children: [
@@ -528,7 +533,13 @@ class _HomePageState extends State<HomePage> {
       ),
       body: appState.rootEntity == null
           ? const Center(child: CircularProgressIndicator())
-          : LayoutBuilder(
+          : _isFullScreenWorkspace
+              ? SafeArea(
+                  child: _showTreeView
+                      ? _buildTreeViewWorkspace(appState)
+                      : _buildWorkspace(appState),
+                )
+              : LayoutBuilder(
               builder: (context, constraints) {
                 if (isWide) {
                   return Row(
@@ -1095,6 +1106,24 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(width: 8.0),
+                    if (isRoot)
+                      IconButton(
+                        icon: Icon(
+                          _isFullScreenWorkspace
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 24.0,
+                        ),
+                        tooltip: _isFullScreenWorkspace
+                            ? 'Exit Fullscreen Mode'
+                            : 'Enter Fullscreen Mode',
+                        onPressed: () {
+                          setState(() {
+                            _isFullScreenWorkspace = !_isFullScreenWorkspace;
+                          });
+                        },
+                      ),
                     if (!isRoot)
                       IconButton(
                         icon: const Icon(
