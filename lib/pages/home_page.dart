@@ -42,6 +42,11 @@ class _HomePageState extends State<HomePage> {
 
   bool _showTreeView = false;
 
+  final ScrollController _workspaceVerticalController = ScrollController();
+  final ScrollController _workspaceHorizontalController = ScrollController();
+  final ScrollController _treeVerticalController = ScrollController();
+  final ScrollController _treeHorizontalController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -819,8 +824,30 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 12.0),
           Expanded(
-            child: SingleChildScrollView(
-              child: _buildEntityEditorCard(appState, root!, isRoot: true),
+            child: Scrollbar(
+              controller: _workspaceVerticalController,
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                controller: _workspaceVerticalController,
+                scrollDirection: Axis.vertical,
+                child: Scrollbar(
+                  controller: _workspaceHorizontalController,
+                  thumbVisibility: true,
+                  notificationPredicate: (notif) => notif.depth == 0,
+                  child: SingleChildScrollView(
+                    controller: _workspaceHorizontalController,
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: MediaQuery.of(context).size.width > 950.0
+                            ? MediaQuery.of(context).size.width - 32.0
+                            : 950.0,
+                      ),
+                      child: _buildEntityEditorCard(appState, root!, isRoot: true),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -857,10 +884,30 @@ class _HomePageState extends State<HomePage> {
                   color: Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
-              child: ListView(
-                children: [
-                  _buildTreeViewNode(appState.rootEntity!, isRoot: true),
-                ],
+              child: Scrollbar(
+                controller: _treeVerticalController,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _treeVerticalController,
+                  scrollDirection: Axis.vertical,
+                  child: Scrollbar(
+                    controller: _treeHorizontalController,
+                    thumbVisibility: true,
+                    notificationPredicate: (notif) => notif.depth == 0,
+                    child: SingleChildScrollView(
+                      controller: _treeHorizontalController,
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: MediaQuery.of(context).size.width > 950.0
+                              ? MediaQuery.of(context).size.width - 64.0
+                              : 950.0,
+                        ),
+                        child: _buildTreeViewNode(appState.rootEntity!, isRoot: true),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -2654,6 +2701,10 @@ class _HomePageState extends State<HomePage> {
     _docNameController.dispose();
     _customPropController.dispose();
     _searchMarkupController.dispose();
+    _workspaceVerticalController.dispose();
+    _workspaceHorizontalController.dispose();
+    _treeVerticalController.dispose();
+    _treeHorizontalController.dispose();
     super.dispose();
   }
 
