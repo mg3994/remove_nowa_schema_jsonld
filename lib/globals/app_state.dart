@@ -136,7 +136,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> persistDocument(SchemaEntity entity, {bool immediate = false}) async {
+  Future<void> persistDocument(SchemaEntity entity,
+      {bool immediate = false}) async {
     _saveStatus = 'Saving...';
     notifyListeners();
     _debounceTimer?.cancel();
@@ -145,14 +146,14 @@ class AppState extends ChangeNotifier {
       try {
         final serialized = json.encode(entity.serializeProperties());
         await db.into(db.localDocuments).insertOnConflictUpdate(
-          LocalDocument(
-            id: entity.id,
-            name: entity.name,
-            type: entity.type,
-            propertiesJson: serialized,
-            updatedAt: DateTime.now(),
-          ),
-        );
+              LocalDocument(
+                id: entity.id,
+                name: entity.name,
+                type: entity.type,
+                propertiesJson: serialized,
+                updatedAt: DateTime.now(),
+              ),
+            );
         _saveStatus = 'Saved';
         notifyListeners();
       } catch (e) {
@@ -368,9 +369,8 @@ class AppState extends ChangeNotifier {
     if (entity.properties[propertyId] == null) {
       entity.properties[propertyId] = [];
     }
-    final dynamic valueToAdd = (initialValue is SchemaEntity)
-        ? initialValue.clone()
-        : initialValue;
+    final dynamic valueToAdd =
+        (initialValue is SchemaEntity) ? initialValue.clone() : initialValue;
     entity.properties[propertyId]?.add(
       SchemaValue(
         id: 'val_${DateTime.now().microsecondsSinceEpoch}',

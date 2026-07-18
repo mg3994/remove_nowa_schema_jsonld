@@ -20,7 +20,8 @@ String _getUniqueFileName(Directory dir, String filename) {
     extension = filename.substring(dotIdx);
   }
   final now = DateTime.now();
-  final timestamp = '${now.year}${_twoDigits(now.month)}${_twoDigits(now.day)}_${_twoDigits(now.hour)}${_twoDigits(now.minute)}${_twoDigits(now.second)}';
+  final timestamp =
+      '${now.year}${_twoDigits(now.month)}${_twoDigits(now.day)}_${_twoDigits(now.hour)}${_twoDigits(now.minute)}${_twoDigits(now.second)}';
   return '${baseName}_$timestamp$extension';
 }
 
@@ -59,7 +60,8 @@ Future<String?> downloadFile(String content, String filename) async {
       final tempFile = File('${tempDir.path}/$uniqueName');
       await tempFile.writeAsString(content);
 
-      final success = await copyFileIntoDownloadFolder(tempFile.path, uniqueName);
+      final success =
+          await copyFileIntoDownloadFolder(tempFile.path, uniqueName);
       if (success == true) {
         return '${downloadDir.path}/$uniqueName';
       }
@@ -72,7 +74,8 @@ Future<String?> downloadFile(String content, String filename) async {
   Directory? directory;
   if (Platform.isAndroid) {
     try {
-      final extDirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
+      final extDirs =
+          await getExternalStorageDirectories(type: StorageDirectory.downloads);
       if (extDirs != null && extDirs.isNotEmpty) {
         directory = Directory('${extDirs.first.path}/JSONLD');
         if (!await directory.exists()) {

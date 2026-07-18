@@ -18,7 +18,8 @@ class HomePage extends StatefulWidget {
   }
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final TextEditingController _importController = TextEditingController();
@@ -47,6 +48,8 @@ class _HomePageState extends State<HomePage> {
       TransformationController();
   double _canvasScale = 1.0;
 
+  late TabController _tabController;
+
   final ScrollController _workspaceVerticalController = ScrollController();
   final ScrollController _workspaceHorizontalController = ScrollController();
   final ScrollController _treeVerticalController = ScrollController();
@@ -55,10 +58,16 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _transformationController.addListener(_onCanvasTransform);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppState.of(context, listen: false).initSchemaService();
     });
+  }
+
+  void _onTabChanged() {
+    setState(() {});
   }
 
   void _onCanvasTransform() {
@@ -77,9 +86,8 @@ class _HomePageState extends State<HomePage> {
     final Set<String> visited = {};
     while (current != null && !visited.contains(current)) {
       visited.add(current!);
-      final label = current!.startsWith('schema:')
-          ? current?.substring(7)
-          : current;
+      final label =
+          current!.startsWith('schema:') ? current?.substring(7) : current;
       path.insert(0, label!);
       final cls = classes[current!];
       current = (cls != null && cls!.subClassOf.isNotEmpty)
@@ -186,365 +194,404 @@ class _HomePageState extends State<HomePage> {
       drawer: _isFullScreenWorkspace
           ? null
           : Drawer(
-        child: Column(
-          children: [
-             Container(
-               padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 24.0),
-              decoration: BoxDecoration(
-                 gradient: LinearGradient(
-                   colors: [
-                     Theme.of(context).colorScheme.primary,
-                     Theme.of(context).colorScheme.secondary,
-                   ],
-                   begin: Alignment.topLeft,
-                   end: Alignment.bottomRight,
-                 ),
-                 boxShadow: [
-                   BoxShadow(
-                     color: Colors.black.withOpacity(0.15),
-                     blurRadius: 10,
-                     offset: const Offset(0, 4),
-                   ),
-                 ],
-              ),
-               child: Stack(
+              child: Column(
                 children: [
-                   Row(
-                     children: [
-                       Container(
-                         decoration: BoxDecoration(
-                           borderRadius: BorderRadius.circular(16.0),
-                           boxShadow: [
-                             BoxShadow(
-                               color: Colors.black.withOpacity(0.2),
-                               blurRadius: 6,
-                               offset: const Offset(0, 2),
-                             ),
-                           ],
-                         ),
-                         child: ClipRRect(
-                           borderRadius: BorderRadius.circular(16.0),
-                           child: Image.asset(
-                              'assets/json_ld.png',
-                             width: 68.0,
-                             height: 68.0,
-                             fit: BoxFit.cover,
-                           ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 24.0),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                       ),
-                       const SizedBox(width: 16.0),
-                       Expanded(
-                         child: Column(
-                           mainAxisAlignment: MainAxisAlignment.center,
-                           crossAxisAlignment: CrossAxisAlignment.start,
-                           children: [
-                             const Text(
-                               'JSON LD',
-                               style: TextStyle(
-                                 fontWeight: FontWeight.bold,
-                                 fontSize: 22.0,
-                                 color: Colors.white,
-                                 letterSpacing: 1.2,
-                               ),
-                             ),
-                             const Text(
-                               'Visual Editor',
-                               style: TextStyle(
-                                 fontSize: 15.0,
-                                 fontWeight: FontWeight.w300,
-                                 color: Colors.white70,
-                               ),
-                             ),
-                             const SizedBox(height: 6.0),
-                             Container(
-                               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-                               decoration: BoxDecoration(
-                                 color: Colors.white.withOpacity(0.2),
-                                 borderRadius: BorderRadius.circular(12.0),
-                               ),
-                               child: const Text(
-                                 'v1.0.0 • by Antinna',
-                                 style: TextStyle(
-                                   fontSize: 9.0,
-                                   fontWeight: FontWeight.bold,
-                                   color: Colors.white,
-                                 ),
-                               ),
-                             ),
-                           ],
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16.0),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16.0),
+                                child: Image.asset(
+                                  'assets/json_ld.png',
+                                  width: 68.0,
+                                  height: 68.0,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16.0),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'JSON LD',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 22.0,
+                                      color: Colors.white,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Visual Editor',
+                                    style: TextStyle(
+                                      fontSize: 15.0,
+                                      fontWeight: FontWeight.w300,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6.0),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0, vertical: 2.0),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12.0),
+                                    ),
+                                    child: const Text(
+                                      'v1.0.0 • by Antinna',
+                                      style: TextStyle(
+                                        fontSize: 9.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                       ),
-                     ],
-                   ),
-                   Positioned(
-                     top: 0,
-                     right: 0,
-                     child: Material(
-                       color: Colors.white.withOpacity(0.2),
-                       shape: const CircleBorder(),
-                       child: IconButton(
-                         icon: const Icon(
-                           Icons.close,
-                           color: Colors.white,
-                           size: 18.0,
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Material(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 18.0,
+                              ),
+                              onPressed: () {
+                                _scaffoldKey.currentState?.closeDrawer();
+                              },
+                            ),
+                          ),
                         ),
-                         onPressed: () {
-                           _scaffoldKey.currentState?.closeDrawer();
-                         },
-                       ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 4.0),
+                    child: Card(
+                      elevation: 0.0,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.06),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        side: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.12),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.info_outline,
+                              color: Theme.of(context).colorScheme.primary),
+                        ),
+                        title: const Text(
+                          'About App',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        trailing: const Icon(Icons.chevron_right, size: 18.0),
+                        onTap: () {
+                          Navigator.pop(context); // close drawer
+                          _showAboutApp();
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 4.0),
+                    child: Card(
+                      elevation: 0.0,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .secondary
+                          .withOpacity(0.06),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        side: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .secondary
+                              .withOpacity(0.12),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .secondary
+                                .withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.privacy_tip_outlined,
+                              color: Theme.of(context).colorScheme.secondary),
+                        ),
+                        title: const Text(
+                          'Privacy Policy',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        trailing: const Icon(Icons.chevron_right, size: 18.0),
+                        onTap: () {
+                          Navigator.pop(context); // close drawer
+                          _showPrivacyPolicy();
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 4.0),
+                    child: Card(
+                      elevation: 0.0,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.06),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        side: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.12),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.gavel_outlined,
+                              color: Theme.of(context).colorScheme.primary),
+                        ),
+                        title: const Text(
+                          'Terms & Conditions',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        trailing: const Icon(Icons.chevron_right, size: 18.0),
+                        onTap: () {
+                          Navigator.pop(context); // close drawer
+                          _showTermsAndConditions();
+                        },
+                      ),
+                    ),
+                  ),
+                  const Divider(indent: 16.0, endIndent: 16.0, height: 24.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Connect with Antinna',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.0,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      children: [
+                        const SocialCard(
+                          platform: 'GitHub',
+                          profileName: 'Antinna',
+                          imageAsset: 'assets/antinna_copyrights.png',
+                          url: 'https://github.com/antinna',
+                        ),
+                        const SocialCard(
+                          platform: 'YouTube',
+                          profileName: 'Antinna',
+                          imageAsset: 'assets/antinna_copyrights.png',
+                          url: 'https://www.youtube.com/antinna',
+                        ),
+                        const SocialCard(
+                          platform: ' X (Twitter)',
+                          profileName: 'antinna_yt',
+                          imageAsset: 'assets/antinna_copyrights.png',
+                          url: 'https://x.com/antinna_yt',
+                        ),
+                        const SocialCard(
+                          platform: 'Instagram',
+                          profileName: 'antinna.yt',
+                          imageAsset: 'assets/antinna_copyrights.png',
+                          url: 'https://www.instagram.com/antinna.yt/',
+                        ),
+                        const SocialCard(
+                          platform: 'Facebook',
+                          profileName: 'Antinna Profile',
+                          imageAsset: 'assets/antinna_copyrights.png',
+                          url:
+                              'https://www.facebook.com/profile.php?id=100083138576317',
+                        ),
+                        const SocialCard(
+                          platform: 'Substack',
+                          profileName: 'Antinna Newsletter',
+                          imageAsset: 'assets/antinna_copyrights.png',
+                          url: 'https://antinna.substack.com/',
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-             const SizedBox(height: 16.0),
-             Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-               child: Card(
-                 elevation: 0.0,
-                 color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
-                 shape: RoundedRectangleBorder(
-                   borderRadius: BorderRadius.circular(12.0),
-                   side: BorderSide(
-                     color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                     width: 1.0,
-                   ),
-                 ),
-                 child: ListTile(
-                   leading: Container(
-                     padding: const EdgeInsets.all(8.0),
-                     decoration: BoxDecoration(
-                       color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                       shape: BoxShape.circle,
-                     ),
-                     child: Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
-                   ),
-                   title: const Text(
-                     'About App',
-                     style: TextStyle(fontWeight: FontWeight.bold),
-                   ),
-                   trailing: const Icon(Icons.chevron_right, size: 18.0),
-                   onTap: () {
-                     Navigator.pop(context); // close drawer
-                     _showAboutApp();
-                   },
-                 ),
-               ),
-            ),
-             Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-               child: Card(
-                 elevation: 0.0,
-                 color: Theme.of(context).colorScheme.secondary.withOpacity(0.06),
-                 shape: RoundedRectangleBorder(
-                   borderRadius: BorderRadius.circular(12.0),
-                   side: BorderSide(
-                     color: Theme.of(context).colorScheme.secondary.withOpacity(0.12),
-                     width: 1.0,
-                   ),
-                 ),
-                 child: ListTile(
-                   leading: Container(
-                     padding: const EdgeInsets.all(8.0),
-                     decoration: BoxDecoration(
-                       color: Theme.of(context).colorScheme.secondary.withOpacity(0.12),
-                       shape: BoxShape.circle,
-                     ),
-                     child: Icon(Icons.privacy_tip_outlined, color: Theme.of(context).colorScheme.secondary),
-                   ),
-                   title: const Text(
-                     'Privacy Policy',
-                     style: TextStyle(fontWeight: FontWeight.bold),
-                   ),
-                   trailing: const Icon(Icons.chevron_right, size: 18.0),
-                   onTap: () {
-                     Navigator.pop(context); // close drawer
-                     _showPrivacyPolicy();
-                   },
-                 ),
-               ),
-            ),
-             Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-               child: Card(
-                 elevation: 0.0,
-                 color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
-                 shape: RoundedRectangleBorder(
-                   borderRadius: BorderRadius.circular(12.0),
-                   side: BorderSide(
-                     color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                     width: 1.0,
-                   ),
-                 ),
-                 child: ListTile(
-                   leading: Container(
-                     padding: const EdgeInsets.all(8.0),
-                     decoration: BoxDecoration(
-                       color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                       shape: BoxShape.circle,
-                     ),
-                     child: Icon(Icons.gavel_outlined, color: Theme.of(context).colorScheme.primary),
-                   ),
-                   title: const Text(
-                     'Terms & Conditions',
-                     style: TextStyle(fontWeight: FontWeight.bold),
-                   ),
-                   trailing: const Icon(Icons.chevron_right, size: 18.0),
-                   onTap: () {
-                     Navigator.pop(context); // close drawer
-                     _showTermsAndConditions();
-                   },
-                 ),
-               ),
-            ),
-             const Divider(indent: 16.0, endIndent: 16.0, height: 24.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Connect with Antinna',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12.0,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                children: [
-                  const SocialCard(
-                    platform: 'GitHub',
-                    profileName: 'Antinna',
-                    imageAsset: 'assets/antinna_copyrights.png',
-                    url: 'https://github.com/antinna',
-                  ),
-                  const SocialCard(
-                    platform: 'YouTube',
-                    profileName: 'Antinna',
-                    imageAsset: 'assets/antinna_copyrights.png',
-                    url: 'https://www.youtube.com/antinna',
-                  ),
-                  const SocialCard(
-                    platform: ' X (Twitter)',
-                    profileName: 'antinna_yt',
-                    imageAsset: 'assets/antinna_copyrights.png',
-                    url: 'https://x.com/antinna_yt',
-                  ),
-                  const SocialCard(
-                    platform: 'Instagram',
-                    profileName: 'antinna.yt',
-                    imageAsset: 'assets/antinna_copyrights.png',
-                    url: 'https://www.instagram.com/antinna.yt/',
-                  ),
-                  const SocialCard(
-                    platform: 'Facebook',
-                    profileName: 'Antinna Profile',
-                    imageAsset: 'assets/antinna_copyrights.png',
-                    url: 'https://www.facebook.com/profile.php?id=100083138576317',
-                  ),
-                  const SocialCard(
-                    platform: 'Substack',
-                    profileName: 'Antinna Newsletter',
-                    imageAsset: 'assets/antinna_copyrights.png',
-                    url: 'https://antinna.substack.com/',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
       appBar: _isFullScreenWorkspace
           ? null
           : AppBar(
-         automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.hub_outlined, size: 28.0),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              tooltip: 'Open Settings & Socials',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-            const SizedBox(width: 12.0),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+              automaticallyImplyLeading: false,
+              title: Row(
                 children: [
-                  const Text(
-                    'Json LD Visual Editor',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18.0,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  IconButton(
+                    icon: const Icon(Icons.hub_outlined, size: 28.0),
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    tooltip: 'Open Settings & Socials',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-                  Text(
-                    isWide
-                        ? 'Fully compliant with current https://schema.org JSON-LD specification'
-                        : 'Visual Schema IDE',
-                    style: TextStyle(
-                      fontSize: 10.0,
-                      fontWeight: FontWeight.normal,
-                      color: Theme.of(context).colorScheme.outline,
+                  const SizedBox(width: 12.0),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Json LD Visual Editor',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.0,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          isWide
+                              ? 'Fully compliant with current https://schema.org JSON-LD specification'
+                              : 'Visual Schema IDE',
+                          style: TextStyle(
+                            fontSize: 10.0,
+                            fontWeight: FontWeight.normal,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
                   ),
+                  if (isWide) ...[
+                    const SizedBox(width: 16.0),
+                    _buildStatusBadge(appState),
+                    const SizedBox(width: 8.0),
+                    _buildAutosaveBadge(appState),
+                  ],
                 ],
               ),
+              actions: [
+                Row(
+                  children: [
+                    const Text(
+                      'Tree View',
+                      style: TextStyle(
+                          fontSize: 12.0, fontWeight: FontWeight.bold),
+                    ),
+                    Switch(
+                      value: _showTreeView,
+                      onChanged: (val) {
+                        setState(() {
+                          _showTreeView = val;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12.0),
+                IconButton(
+                  icon: Icon(
+                    appState.theme == darkTheme
+                        ? Icons.light_mode
+                        : Icons.dark_mode,
+                  ),
+                  tooltip: 'Toggle Dark/Light Mode',
+                  onPressed: () {
+                    appState.changeTheme(
+                      appState.theme == darkTheme ? lightTheme : darkTheme,
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: 'Reset Active Document',
+                  onPressed: _confirmReset,
+                ),
+                const SizedBox(width: 16.0),
+              ],
             ),
-            if (isWide) ...[
-              const SizedBox(width: 16.0),
-              _buildStatusBadge(appState),
-              const SizedBox(width: 8.0),
-              _buildAutosaveBadge(appState),
-            ],
-          ],
-        ),
-        actions: [
-          Row(
-            children: [
-              const Text(
-                'Tree View',
-                style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
-              ),
-              Switch(
-                value: _showTreeView,
-                onChanged: (val) {
-                  setState(() {
-                    _showTreeView = val;
-                  });
-                },
-              ),
-            ],
-          ),
-          const SizedBox(width: 12.0),
-          IconButton(
-            icon: Icon(
-              appState.theme == darkTheme ? Icons.light_mode : Icons.dark_mode,
-            ),
-            tooltip: 'Toggle Dark/Light Mode',
-            onPressed: () {
-              appState.changeTheme(
-                appState.theme == darkTheme ? lightTheme : darkTheme,
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Reset Active Document',
-            onPressed: _confirmReset,
-          ),
-          const SizedBox(width: 16.0),
-        ],
-      ),
       body: appState.rootEntity == null
           ? const Center(child: CircularProgressIndicator())
           : _isFullScreenWorkspace
@@ -554,71 +601,70 @@ class _HomePageState extends State<HomePage> {
                       : _buildWorkspace(appState),
                 )
               : LayoutBuilder(
-              builder: (context, constraints) {
-                if (isWide) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(
-                        width: 320.0,
-                        child: _buildLeftSidebar(appState),
-                      ),
-                      const VerticalDivider(width: 1.0, thickness: 1.0),
-                      Expanded(
-                        child: _showTreeView
-                            ? _buildTreeViewWorkspace(appState)
-                            : _buildWorkspace(appState),
-                      ),
-                      const VerticalDivider(width: 1.0, thickness: 1.0),
-                      SizedBox(
-                        width: 440.0,
-                        child: _buildRightSidebar(appState),
-                      ),
-                    ],
-                  );
-                } else {
-                  return DefaultTabController(
-                    length: 3,
-                    child: Column(
-                      children: [
-                        TabBar(
-                          labelColor: Theme.of(context).colorScheme.primary,
-                          unselectedLabelColor: Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant,
-                          tabs: const [
-                            Tab(
-                              icon: Icon(Icons.folder_shared_outlined),
-                              text: 'Documents',
-                            ),
-                            Tab(
-                              icon: Icon(Icons.edit_note_outlined),
-                              text: 'Workspace',
-                            ),
-                            Tab(
-                              icon: Icon(Icons.code_outlined),
-                              text: 'JSON-LD',
-                            ),
-                          ],
-                        ),
-                        Expanded(
-                          child: TabBarView(
-                            physics: const NeverScrollableScrollPhysics(),
-                            children: [
-                              _buildLeftSidebar(appState),
-                              _showTreeView
-                                  ? _buildTreeViewWorkspace(appState)
-                                  : _buildWorkspace(appState),
-                              _buildRightSidebar(appState),
+                  builder: (context, constraints) {
+                    if (isWide) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            width: 320.0,
+                            child: _buildLeftSidebar(appState),
+                          ),
+                          const VerticalDivider(width: 1.0, thickness: 1.0),
+                          Expanded(
+                            child: _showTreeView
+                                ? _buildTreeViewWorkspace(appState)
+                                : _buildWorkspace(appState),
+                          ),
+                          const VerticalDivider(width: 1.0, thickness: 1.0),
+                          SizedBox(
+                            width: 440.0,
+                            child: _buildRightSidebar(appState),
+                          ),
+                        ],
+                      );
+                    } else {
+                      return Column(
+                        children: [
+                          TabBar(
+                            controller: _tabController,
+                            labelColor: Theme.of(context).colorScheme.primary,
+                            unselectedLabelColor: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            tabs: const [
+                              Tab(
+                                icon: Icon(Icons.folder_shared_outlined),
+                                text: 'Documents',
+                              ),
+                              Tab(
+                                icon: Icon(Icons.edit_note_outlined),
+                                text: 'Workspace',
+                              ),
+                              Tab(
+                                icon: Icon(Icons.code_outlined),
+                                text: 'JSON-LD',
+                              ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              },
-            ),
+                          Expanded(
+                            child: TabBarView(
+                              controller: _tabController,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: [
+                                _buildLeftSidebar(appState),
+                                _showTreeView
+                                    ? _buildTreeViewWorkspace(appState)
+                                    : _buildWorkspace(appState),
+                                _buildRightSidebar(appState),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                  },
+                ),
     );
   }
 
@@ -630,10 +676,15 @@ class _HomePageState extends State<HomePage> {
 
     final Color bgColor = isSaving
         ? colorScheme.secondaryContainer
-        : (isError ? colorScheme.errorContainer : (colorScheme.surfaceContainerHighest ?? Colors.grey.withOpacity(0.15)));
+        : (isError
+            ? colorScheme.errorContainer
+            : (colorScheme.surfaceContainerHighest ??
+                Colors.grey.withOpacity(0.15)));
     final Color fgColor = isSaving
         ? colorScheme.onSecondaryContainer
-        : (isError ? colorScheme.onErrorContainer : colorScheme.onSurfaceVariant);
+        : (isError
+            ? colorScheme.onErrorContainer
+            : colorScheme.onSurfaceVariant);
     final IconData icon = isSaving
         ? Icons.sync_outlined
         : (isError ? Icons.error_outline : Icons.cloud_done_outlined);
@@ -809,6 +860,24 @@ class _HomePageState extends State<HomePage> {
                     }
                   },
                 ),
+                const SizedBox(width: 8.0),
+                IconButton(
+                  icon: Icon(
+                    _isFullScreenWorkspace
+                        ? Icons.fullscreen_exit
+                        : Icons.fullscreen,
+                    size: 18.0,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  tooltip: _isFullScreenWorkspace
+                      ? 'Exit Fullscreen'
+                      : 'Fullscreen Workspace',
+                  onPressed: () {
+                    setState(() {
+                      _isFullScreenWorkspace = !_isFullScreenWorkspace;
+                    });
+                  },
+                ),
               ],
             ),
           ),
@@ -824,8 +893,8 @@ class _HomePageState extends State<HomePage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 4.0),
                     Text(
@@ -856,7 +925,8 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: BorderRadius.circular(16.0),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerLowest,
                       border: Border.all(
                         color: Theme.of(context).colorScheme.outlineVariant,
                         width: 1.0,
@@ -868,19 +938,107 @@ class _HomePageState extends State<HomePage> {
                       minScale: 0.15,
                       maxScale: 2.5,
                       child: CustomPaint(
-                        painter: GridBackgroundPainter(
-                          gridColor: Theme.of(context).colorScheme.outline.withOpacity(0.08),
-                          spacing: 30.0,
+                        painter: GraphBackgroundPainter(
+                          gridColor: Theme.of(context)
+                              .colorScheme
+                              .outline
+                              .withOpacity(0.08),
+                          spacing: 40.0,
                         ),
                         child: Container(
                           width: 2500.0,
                           height: 2500.0,
-                          padding: const EdgeInsets.all(120.0),
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: SizedBox(
-                              width: 1000.0,
-                              child: _buildEntityEditorCard(appState, root!, isRoot: true),
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: 1400.0,
+                            height: 2200.0,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(4.0),
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.3),
+                                width: 2.0,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 16.0,
+                                  spreadRadius: 4.0,
+                                  offset: const Offset(4, 4),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(40.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.architecture,
+                                          size: 16.0,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
+                                        const SizedBox(width: 8.0),
+                                        Text(
+                                          '📐 DRAFT BOARD ARTBOARD • 1400px × 2200px • COMPLIANT VIEWPORT',
+                                          style: TextStyle(
+                                            fontSize: 11.0,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.0,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .outline,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      'SCALE 100% • OFF-LINE SCHEMA CANVAS',
+                                      style: TextStyle(
+                                        fontSize: 10.0,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withOpacity(0.6),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16.0),
+                                Divider(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outline
+                                      .withOpacity(0.12),
+                                  thickness: 1.0,
+                                ),
+                                const SizedBox(height: 24.0),
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    child: Align(
+                                      alignment: Alignment.topCenter,
+                                      child: SizedBox(
+                                        width: 1300.0,
+                                        child: _buildEntityEditorCard(
+                                            appState, root!,
+                                            isRoot: true),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -897,9 +1055,11 @@ class _HomePageState extends State<HomePage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24.0),
                     ),
-                    color: Theme.of(context).colorScheme.surface.withOpacity(0.92),
+                    color:
+                        Theme.of(context).colorScheme.surface.withOpacity(0.92),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 4.0),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -910,7 +1070,8 @@ class _HomePageState extends State<HomePage> {
                               final current = _transformationController.value;
                               final scale = current.getMaxScaleOnAxis();
                               if (scale > 0.2) {
-                                final next = Matrix4.identity()..scale(scale - 0.15);
+                                final next = Matrix4.identity()
+                                  ..scale(scale - 0.15);
                                 _transformationController.value = next;
                               }
                             },
@@ -929,7 +1090,8 @@ class _HomePageState extends State<HomePage> {
                               final current = _transformationController.value;
                               final scale = current.getMaxScaleOnAxis();
                               if (scale < 2.4) {
-                                final next = Matrix4.identity()..scale(scale + 0.15);
+                                final next = Matrix4.identity()
+                                  ..scale(scale + 0.15);
                                 _transformationController.value = next;
                               }
                             },
@@ -942,10 +1104,12 @@ class _HomePageState extends State<HomePage> {
                           ),
                           const SizedBox(width: 4.0),
                           IconButton(
-                            icon: const Icon(Icons.center_focus_strong, size: 20.0),
+                            icon: const Icon(Icons.center_focus_strong,
+                                size: 20.0),
                             tooltip: 'Reset View / Fit Screen',
                             onPressed: () {
-                              _transformationController.value = Matrix4.identity();
+                              _transformationController.value =
+                                  Matrix4.identity();
                             },
                           ),
                         ],
@@ -1012,7 +1176,8 @@ class _HomePageState extends State<HomePage> {
                               ? MediaQuery.of(context).size.width - 64.0
                               : 950.0,
                         ),
-                        child: _buildTreeViewNode(appState.rootEntity!, isRoot: true),
+                        child: _buildTreeViewNode(appState.rootEntity!,
+                            isRoot: true),
                       ),
                     ),
                   ),
@@ -1169,24 +1334,24 @@ class _HomePageState extends State<HomePage> {
           ? Theme.of(context).colorScheme.surfaceContainerLow
           : Theme.of(context).colorScheme.surfaceContainerLowest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(4.0),
         side: BorderSide(
           color: isRoot
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.25)
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
               : Theme.of(context).colorScheme.outline.withOpacity(0.12),
           width: 1.0,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(4.0),
         child: Container(
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
                 color: isRoot
                     ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
-                width: 5.0,
+                    : Theme.of(context).colorScheme.secondary.withOpacity(0.8),
+                width: 6.0,
               ),
             ),
           ),
@@ -1208,32 +1373,15 @@ class _HomePageState extends State<HomePage> {
                         isRoot
                             ? 'Root Entity: @type = ${typeLabel}'
                             : 'Nested Object: @type = ${typeLabel}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8.0),
-                    if (isRoot)
-                      IconButton(
-                        icon: Icon(
-                          _isFullScreenWorkspace
-                              ? Icons.fullscreen_exit
-                              : Icons.fullscreen,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 24.0,
-                        ),
-                        tooltip: _isFullScreenWorkspace
-                            ? 'Exit Fullscreen Mode'
-                            : 'Enter Fullscreen Mode',
-                        onPressed: () {
-                          setState(() {
-                            _isFullScreenWorkspace = !_isFullScreenWorkspace;
-                          });
-                        },
-                      ),
                     if (!isRoot)
                       IconButton(
                         icon: const Icon(
@@ -1319,9 +1467,8 @@ class _HomePageState extends State<HomePage> {
     List<SchemaValue> values,
   ) {
     final propDef = SchemaService.instance.properties[propId];
-    final propName = propId.startsWith('schema:')
-        ? propId.substring(7)
-        : propId;
+    final propName =
+        propId.startsWith('schema:') ? propId.substring(7) : propId;
     final comment = propDef?.comment ?? 'Custom user extension field';
     final List<String> ranges = propDef?.ranges ?? [];
     return Container(
@@ -1329,9 +1476,18 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.35),
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(4.0),
+        border: Border(
+          left: BorderSide(
+            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.6),
+            width: 3.0,
+          ),
+          top: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
+          right: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
+          bottom: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
         ),
       ),
       child: Column(
@@ -1369,8 +1525,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   if (ranges.isNotEmpty)
                     ...ranges.take(2).map((range) {
-                      final isPrim =
-                          range == 'schema:Text' ||
+                      final isPrim = range == 'schema:Text' ||
                           range == 'schema:URL' ||
                           range == 'schema:Number' ||
                           range == 'schema:Boolean' ||
@@ -1401,9 +1556,8 @@ class _HomePageState extends State<HomePage> {
                               : Theme.of(context).colorScheme.primary,
                           onPressed: () {
                             if (isPrim) {
-                              final initialVal = range == 'schema:Boolean'
-                                  ? false
-                                  : '';
+                              final initialVal =
+                                  range == 'schema:Boolean' ? false : '';
                               appState.addPropertyToEntity(
                                 entity,
                                 propId,
@@ -1479,15 +1633,15 @@ class _HomePageState extends State<HomePage> {
               );
             } else {
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: _buildValueEditor(appState, entity, propId, v),
                     ),
-                    if (values.length > 1)
-                      const SizedBox(width: 4.0),
+                    if (values.length > 1) const SizedBox(width: 4.0),
                     if (values.length > 1)
                       IconButton(
                         icon: const Icon(
@@ -1552,7 +1706,9 @@ class _HomePageState extends State<HomePage> {
       final subs = classToSubclasses[baseClass] ?? [];
       for (var sub in subs) {
         if (!classes.contains(sub)) {
-          final baseLabel = baseClass.startsWith('schema:') ? baseClass.substring(7) : baseClass;
+          final baseLabel = baseClass.startsWith('schema:')
+              ? baseClass.substring(7)
+              : baseClass;
           typeOptions.add(MapEntry(sub, 'Subtype of $baseLabel'));
         }
       }
@@ -1574,16 +1730,23 @@ class _HomePageState extends State<HomePage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           final filteredOptions = uniqueTypeOptions.where((option) {
-            final label = option.key.startsWith('schema:') ? option.key.substring(7) : option.key;
+            final label = option.key.startsWith('schema:')
+                ? option.key.substring(7)
+                : option.key;
             final query = searchVal.toLowerCase();
-            return label.toLowerCase().contains(query) || option.value.toLowerCase().contains(query);
+            return label.toLowerCase().contains(query) ||
+                option.value.toLowerCase().contains(query);
           }).toList();
 
           return AlertDialog(
             title: const Text('Add Value - Select Compliant Type'),
             content: SizedBox(
-              width: MediaQuery.of(context).size.width > 560 ? 480.0 : MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height > 600 ? 440.0 : MediaQuery.of(context).size.height * 0.6,
+              width: MediaQuery.of(context).size.width > 560
+                  ? 480.0
+                  : MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height > 600
+                  ? 440.0
+                  : MediaQuery.of(context).size.height * 0.6,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1621,15 +1784,23 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 6.0),
                           ...filteredOptions.map((option) {
                             final clsId = option.key;
-                            final isSubclass = option.value != 'Base expected type';
-                            final label = clsId.startsWith('schema:') ? clsId.substring(7) : clsId;
-                            final comment = SchemaService.instance.classes[clsId]?.comment ?? '';
+                            final isSubclass =
+                                option.value != 'Base expected type';
+                            final label = clsId.startsWith('schema:')
+                                ? clsId.substring(7)
+                                : clsId;
+                            final comment = SchemaService
+                                    .instance.classes[clsId]?.comment ??
+                                '';
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4.0),
                               child: ListTile(
                                 leading: Icon(
-                                  isSubclass ? Icons.subdirectory_arrow_right : Icons.playlist_add_circle_outlined,
-                                  color: isSubclass ? Colors.orange : Colors.blue,
+                                  isSubclass
+                                      ? Icons.subdirectory_arrow_right
+                                      : Icons.playlist_add_circle_outlined,
+                                  color:
+                                      isSubclass ? Colors.orange : Colors.blue,
                                 ),
                                 title: Wrap(
                                   spacing: 6.0,
@@ -1638,20 +1809,28 @@ class _HomePageState extends State<HomePage> {
                                   children: [
                                     Text(
                                       'Create "${label}"',
-                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6.0, vertical: 2.0),
                                       decoration: BoxDecoration(
-                                        color: isSubclass ? Colors.orange.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8.0),
+                                        color: isSubclass
+                                            ? Colors.orange.withOpacity(0.1)
+                                            : Colors.blue.withOpacity(0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
                                       ),
                                       child: Text(
                                         option.value,
                                         style: TextStyle(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
-                                          color: isSubclass ? Colors.orange.shade700 : Colors.blue.shade700,
+                                          color: isSubclass
+                                              ? Colors.orange.shade700
+                                              : Colors.blue.shade700,
                                         ),
                                       ),
                                     ),
@@ -1672,7 +1851,8 @@ class _HomePageState extends State<HomePage> {
                                     type: clsId,
                                     properties: {},
                                   );
-                                  appState.addPropertyToEntity(entity, propId, nested);
+                                  appState.addPropertyToEntity(
+                                      entity, propId, nested);
                                   Navigator.pop(context);
                                 },
                               ),
@@ -1703,7 +1883,9 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 title: Text(
                                   'Add "${label}" Field',
-                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 dense: true,
                                 onTap: () {
@@ -1901,8 +2083,7 @@ class _HomePageState extends State<HomePage> {
             prefixIcon: inputIcon != null ? Icon(inputIcon, size: 14.0) : null,
             hintText: 'Enter value...',
             isDense: true,
-            suffixIcon:
-                (ranges.contains('schema:Date') ||
+            suffixIcon: (ranges.contains('schema:Date') ||
                     ranges.contains('schema:DateTime'))
                 ? IconButton(
                     icon: const Icon(Icons.date_range, size: 14.0),
@@ -1914,10 +2095,8 @@ class _HomePageState extends State<HomePage> {
                         lastDate: DateTime(2100),
                       );
                       if (picked != null) {
-                        final dateStr = picked
-                            .toIso8601String()
-                            .split('T')
-                            .first;
+                        final dateStr =
+                            picked.toIso8601String().split('T').first;
                         appState.updatePropertyValue(
                           parentEntity,
                           propId,
@@ -2021,8 +2200,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildRightSidebar(AppState appState) {
     return Container(
-      color:
-          Theme.of(context).colorScheme.surfaceContainerHigh ??
+      color: Theme.of(context).colorScheme.surfaceContainerHigh ??
           Theme.of(context).colorScheme.surface.withOpacity(0.95),
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -2030,11 +2208,45 @@ class _HomePageState extends State<HomePage> {
         children: [
           Row(
             children: [
-              Text(
-                'JSON-LD Output',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(4.0),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8.0,
+                      height: 8.0,
+                      decoration: const BoxDecoration(
+                        color: Colors.greenAccent,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.greenAccent,
+                            blurRadius: 4.0,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8.0),
+                    const Text(
+                      'schema.jsonld',
+                      style: TextStyle(
+                        fontFamily: 'Courier',
+                        fontSize: 11.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const Spacer(),
               IconButton(
@@ -2055,14 +2267,19 @@ class _HomePageState extends State<HomePage> {
                 tooltip: 'Download .jsonld file',
                 onPressed: () async {
                   final rootName = appState.rootEntity?.name ?? 'document';
-                  final cleanName = rootName.replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(' ', '_');
-                  final filename = '${cleanName.isNotEmpty ? cleanName : 'schema'}.jsonld';
+                  final cleanName = rootName
+                      .replaceAll(RegExp(r'[^\w\s\-]'), '')
+                      .replaceAll(' ', '_');
+                  final filename =
+                      '${cleanName.isNotEmpty ? cleanName : 'schema'}.jsonld';
                   try {
-                    final savedPath = await dl.downloadFile(appState.jsonLdOutput, filename);
+                    final savedPath =
+                        await dl.downloadFile(appState.jsonLdOutput, filename);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Saved "${filename}" successfully! 💾\nLocation: ${savedPath ?? "Downloads"}'),
+                          content: Text(
+                              'Saved "${filename}" successfully! 💾\nLocation: ${savedPath ?? "Downloads"}'),
                           behavior: SnackBarBehavior.floating,
                           duration: const Duration(seconds: 4),
                         ),
@@ -2091,31 +2308,23 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 12.0),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
               decoration: BoxDecoration(
-                color:
-                    Theme.of(context).colorScheme.surfaceContainerLowest ??
-                    Colors.black87,
-                borderRadius: BorderRadius.circular(8.0),
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(4.0),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
+                  color: Colors.black,
+                  width: 1.5,
                 ),
-              ),
-              child: SingleChildScrollView(
-                child: SelectionArea(
-                  child: Text(
-                    appState.jsonLdOutput.isEmpty
-                        ? '{}'
-                        : appState.jsonLdOutput,
-                    style: TextStyle(
-                      fontFamily: 'Courier',
-                      fontSize: 12.5,
-                      height: 1.4,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8.0,
+                    offset: const Offset(2, 2),
                   ),
-                ),
+                ],
               ),
+              child: _buildIDEView(appState.jsonLdOutput),
             ),
           ),
           const SizedBox(height: 12.0),
@@ -2151,18 +2360,22 @@ class _HomePageState extends State<HomePage> {
                         fontSize: 10.5,
                         height: 1.3,
                         color: Colors.grey,
-                        fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                        fontFamily:
+                            Theme.of(context).textTheme.bodyMedium?.fontFamily,
                       ),
                       children: [
                         const TextSpan(
-                          text: 'This document contains schema.org context fields. You can validate it directly on Google\'s Rich Results Test tool to boost SEO rankings!\n\n',
+                          text:
+                              'This document contains schema.org context fields. You can validate it directly on Google\'s Rich Results Test tool to boost SEO rankings!\n\n',
                         ),
                         WidgetSpan(
                           child: InkWell(
                             onTap: () async {
-                              final url = Uri.parse('https://search.google.com/test/rich-results');
+                              final url = Uri.parse(
+                                  'https://search.google.com/test/rich-results');
                               if (await canLaunchUrl(url)) {
-                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                                await launchUrl(url,
+                                    mode: LaunchMode.externalApplication);
                               }
                             },
                             child: Row(
@@ -2178,7 +2391,8 @@ class _HomePageState extends State<HomePage> {
                                   'https://search.google.com/test/rich-results',
                                   style: TextStyle(
                                     fontSize: 10.5,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
                                   ),
@@ -2199,10 +2413,177 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildIDEView(String code) {
+    final cleanCode = code.isEmpty ? '{}' : code;
+    final lines = cleanCode.split('\n');
+    final lineCount = lines.length;
+
+    return SelectionArea(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Line numbers gutter column
+              Container(
+                padding: const EdgeInsets.only(right: 12.0, left: 10.0),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    right: BorderSide(color: Color(0xFF3C3C3C), width: 1.0),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(
+                      lineCount,
+                      (i) => Text(
+                            '${i + 1}',
+                            style: const TextStyle(
+                              fontFamily: 'Courier',
+                              fontSize: 12.0,
+                              height: 1.4,
+                              color: Color(0xFF858585),
+                            ),
+                          )),
+                ),
+              ),
+              const SizedBox(width: 12.0),
+              // Code lines column
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: lines.map((line) {
+                  return RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontFamily: 'Courier',
+                        fontSize: 12.0,
+                        height: 1.4,
+                        color: Color(0xFFE4E4E4),
+                      ),
+                      children: _highlightJsonLine(line),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<TextSpan> _highlightJsonLine(String line) {
+    final List<TextSpan> spans = [];
+    final keyRegex = RegExp(r'^(\s*)("[^"]+")(\s*:\s*)');
+    final match = keyRegex.firstMatch(line);
+
+    if (match != null) {
+      // Indentation
+      spans.add(TextSpan(
+        text: match.group(1),
+        style: const TextStyle(color: Color(0xFFE4E4E4)),
+      ));
+
+      // JSON Key
+      final keyStr = match.group(2) ?? '';
+      Color keyColor = const Color(0xFF9CDCFE); // Light blue
+      if (keyStr.contains('@')) {
+        keyColor = const Color(0xFFC586C0); // Magenta for JSON-LD keywords
+      }
+      spans.add(TextSpan(
+        text: keyStr,
+        style: TextStyle(color: keyColor, fontWeight: FontWeight.bold),
+      ));
+
+      // Separator ':'
+      spans.add(TextSpan(
+        text: match.group(3),
+        style: const TextStyle(color: Color(0xFFE4E4E4)),
+      ));
+
+      // JSON Value
+      final rest = line.substring(match.end);
+      spans.add(_highlightValue(rest));
+    } else {
+      spans.add(_highlightValue(line));
+    }
+
+    return spans;
+  }
+
+  TextSpan _highlightValue(String text) {
+    final List<TextSpan> children = [];
+    int index = 0;
+
+    while (index < text.length) {
+      final remaining = text.substring(index);
+
+      // Match string literals
+      final stringMatch = RegExp(r'^"[^"]*"').firstMatch(remaining);
+      if (stringMatch != null) {
+        children.add(TextSpan(
+          text: stringMatch.group(0),
+          style: const TextStyle(color: Color(0xFFCE9178)), // Warm orange
+        ));
+        index += stringMatch.end;
+        continue;
+      }
+
+      // Match boolean/null
+      final boolMatch = RegExp(r'^(true|false|null)\b').firstMatch(remaining);
+      if (boolMatch != null) {
+        children.add(TextSpan(
+          text: boolMatch.group(0),
+          style: const TextStyle(
+            color: Color(0xFF569CD6), // Dark blue
+            fontWeight: FontWeight.bold,
+          ),
+        ));
+        index += boolMatch.end;
+        continue;
+      }
+
+      // Match numbers
+      final numMatch = RegExp(r'^\d+(\.\d+)?\b').firstMatch(remaining);
+      if (numMatch != null) {
+        children.add(TextSpan(
+          text: numMatch.group(0),
+          style: const TextStyle(color: Color(0xFFB5CEA8)), // Pale green
+        ));
+        index += numMatch.end;
+        continue;
+      }
+
+      // Match braces, brackets and commas
+      final char = remaining[0];
+      if (char == '{' || char == '}' || char == '[' || char == ']') {
+        children.add(TextSpan(
+          text: char,
+          style: const TextStyle(
+            color: Color(0xFFFFD700), // Gold
+            fontWeight: FontWeight.bold,
+          ),
+        ));
+        index += 1;
+        continue;
+      }
+
+      // Normal characters
+      children.add(TextSpan(
+        text: char,
+        style: const TextStyle(color: Color(0xFFE4E4E4)),
+      ));
+      index += 1;
+    }
+
+    return TextSpan(children: children);
+  }
+
   void _confirmChangeRootType(AppState appState, String newType) {
-    final typeLabel = newType.startsWith('schema:')
-        ? newType.substring(7)
-        : newType;
+    final typeLabel =
+        newType.startsWith('schema:') ? newType.substring(7) : newType;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2341,14 +2722,17 @@ class _HomePageState extends State<HomePage> {
             final query = _propertySearchQuery.toLowerCase();
             return label.contains(query) || comment.contains(query);
           }).toList();
-          final recProps = allProps
-              .where((p) => recommended.contains(p.id))
-              .toList();
+          final recProps =
+              allProps.where((p) => recommended.contains(p.id)).toList();
           return AlertDialog(
             title: Text('Configure Properties for ${typeLabel}'),
             content: SizedBox(
-              width: MediaQuery.of(context).size.width > 600 ? 520.0 : MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height > 650 ? 480.0 : MediaQuery.of(context).size.height * 0.65,
+              width: MediaQuery.of(context).size.width > 600
+                  ? 520.0
+                  : MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height > 650
+                  ? 480.0
+                  : MediaQuery.of(context).size.height * 0.65,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -2374,9 +2758,8 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(
                               fontSize: 10.0,
                               fontWeight: FontWeight.bold,
-                              decoration: isAdded
-                                  ? TextDecoration.lineThrough
-                                  : null,
+                              decoration:
+                                  isAdded ? TextDecoration.lineThrough : null,
                             ),
                           ),
                           backgroundColor: Theme.of(
@@ -2443,8 +2826,8 @@ class _HomePageState extends State<HomePage> {
                             itemBuilder: (context, index) {
                               final prop = filteredProps[index];
                               final propLabel = prop.label;
-                              final isAlreadyAdded = entity.properties
-                                  .containsKey(prop.id);
+                              final isAlreadyAdded =
+                                  entity.properties.containsKey(prop.id);
                               return ListTile(
                                 title: Row(
                                   children: [
@@ -2538,8 +2921,7 @@ class _HomePageState extends State<HomePage> {
   ) {
     final ranges = prop.ranges;
     final nonPrimitiveClasses = ranges.where((r) {
-      final isPrim =
-          r == 'schema:Text' ||
+      final isPrim = r == 'schema:Text' ||
           r == 'schema:URL' ||
           r == 'schema:Number' ||
           r == 'schema:Boolean' ||
@@ -2569,7 +2951,9 @@ class _HomePageState extends State<HomePage> {
         final subs = classToSubclasses[baseClass] ?? [];
         for (var sub in subs) {
           if (!nonPrimitiveClasses.contains(sub)) {
-            final baseLabel = baseClass.startsWith('schema:') ? baseClass.substring(7) : baseClass;
+            final baseLabel = baseClass.startsWith('schema:')
+                ? baseClass.substring(7)
+                : baseClass;
             typeOptions.add(MapEntry(sub, 'Subtype of $baseLabel'));
           }
         }
@@ -2591,16 +2975,23 @@ class _HomePageState extends State<HomePage> {
         builder: (context) => StatefulBuilder(
           builder: (context, setDialogState) {
             final filteredOptions = uniqueTypeOptions.where((option) {
-              final label = option.key.startsWith('schema:') ? option.key.substring(7) : option.key;
+              final label = option.key.startsWith('schema:')
+                  ? option.key.substring(7)
+                  : option.key;
               final query = searchVal.toLowerCase();
-              return label.toLowerCase().contains(query) || option.value.toLowerCase().contains(query);
+              return label.toLowerCase().contains(query) ||
+                  option.value.toLowerCase().contains(query);
             }).toList();
 
             return AlertDialog(
               title: Text('Select Input Type for "${prop.label}"'),
               content: SizedBox(
-                width: MediaQuery.of(context).size.width > 560 ? 480.0 : MediaQuery.of(context).size.width * 0.9,
-                height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
+                width: MediaQuery.of(context).size.width > 560
+                    ? 480.0
+                    : MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height > 600
+                    ? 400.0
+                    : MediaQuery.of(context).size.height * 0.6,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -2628,15 +3019,23 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           ...filteredOptions.map((option) {
                             final clsId = option.key;
-                            final isSubclass = option.value != 'Base expected type';
-                            final label = clsId.startsWith('schema:') ? clsId.substring(7) : clsId;
-                            final comment = SchemaService.instance.classes[clsId]?.comment ?? '';
+                            final isSubclass =
+                                option.value != 'Base expected type';
+                            final label = clsId.startsWith('schema:')
+                                ? clsId.substring(7)
+                                : clsId;
+                            final comment = SchemaService
+                                    .instance.classes[clsId]?.comment ??
+                                '';
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4.0),
                               child: ListTile(
                                 leading: Icon(
-                                  isSubclass ? Icons.subdirectory_arrow_right : Icons.playlist_add_circle_outlined,
-                                  color: isSubclass ? Colors.orange : Colors.blue,
+                                  isSubclass
+                                      ? Icons.subdirectory_arrow_right
+                                      : Icons.playlist_add_circle_outlined,
+                                  color:
+                                      isSubclass ? Colors.orange : Colors.blue,
                                 ),
                                 title: Wrap(
                                   spacing: 6.0,
@@ -2645,20 +3044,28 @@ class _HomePageState extends State<HomePage> {
                                   children: [
                                     Text(
                                       'Create "${label}"',
-                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6.0, vertical: 2.0),
                                       decoration: BoxDecoration(
-                                        color: isSubclass ? Colors.orange.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8.0),
+                                        color: isSubclass
+                                            ? Colors.orange.withOpacity(0.1)
+                                            : Colors.blue.withOpacity(0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
                                       ),
                                       child: Text(
                                         option.value,
                                         style: TextStyle(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
-                                          color: isSubclass ? Colors.orange.shade700 : Colors.blue.shade700,
+                                          color: isSubclass
+                                              ? Colors.orange.shade700
+                                              : Colors.blue.shade700,
                                         ),
                                       ),
                                     ),
@@ -2679,7 +3086,8 @@ class _HomePageState extends State<HomePage> {
                                     type: clsId,
                                     properties: {},
                                   );
-                                  appState.addPropertyToEntity(entity, prop.id, nested);
+                                  appState.addPropertyToEntity(
+                                      entity, prop.id, nested);
                                   Navigator.pop(context);
                                 },
                               ),
@@ -2688,14 +3096,18 @@ class _HomePageState extends State<HomePage> {
                           Card(
                             margin: const EdgeInsets.symmetric(vertical: 4.0),
                             child: ListTile(
-                              leading: const Icon(Icons.edit_note, color: Colors.green),
+                              leading: const Icon(Icons.edit_note,
+                                  color: Colors.green),
                               title: const Text(
                                 'Add simple text input field',
-                                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold),
                               ),
                               dense: true,
                               onTap: () {
-                                appState.addPropertyToEntity(entity, prop.id, '');
+                                appState.addPropertyToEntity(
+                                    entity, prop.id, '');
                                 Navigator.pop(context);
                               },
                             ),
@@ -2823,8 +3235,12 @@ class _HomePageState extends State<HomePage> {
       builder: (context) => AlertDialog(
         title: const Text('Import JSON-LD Schema'),
         content: SizedBox(
-          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height > 550 ? 350.0 : MediaQuery.of(context).size.height * 0.5,
+          width: MediaQuery.of(context).size.width > 560
+              ? 500.0
+              : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 550
+              ? 350.0
+              : MediaQuery.of(context).size.height * 0.5,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -2886,6 +3302,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     _transformationController.removeListener(_onCanvasTransform);
     _transformationController.dispose();
     _importController.dispose();
@@ -2911,6 +3329,7 @@ class _HomePageState extends State<HomePage> {
       return cls.label.toLowerCase().contains(lowercaseClassQuery) ||
           cls.id.toLowerCase().contains(lowercaseClassQuery);
     }).toList();
+
     final lowercaseMarkupQuery = _markupSearchQuery.trim().toLowerCase();
     final filteredDocuments = appState.documents.where((doc) {
       if (lowercaseMarkupQuery.isEmpty) {
@@ -2919,38 +3338,116 @@ class _HomePageState extends State<HomePage> {
       return doc.name.toLowerCase().contains(lowercaseMarkupQuery) ||
           doc.type.toLowerCase().contains(lowercaseMarkupQuery);
     }).toList();
+
     return Container(
-      color:
-          Theme.of(context).colorScheme.surfaceContainerLow ??
-          Theme.of(context).colorScheme.surface.withOpacity(0.5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-            child: Row(
-              children: [
-                Text(
-                  'My Active Markups',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: CustomScrollView(
+        slivers: [
+          // 1. Premium Metrics Dashboard Card
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.2),
+                      blurRadius: 8.0,
+                      offset: const Offset(0, 4.0),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.add_box_outlined, size: 20.0),
-                  tooltip: 'Create New Document',
-                  onPressed: () => _showCreateDocDialog(appState),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Active Documents',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4.0),
+                          Text(
+                            '${appState.documents.length} Markups',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4.0),
+                          const Text(
+                            'Saved locally • Autosave enabled',
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 10.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.folder_open_outlined,
+                      color: Colors.white.withOpacity(0.9),
+                      size: 44.0,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 4.0,
+
+          // 2. Active Markups Header Title
+          SliverToBoxAdapter(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  Text(
+                    'My Active Markups',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.add_box_outlined, size: 20.0),
+                    tooltip: 'Create New Document',
+                    onPressed: () => _showCreateDocDialog(appState),
+                  ),
+                ],
+              ),
             ),
-            child: TextField(
+          ),
+
+          // 3. Persistent Search Bar Header
+          SliverAppBar(
+            pinned: true,
+            elevation: 0.0,
+            automaticallyImplyLeading: false,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+            toolbarHeight: 52.0,
+            titleSpacing: 16.0,
+            title: TextField(
               controller: _searchMarkupController,
               decoration: InputDecoration(
                 hintText: 'Search active markups...',
@@ -2967,9 +3464,13 @@ class _HomePageState extends State<HomePage> {
                       )
                     : null,
                 isDense: true,
-                contentPadding: const EdgeInsets.all(8.0),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                 border: const OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                  borderSide: BorderSide.none,
                 ),
               ),
               onChanged: (val) {
@@ -2979,198 +3480,287 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-          Container(
-            height: 140.0,
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: filteredDocuments.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No active markups found.',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12.0,
-                      ),
+
+          // 4. Documents List Section
+          if (filteredDocuments.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Center(
+                  child: Text(
+                    'No active markups found.',
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      fontSize: 12.0,
+                      color: Colors.grey,
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredDocuments.length,
-                    itemBuilder: (context, index) {
-                      final doc = filteredDocuments[index];
-                      final originalIndex = appState.documents.indexOf(doc);
-                      final isSelected =
-                          appState.selectedDocumentIndex == originalIndex;
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4.0),
-                        elevation: 0.0,
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primaryContainer
-                            : Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHigh,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.only(
-                            left: 12.0,
-                            right: 6.0,
-                          ),
-                          dense: true,
-                          title: Text(
-                            doc.name,
-                            style: TextStyle(
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              fontSize: 12.0,
-                              color: isSelected
-                                  ? Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimaryContainer
-                                  : Theme.of(context).colorScheme.onSurface,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            doc.type.replaceAll('schema:', ''),
-                            style: const TextStyle(fontSize: 10.0),
-                          ),
-                          onTap: () => appState.selectDocument(originalIndex),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.edit_outlined,
-                                  size: 14.0,
-                                ),
-                                tooltip: 'Rename',
-                                onPressed: () => _showRenameDialog(
-                                  appState,
-                                  originalIndex,
-                                  doc.name,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.copy, size: 14.0),
-                                tooltip: 'Duplicate',
-                                onPressed: () =>
-                                    appState.duplicateDocument(originalIndex),
-                              ),
-                              if (appState.documents.length > 1)
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    size: 14.0,
-                                    color: Colors.redAccent,
-                                  ),
-                                  tooltip: 'Delete',
-                                  onPressed: () =>
-                                      appState.deleteDocument(originalIndex),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
                   ),
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
-            child: Text(
-              'Instantiate New Class Type',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: TextField(
-              controller: _searchClassController,
-              decoration: InputDecoration(
-                hintText: 'Search 800+ types (e.g. Recipe)...',
-                prefixIcon: const Icon(Icons.search, size: 18.0),
-                suffixIcon: _classSearchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16.0),
-                        onPressed: () {
-                          _searchClassController.clear();
-                          setState(() {
-                            _classSearchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                isDense: true,
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 ),
               ),
-              onChanged: (val) {
-                setState(() {
-                  _classSearchQuery = val;
-                });
-              },
-            ),
-          ),
-          const SizedBox(height: 8.0),
-          Expanded(
-            child: filteredClasses.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No classes found.',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12.0,
+            )
+          else
+            SliverPadding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final doc = filteredDocuments[index];
+                    final originalIndex = appState.documents.indexOf(doc);
+                    final isSelected =
+                        appState.selectedDocumentIndex == originalIndex;
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      elevation: isSelected ? 1.0 : 0.0,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : Theme.of(context).colorScheme.surface,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4.0),
+                        side: BorderSide(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .outlineVariant
+                                  .withOpacity(0.5),
+                          width: isSelected ? 1.5 : 0.8,
+                        ),
                       ),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    itemCount: filteredClasses.length,
-                    itemBuilder: (context, index) {
-                      final cls = filteredClasses[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4.0),
-                        elevation: 0.0,
-                        color: Theme.of(context).colorScheme.surfaceContainer,
-                        child: ListTile(
-                          title: Text(
-                            cls.label,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.5,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border(
+                              left: BorderSide(
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Colors.transparent,
+                                width: 4.0,
+                              ),
                             ),
                           ),
-                          subtitle: Text(
-                            cls.comment,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 10.5),
-                          ),
-                          dense: true,
-                          trailing: const Icon(
-                            Icons.add_circle_outline,
-                            size: 14.0,
-                          ),
-                          onTap: () {
-                            appState.createNewDocument(
-                              'New ${cls.label} Document',
-                              cls.id,
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Created new ${cls.label} document successfully!',
-                                ),
-                                behavior: SnackBarBehavior.floating,
+                          child: ListTile(
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 12.0),
+                            dense: true,
+                            title: Text(
+                              doc.name,
+                              style: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                fontSize: 13.0,
+                                color: isSelected
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer
+                                    : Theme.of(context).colorScheme.onSurface,
                               ),
-                            );
-                          },
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(
+                              doc.type.replaceAll('schema:', ''),
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: isSelected
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer
+                                        .withOpacity(0.8)
+                                    : Colors.grey,
+                              ),
+                            ),
+                            onTap: () {
+                              appState.selectDocument(originalIndex);
+                              if (MediaQuery.of(context).size.width < 1100) {
+                                _tabController.animateTo(1);
+                              }
+                            },
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined,
+                                      size: 14.0),
+                                  tooltip: 'Rename',
+                                  onPressed: () => _showRenameDialog(
+                                    appState,
+                                    originalIndex,
+                                    doc.name,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.copy, size: 14.0),
+                                  tooltip: 'Duplicate',
+                                  onPressed: () =>
+                                      appState.duplicateDocument(originalIndex),
+                                ),
+                                if (appState.documents.length > 1)
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      size: 14.0,
+                                      color: Colors.redAccent,
+                                    ),
+                                    tooltip: 'Delete',
+                                    onPressed: () =>
+                                        appState.deleteDocument(originalIndex),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                    );
+                  },
+                  childCount: filteredDocuments.length,
+                ),
+              ),
+            ),
+
+          // 5. Section Divider & Header
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Divider(height: 32.0, thickness: 1.0),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 12.0),
+                  child: Text(
+                    'Instantiate New Class Type',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
+                ),
+              ],
+            ),
           ),
+
+          // 6. Search Bar for 800+ types
+          SliverToBoxAdapter(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              child: TextField(
+                controller: _searchClassController,
+                decoration: InputDecoration(
+                  hintText: 'Search 800+ types (e.g. Recipe)...',
+                  prefixIcon: const Icon(Icons.search, size: 18.0),
+                  suffixIcon: _classSearchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 16.0),
+                          onPressed: () {
+                            _searchClassController.clear();
+                            setState(() {
+                              _classSearchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  isDense: true,
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12.0, vertical: 8.0),
+                  border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (val) {
+                  setState(() {
+                    _classSearchQuery = val;
+                  });
+                },
+              ),
+            ),
+          ),
+
+          // 7. Schema Classes List Sliver
+          if (filteredClasses.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Center(
+                  child: Text(
+                    'No classes found.',
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      fontSize: 12.0,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final cls = filteredClasses[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      elevation: 0.0,
+                      color: Theme.of(context).colorScheme.surface,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4.0),
+                        side: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .outlineVariant
+                              .withOpacity(0.5),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          cls.label,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.0,
+                          ),
+                        ),
+                        subtitle: Text(
+                          cls.comment,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 10.5, color: Colors.grey),
+                        ),
+                        dense: true,
+                        trailing: Icon(
+                          Icons.add_circle_outline,
+                          size: 16.0,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        onTap: () {
+                          appState.createNewDocument(
+                            'New ${cls.label} Document',
+                            cls.id,
+                          );
+                          if (MediaQuery.of(context).size.width < 1100) {
+                            _tabController.animateTo(1);
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Created new ${cls.label} document successfully!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  childCount: filteredClasses.length,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -3218,8 +3808,12 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         content: SizedBox(
-          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
+          width: MediaQuery.of(context).size.width > 560
+              ? 500.0
+              : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 600
+              ? 400.0
+              : MediaQuery.of(context).size.height * 0.6,
           child: const SingleChildScrollView(
             child: Text(
               'Privacy Policy for JSON LD Visual Editor\n\n'
@@ -3272,8 +3866,12 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         content: SizedBox(
-          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
+          width: MediaQuery.of(context).size.width > 560
+              ? 500.0
+              : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 600
+              ? 400.0
+              : MediaQuery.of(context).size.height * 0.6,
           child: const SingleChildScrollView(
             child: Text(
               'Terms & Conditions for JSON LD Visual Editor\n\n'
@@ -3308,25 +3906,27 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class GridBackgroundPainter extends CustomPainter {
+class GraphBackgroundPainter extends CustomPainter {
   final Color gridColor;
   final double spacing;
 
-  GridBackgroundPainter({
+  GraphBackgroundPainter({
     required this.gridColor,
-    this.spacing = 30.0,
+    this.spacing = 40.0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
+    final paint = Paint()
       ..color = gridColor
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 0.5;
 
-    for (double x = 0; x < size.width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), 1.0, paint);
-      }
+    for (double x = 0; x <= size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    for (double y = 0; y <= size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
 
@@ -3372,14 +3972,20 @@ class _CreateDocDialogState extends State<_CreateDocDialog> {
       final label = cls.label.toLowerCase();
       final comment = cls.comment.toLowerCase();
       final id = cls.id.toLowerCase();
-      return label.contains(query) || comment.contains(query) || id.contains(query);
+      return label.contains(query) ||
+          comment.contains(query) ||
+          id.contains(query);
     }).toList();
 
     return AlertDialog(
       title: const Text('Create New Schema Document'),
       content: SizedBox(
-        width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
-        height: MediaQuery.of(context).size.height > 600 ? 520.0 : MediaQuery.of(context).size.height * 0.75,
+        width: MediaQuery.of(context).size.width > 560
+            ? 500.0
+            : MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height > 600
+            ? 520.0
+            : MediaQuery.of(context).size.height * 0.75,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -3452,7 +4058,9 @@ class _CreateDocDialogState extends State<_CreateDocDialog> {
                               title: Text(
                                 cls.label,
                                 style: TextStyle(
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
                               ),
                               subtitle: Text(
@@ -3466,7 +4074,8 @@ class _CreateDocDialogState extends State<_CreateDocDialog> {
                               trailing: isSelected
                                   ? Icon(
                                       Icons.check_circle,
-                                      color: Theme.of(context).colorScheme.primary,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                       size: 18.0,
                                     )
                                   : null,
