@@ -2965,7 +2965,12 @@ class _HomePageState extends State<HomePage> {
               height: 28.0,
             ),
             const SizedBox(width: 8.0),
-            const Text('Privacy Policy'),
+            const Expanded(
+              child: Text(
+                'Privacy Policy',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: SizedBox(
@@ -3014,7 +3019,12 @@ class _HomePageState extends State<HomePage> {
               height: 28.0,
             ),
             const SizedBox(width: 8.0),
-            const Text('Terms & Conditions'),
+            const Expanded(
+              child: Text(
+                'Terms & Conditions',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: SizedBox(
