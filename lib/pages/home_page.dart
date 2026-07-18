@@ -578,6 +578,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         Expanded(
                           child: TabBarView(
+                            physics: const NeverScrollableScrollPhysics(),
                             children: [
                               _buildLeftSidebar(appState),
                               _showTreeView
@@ -830,26 +831,7 @@ class _HomePageState extends State<HomePage> {
               child: SingleChildScrollView(
                 controller: _workspaceVerticalController,
                 scrollDirection: Axis.vertical,
-                child: Scrollbar(
-                  controller: _workspaceHorizontalController,
-                  thumbVisibility: true,
-                  notificationPredicate: (notif) => notif.depth == 0,
-                  child: SingleChildScrollView(
-                    controller: _workspaceHorizontalController,
-                    scrollDirection: Axis.horizontal,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: MediaQuery.of(context).size.width > 950.0
-                            ? MediaQuery.of(context).size.width - 32.0
-                            : 950.0,
-                        maxWidth: MediaQuery.of(context).size.width > 950.0
-                            ? MediaQuery.of(context).size.width - 32.0
-                            : 950.0,
-                      ),
-                      child: _buildEntityEditorCard(appState, root!, isRoot: true),
-                    ),
-                  ),
-                ),
+                child: _buildEntityEditorCard(appState, root!, isRoot: true),
               ),
             ),
           ),
@@ -1322,32 +1304,68 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          ...values
-              .map(
-                (v) => Padding(
-                  padding: const EdgeInsets.only(left: 8.0, bottom: 6.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildValueEditor(appState, entity, propId, v),
-                      ),
-                      if (values.length > 1)
-                        IconButton(
+          ...values.map((v) {
+            final isEntity = v.value is SchemaEntity;
+            if (isEntity) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (values.length > 1)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
                           icon: const Icon(
                             Icons.remove_circle_outline,
-                            size: 16.0,
+                            size: 14.0,
                             color: Colors.red,
+                          ),
+                          label: const Text(
+                            'Remove this nested object',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 11.0,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           onPressed: () {
                             appState.removePropertyValue(entity, propId, v.id);
                           },
                         ),
-                    ],
-                  ),
+                      ),
+                    _buildEntityEditorCard(appState, v.value as SchemaEntity),
+                  ],
                 ),
-              )
-              .toList(),
+              );
+            } else {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: _buildValueEditor(appState, entity, propId, v),
+                    ),
+                    if (values.length > 1)
+                      const SizedBox(width: 4.0),
+                    if (values.length > 1)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.remove_circle_outline,
+                          size: 18.0,
+                          color: Colors.red,
+                        ),
+                        tooltip: 'Remove value',
+                        onPressed: () {
+                          appState.removePropertyValue(entity, propId, v.id);
+                        },
+                      ),
+                  ],
+                ),
+              );
+            }
+          }).toList(),
         ],
       ),
     );
@@ -2291,13 +2309,16 @@ class _HomePageState extends State<HomePage> {
                               return ListTile(
                                 title: Row(
                                   children: [
-                                    Text(
-                                      propLabel,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: isAlreadyAdded
-                                            ? Colors.grey
-                                            : null,
+                                    Expanded(
+                                      child: Text(
+                                        propLabel,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: isAlreadyAdded
+                                              ? Colors.grey
+                                              : null,
+                                        ),
                                       ),
                                     ),
                                     if (isAlreadyAdded) ...[
