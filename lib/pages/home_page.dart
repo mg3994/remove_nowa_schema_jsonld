@@ -842,6 +842,9 @@ class _HomePageState extends State<HomePage> {
                         minWidth: MediaQuery.of(context).size.width > 950.0
                             ? MediaQuery.of(context).size.width - 32.0
                             : 950.0,
+                        maxWidth: MediaQuery.of(context).size.width > 950.0
+                            ? MediaQuery.of(context).size.width - 32.0
+                            : 950.0,
                       ),
                       child: _buildEntityEditorCard(appState, root!, isRoot: true),
                     ),
@@ -900,6 +903,9 @@ class _HomePageState extends State<HomePage> {
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           minWidth: MediaQuery.of(context).size.width > 950.0
+                              ? MediaQuery.of(context).size.width - 64.0
+                              : 950.0,
+                          maxWidth: MediaQuery.of(context).size.width > 950.0
                               ? MediaQuery.of(context).size.width - 64.0
                               : 950.0,
                         ),
@@ -1054,114 +1060,132 @@ class _HomePageState extends State<HomePage> {
     final schemaClass = SchemaService.instance.classes[entity.type];
     final classComment = schemaClass?.comment ?? 'No description available.';
     return Card(
-      elevation: isRoot ? 1.0 : 0.0,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      elevation: isRoot ? 2.0 : 0.0,
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      color: isRoot
+          ? Theme.of(context).colorScheme.surfaceContainerLow
+          : Theme.of(context).colorScheme.surfaceContainerLowest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16.0),
         side: BorderSide(
           color: isRoot
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.4)
-              : Theme.of(context).colorScheme.outline.withOpacity(0.15),
-          width: isRoot ? 1.5 : 1.0,
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.25)
+              : Theme.of(context).colorScheme.outline.withOpacity(0.12),
+          width: 1.0,
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.0),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(
+                color: isRoot
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                width: 5.0,
+              ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  isRoot ? Icons.settings_ethernet : Icons.layers_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20.0,
-                ),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    isRoot
-                        ? 'Root Entity: @type = ${typeLabel}'
-                        : 'Nested Object: @type = ${typeLabel}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                Row(
+                  children: [
+                    Icon(
+                      isRoot ? Icons.settings_ethernet : Icons.layers_outlined,
                       color: Theme.of(context).colorScheme.primary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8.0),
-                if (!isRoot)
-                  IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.redAccent,
                       size: 20.0,
                     ),
-                    tooltip: 'Delete nested object',
-                    onPressed: () => _confirmDeleteNested(appState, entity),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 6.0),
-            Text(
-              classComment,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontStyle: FontStyle.italic,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant.withOpacity(0.8),
-              ),
-            ),
-            const SizedBox(height: 12.0),
-            const Divider(),
-            const SizedBox(height: 8.0),
-            if (entity.properties.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.playlist_add,
-                        size: 40.0,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      const SizedBox(height: 8.0),
-                      const Text(
-                        'No properties configured.',
-                        style: TextStyle(
-                          fontSize: 13.0,
-                          fontStyle: FontStyle.italic,
+                    const SizedBox(width: 8.0),
+                    Expanded(
+                      child: Text(
+                        isRoot
+                            ? 'Root Entity: @type = ${typeLabel}'
+                            : 'Nested Object: @type = ${typeLabel}',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 8.0),
-                      TextButton.icon(
-                        icon: const Icon(Icons.add, size: 16.0),
-                        label: const Text('Add property'),
-                        onPressed: () =>
-                            _showAddPropertyDialog(appState, entity),
+                    ),
+                    const SizedBox(width: 8.0),
+                    if (!isRoot)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.redAccent,
+                          size: 20.0,
+                        ),
+                        tooltip: 'Delete nested object',
+                        onPressed: () => _confirmDeleteNested(appState, entity),
                       ),
-                    ],
+                  ],
+                ),
+                const SizedBox(height: 6.0),
+                Text(
+                  classComment,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontStyle: FontStyle.italic,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withOpacity(0.8),
                   ),
                 ),
-              )
-            else
-              ...entity.properties.entries.map((entry) {
-                final propId = entry.key;
-                final values = entry.value;
-                return _buildPropertyRow(appState, entity, propId, values);
-              }).toList(),
-            if (entity.properties.isNotEmpty) ...[
-              const SizedBox(height: 12.0),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.add, size: 16.0),
-                label: Text('Add field to ${typeLabel}'),
-                onPressed: () => _showAddPropertyDialog(appState, entity),
-              ),
-            ],
-          ],
+                const SizedBox(height: 12.0),
+                const Divider(),
+                const SizedBox(height: 8.0),
+                if (entity.properties.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.playlist_add,
+                            size: 40.0,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                          const SizedBox(height: 8.0),
+                          const Text(
+                            'No properties configured.',
+                            style: TextStyle(
+                              fontSize: 13.0,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          const SizedBox(height: 8.0),
+                          TextButton.icon(
+                            icon: const Icon(Icons.add, size: 16.0),
+                            label: const Text('Add property'),
+                            onPressed: () =>
+                                _showAddPropertyDialog(appState, entity),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ...entity.properties.entries.map((entry) {
+                    final propId = entry.key;
+                    final values = entry.value;
+                    return _buildPropertyRow(appState, entity, propId, values);
+                  }).toList(),
+                if (entity.properties.isNotEmpty) ...[
+                  const SizedBox(height: 12.0),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.add, size: 16.0),
+                    label: Text('Add field to ${typeLabel}'),
+                    onPressed: () => _showAddPropertyDialog(appState, entity),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1179,8 +1203,16 @@ class _HomePageState extends State<HomePage> {
         : propId;
     final comment = propDef?.comment ?? 'Custom user extension field';
     final List<String> ranges = propDef?.ranges ?? [];
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 2.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.08),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1316,7 +1348,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               )
               .toList(),
-          const Divider(height: 16.0, thickness: 0.5),
         ],
       ),
     );
