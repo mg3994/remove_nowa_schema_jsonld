@@ -149,7 +149,8 @@ class SchemaService {
     'schema:AdministrativeArea': const SchemaClass(
       id: 'schema:AdministrativeArea',
       label: 'AdministrativeArea',
-      comment: 'A geographical region, typically under the jurisdiction of a particular government.',
+      comment:
+          'A geographical region, typically under the jurisdiction of a particular government.',
       subClassOf: const ['schema:Place'],
     ),
     'schema:City': const SchemaClass(
@@ -366,9 +367,19 @@ class SchemaService {
     'schema:areaServed': const SchemaProperty(
       id: 'schema:areaServed',
       label: 'areaServed',
-      comment: 'The geographic area where a service or offered item is provided.',
-      domains: const ['schema:LocalBusiness', 'schema:Service', 'schema:Organization'],
-      ranges: const ['schema:Place', 'schema:AdministrativeArea', 'schema:GeoShape', 'schema:Text'],
+      comment:
+          'The geographic area where a service or offered item is provided.',
+      domains: const [
+        'schema:LocalBusiness',
+        'schema:Service',
+        'schema:Organization'
+      ],
+      ranges: const [
+        'schema:Place',
+        'schema:AdministrativeArea',
+        'schema:GeoShape',
+        'schema:Text'
+      ],
     ),
     'schema:geoMidpoint': const SchemaProperty(
       id: 'schema:geoMidpoint',
@@ -569,14 +580,10 @@ class SchemaService {
           _properties = parsedProperties;
           _enumerationValues = parsedEnums;
           isFullSchemaLoaded = true;
-          final List<Map<String, dynamic>> serializedClasses = parsedClasses
-              .values
-              .map((c) => clsToJson(c))
-              .toList();
-          final List<Map<String, dynamic>> serializedProps = parsedProperties
-              .values
-              .map((p) => propToJson(p))
-              .toList();
+          final List<Map<String, dynamic>> serializedClasses =
+              parsedClasses.values.map((c) => clsToJson(c)).toList();
+          final List<Map<String, dynamic>> serializedProps =
+              parsedProperties.values.map((p) => propToJson(p)).toList();
           await sharedPrefs.setString(
             'schemaorg_classes_cached',
             json.encode(serializedClasses),

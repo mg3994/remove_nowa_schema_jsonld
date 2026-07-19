@@ -10,6 +10,7 @@ class SchemaEntity {
     }
     return false;
   }
+
   SchemaEntity({
     required this.id,
     required this.type,
@@ -30,17 +31,15 @@ class SchemaEntity {
     if (isRoot) {
       result['@context'] = 'https://schema.org';
     }
-    final String typeName = type.startsWith('schema:')
-        ? type.substring(7)
-        : type;
+    final String typeName =
+        type.startsWith('schema:') ? type.substring(7) : type;
     result['@type'] = typeName;
     properties.forEach((propId, values) {
       if (values.isEmpty) {
         return;
       }
-      final propName = propId.startsWith('schema:')
-          ? propId.substring(7)
-          : propId;
+      final propName =
+          propId.startsWith('schema:') ? propId.substring(7) : propId;
       final List<dynamic> jsonValues = [];
       for (var val in values) {
         if (val.value is SchemaEntity) {
@@ -59,9 +58,8 @@ class SchemaEntity {
         }
       }
       if (jsonValues.isNotEmpty) {
-        result[propName] = jsonValues.length == 1
-            ? jsonValues.first
-            : jsonValues;
+        result[propName] =
+            jsonValues.length == 1 ? jsonValues.first : jsonValues;
       }
     });
     return result;
@@ -118,7 +116,8 @@ class SchemaEntity {
     return serialized;
   }
 
-  static Map<String, List<SchemaValue>> deserializeProperties(Map<String, dynamic> data) {
+  static Map<String, List<SchemaValue>> deserializeProperties(
+      Map<String, dynamic> data) {
     final Map<String, List<SchemaValue>> parsed = {};
     data.forEach((propId, valList) {
       if (valList is List) {
@@ -128,10 +127,12 @@ class SchemaEntity {
             final type = item['type']?.toString();
             if (type == 'entity') {
               final nested = SchemaEntity(
-                id: item['id']?.toString() ?? 'nest_${DateTime.now().microsecondsSinceEpoch}',
+                id: item['id']?.toString() ??
+                    'nest_${DateTime.now().microsecondsSinceEpoch}',
                 name: item['name']?.toString() ?? 'Untitled Nested',
                 type: item['schemaType']?.toString() ?? 'schema:Thing',
-                properties: deserializeProperties(item['properties'] as Map<String, dynamic>? ?? {}),
+                properties: deserializeProperties(
+                    item['properties'] as Map<String, dynamic>? ?? {}),
               );
               sValues.add(SchemaValue(
                 id: 'val_${DateTime.now().microsecondsSinceEpoch}_${item.hashCode}',
@@ -179,8 +180,7 @@ class SchemaEntity {
             final refId = singleVal['@id'].toString().replaceAll('#', '');
             values.add(
               SchemaValue(
-                id:
-                    DateTime.now().microsecondsSinceEpoch.toString() +
+                id: DateTime.now().microsecondsSinceEpoch.toString() +
                     '_' +
                     singleVal.hashCode.toString(),
                 value: {
@@ -193,8 +193,7 @@ class SchemaEntity {
           } else {
             values.add(
               SchemaValue(
-                id:
-                    DateTime.now().microsecondsSinceEpoch.toString() +
+                id: DateTime.now().microsecondsSinceEpoch.toString() +
                     '_' +
                     singleVal.hashCode.toString(),
                 value: SchemaEntity.fromJsonLd(singleVal),
@@ -205,13 +204,15 @@ class SchemaEntity {
           var parsedVal = singleVal;
           if (singleVal is String) {
             final String s = singleVal.trim();
-            if (s.startsWith('https://schema.org/') || s.startsWith('http://schema.org/')) {
+            if (s.startsWith('https://schema.org/') ||
+                s.startsWith('http://schema.org/')) {
               final String suffix = s.substring(s.lastIndexOf('/') + 1);
               final String candidate = 'schema:$suffix';
               // Check if we can find this candidate in enumerationValues
               // If empty, fall back to matching by parsing
               bool matched = false;
-              for (var list in SchemaService.instance.enumerationValues.values) {
+              for (var list
+                  in SchemaService.instance.enumerationValues.values) {
                 if (list.contains(candidate)) {
                   matched = true;
                   break;
@@ -227,8 +228,7 @@ class SchemaEntity {
           }
           values.add(
             SchemaValue(
-              id:
-                  DateTime.now().microsecondsSinceEpoch.toString() +
+              id: DateTime.now().microsecondsSinceEpoch.toString() +
                   '_' +
                   singleVal.hashCode.toString(),
               value: parsedVal,
@@ -249,8 +249,7 @@ class SchemaEntity {
       }
     });
     return SchemaEntity(
-      id:
-          DateTime.now().microsecondsSinceEpoch.toString() +
+      id: DateTime.now().microsecondsSinceEpoch.toString() +
           '_' +
           json.hashCode.toString(),
       type: normalizedType,
