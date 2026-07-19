@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:jsonld/schema_entity.dart';
 import 'package:jsonld/schema_value.dart';
+import 'package:jsonld/models/schema_class.dart';
 import 'package:jsonld/models/schema_property.dart';
 import 'package:jsonld/globals/download_helper.dart' as dl;
 
@@ -191,476 +192,490 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     final appState = AppState.of(context);
     final isWide = MediaQuery.of(context).size.width >= 1100;
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: _isFullScreenWorkspace
-          ? null
-          : Drawer(
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 24.0),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+    return WillPopScope(
+      onWillPop: () async {
+        // If we have active cascading column nodes open, pressing physical back goes back to the previous node
+        if (_columnPath.isNotEmpty && _tabController.index == 1) {
+          setState(() {
+            _columnPath.removeLast();
+          });
+          return false; // Intercept & do not exit app
+        }
+        return true; // Let standard back exit/pop occur
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawer: _isFullScreenWorkspace
+            ? null
+            : Drawer(
+                child: Column(
+                  children: [
+                    Container(
+                      padding:
+                          const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 24.0),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.secondary,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16.0),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  child: Image.asset(
+                                    'assets/json_ld.png',
+                                    width: 68.0,
+                                    height: 68.0,
+                                    fit: BoxFit.cover,
                                   ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16.0),
-                                child: Image.asset(
-                                  'assets/json_ld.png',
-                                  width: 68.0,
-                                  height: 68.0,
-                                  fit: BoxFit.cover,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 16.0),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'JSON LD',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 22.0,
-                                      color: Colors.white,
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                                  const Text(
-                                    'Visual Editor',
-                                    style: TextStyle(
-                                      fontSize: 15.0,
-                                      fontWeight: FontWeight.w300,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6.0),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0, vertical: 2.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(12.0),
-                                    ),
-                                    child: const Text(
-                                      'v1.0.0 • by Antinna',
+                              const SizedBox(width: 16.0),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'JSON LD',
                                       style: TextStyle(
-                                        fontSize: 9.0,
                                         fontWeight: FontWeight.bold,
+                                        fontSize: 22.0,
                                         color: Colors.white,
+                                        letterSpacing: 1.2,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const Text(
+                                      'Visual Editor',
+                                      style: TextStyle(
+                                        fontSize: 15.0,
+                                        fontWeight: FontWeight.w300,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6.0),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0, vertical: 2.0),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius:
+                                            BorderRadius.circular(12.0),
+                                      ),
+                                      child: const Text(
+                                        'v1.0.0 • by Antinna',
+                                        style: TextStyle(
+                                          fontSize: 9.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Material(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: const CircleBorder(),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 18.0,
+                            ],
+                          ),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Material(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: const CircleBorder(),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 18.0,
+                                ),
+                                onPressed: () {
+                                  _scaffoldKey.currentState?.closeDrawer();
+                                },
                               ),
-                              onPressed: () {
-                                _scaffoldKey.currentState?.closeDrawer();
-                              },
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0, vertical: 4.0),
-                    child: Card(
-                      elevation: 0.0,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.06),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.12),
-                          width: 1.0,
-                        ),
+                        ],
                       ),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
+                    ),
+                    const SizedBox(height: 16.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 4.0),
+                      child: Card(
+                        elevation: 0.0,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.06),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          side: BorderSide(
                             color: Theme.of(context)
                                 .colorScheme
                                 .primary
                                 .withOpacity(0.12),
-                            shape: BoxShape.circle,
+                            width: 1.0,
                           ),
-                          child: Icon(Icons.info_outline,
-                              color: Theme.of(context).colorScheme.primary),
                         ),
-                        title: const Text(
-                          'About App',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.info_outline,
+                                color: Theme.of(context).colorScheme.primary),
+                          ),
+                          title: const Text(
+                            'About App',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          trailing: const Icon(Icons.chevron_right, size: 18.0),
+                          onTap: () {
+                            Navigator.pop(context); // close drawer
+                            _showAboutApp();
+                          },
                         ),
-                        trailing: const Icon(Icons.chevron_right, size: 18.0),
-                        onTap: () {
-                          Navigator.pop(context); // close drawer
-                          _showAboutApp();
-                        },
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0, vertical: 4.0),
-                    child: Card(
-                      elevation: 0.0,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .secondary
-                          .withOpacity(0.06),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .secondary
-                              .withOpacity(0.12),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 4.0),
+                      child: Card(
+                        elevation: 0.0,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .secondary
+                            .withOpacity(0.06),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          side: BorderSide(
                             color: Theme.of(context)
                                 .colorScheme
                                 .secondary
                                 .withOpacity(0.12),
-                            shape: BoxShape.circle,
+                            width: 1.0,
                           ),
-                          child: Icon(Icons.privacy_tip_outlined,
-                              color: Theme.of(context).colorScheme.secondary),
                         ),
-                        title: const Text(
-                          'Privacy Policy',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondary
+                                  .withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.privacy_tip_outlined,
+                                color: Theme.of(context).colorScheme.secondary),
+                          ),
+                          title: const Text(
+                            'Privacy Policy',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          trailing: const Icon(Icons.chevron_right, size: 18.0),
+                          onTap: () {
+                            Navigator.pop(context); // close drawer
+                            _showPrivacyPolicy();
+                          },
                         ),
-                        trailing: const Icon(Icons.chevron_right, size: 18.0),
-                        onTap: () {
-                          Navigator.pop(context); // close drawer
-                          _showPrivacyPolicy();
-                        },
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0, vertical: 4.0),
-                    child: Card(
-                      elevation: 0.0,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.06),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.12),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 4.0),
+                      child: Card(
+                        elevation: 0.0,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.06),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          side: BorderSide(
                             color: Theme.of(context)
                                 .colorScheme
                                 .primary
                                 .withOpacity(0.12),
-                            shape: BoxShape.circle,
+                            width: 1.0,
                           ),
-                          child: Icon(Icons.gavel_outlined,
-                              color: Theme.of(context).colorScheme.primary),
                         ),
-                        title: const Text(
-                          'Terms & Conditions',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        trailing: const Icon(Icons.chevron_right, size: 18.0),
-                        onTap: () {
-                          Navigator.pop(context); // close drawer
-                          _showTermsAndConditions();
-                        },
-                      ),
-                    ),
-                  ),
-                  const Divider(indent: 16.0, endIndent: 16.0, height: 24.0),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Connect with Antinna',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.0,
-                          color: Theme.of(context).colorScheme.primary,
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.gavel_outlined,
+                                color: Theme.of(context).colorScheme.primary),
+                          ),
+                          title: const Text(
+                            'Terms & Conditions',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          trailing: const Icon(Icons.chevron_right, size: 18.0),
+                          onTap: () {
+                            Navigator.pop(context); // close drawer
+                            _showTermsAndConditions();
+                          },
                         ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      children: [
-                        const SocialCard(
-                          platform: 'GitHub',
-                          profileName: 'Antinna',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://github.com/antinna',
-                        ),
-                        const SocialCard(
-                          platform: 'YouTube',
-                          profileName: 'Antinna',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://www.youtube.com/antinna',
-                        ),
-                        const SocialCard(
-                          platform: ' X (Twitter)',
-                          profileName: 'antinna_yt',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://x.com/antinna_yt',
-                        ),
-                        const SocialCard(
-                          platform: 'Instagram',
-                          profileName: 'antinna.yt',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://www.instagram.com/antinna.yt/',
-                        ),
-                        const SocialCard(
-                          platform: 'Facebook',
-                          profileName: 'Antinna Profile',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url:
-                              'https://www.facebook.com/profile.php?id=100083138576317',
-                        ),
-                        const SocialCard(
-                          platform: 'Substack',
-                          profileName: 'Antinna Newsletter',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://antinna.substack.com/',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-      appBar: _isFullScreenWorkspace
-          ? null
-          : AppBar(
-              automaticallyImplyLeading: false,
-              title: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.hub_outlined, size: 28.0),
-                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    tooltip: 'Open Settings & Socials',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12.0),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Json LD Visual Editor',
+                    const Divider(indent: 16.0, endIndent: 16.0, height: 24.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 8.0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Connect with Antinna',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 18.0,
+                            fontSize: 12.0,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          isWide
-                              ? 'Structured Schema.org Metadata Visualizer & Creator'
-                              : 'Visual Schema Creator',
-                          style: TextStyle(
-                            fontSize: 10.0,
-                            fontWeight: FontWeight.normal,
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  if (isWide) ...[
-                    const SizedBox(width: 16.0),
-                    _buildStatusBadge(appState),
-                    const SizedBox(width: 8.0),
-                    _buildAutosaveBadge(appState),
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        children: [
+                          const SocialCard(
+                            platform: 'GitHub',
+                            profileName: 'Antinna',
+                            imageAsset: 'assets/antinna_copyrights.png',
+                            url: 'https://github.com/antinna',
+                          ),
+                          const SocialCard(
+                            platform: 'YouTube',
+                            profileName: 'Antinna',
+                            imageAsset: 'assets/antinna_copyrights.png',
+                            url: 'https://www.youtube.com/antinna',
+                          ),
+                          const SocialCard(
+                            platform: ' X (Twitter)',
+                            profileName: 'antinna_yt',
+                            imageAsset: 'assets/antinna_copyrights.png',
+                            url: 'https://x.com/antinna_yt',
+                          ),
+                          const SocialCard(
+                            platform: 'Instagram',
+                            profileName: 'antinna.yt',
+                            imageAsset: 'assets/antinna_copyrights.png',
+                            url: 'https://www.instagram.com/antinna.yt/',
+                          ),
+                          const SocialCard(
+                            platform: 'Facebook',
+                            profileName: 'Antinna Profile',
+                            imageAsset: 'assets/antinna_copyrights.png',
+                            url:
+                                'https://www.facebook.com/profile.php?id=100083138576317',
+                          ),
+                          const SocialCard(
+                            platform: 'Substack',
+                            profileName: 'Antinna Newsletter',
+                            imageAsset: 'assets/antinna_copyrights.png',
+                            url: 'https://antinna.substack.com/',
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
+                ),
+              ),
+        appBar: _isFullScreenWorkspace
+            ? null
+            : AppBar(
+                automaticallyImplyLeading: false,
+                title: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.hub_outlined, size: 28.0),
+                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                      tooltip: 'Open Settings & Socials',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 12.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Json LD Visual Editor',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18.0,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            isWide
+                                ? 'Structured Schema.org Metadata Visualizer & Creator'
+                                : 'Visual Schema Creator',
+                            style: TextStyle(
+                              fontSize: 10.0,
+                              fontWeight: FontWeight.normal,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isWide) ...[
+                      const SizedBox(width: 16.0),
+                      _buildStatusBadge(appState),
+                      const SizedBox(width: 8.0),
+                      _buildAutosaveBadge(appState),
+                    ],
+                  ],
+                ),
+                actions: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Tree View',
+                        style: TextStyle(
+                            fontSize: 12.0, fontWeight: FontWeight.bold),
+                      ),
+                      Switch(
+                        value: _showTreeView,
+                        onChanged: (val) {
+                          setState(() {
+                            _showTreeView = val;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12.0),
+                  IconButton(
+                    icon: Icon(
+                      appState.theme == darkTheme
+                          ? Icons.light_mode
+                          : Icons.dark_mode,
+                    ),
+                    tooltip: 'Toggle Dark/Light Mode',
+                    onPressed: () {
+                      appState.changeTheme(
+                        appState.theme == darkTheme ? lightTheme : darkTheme,
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'Reset Active Document',
+                    onPressed: _confirmReset,
+                  ),
+                  const SizedBox(width: 16.0),
                 ],
               ),
-              actions: [
-                Row(
-                  children: [
-                    const Text(
-                      'Tree View',
-                      style: TextStyle(
-                          fontSize: 12.0, fontWeight: FontWeight.bold),
-                    ),
-                    Switch(
-                      value: _showTreeView,
-                      onChanged: (val) {
-                        setState(() {
-                          _showTreeView = val;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 12.0),
-                IconButton(
-                  icon: Icon(
-                    appState.theme == darkTheme
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                  ),
-                  tooltip: 'Toggle Dark/Light Mode',
-                  onPressed: () {
-                    appState.changeTheme(
-                      appState.theme == darkTheme ? lightTheme : darkTheme,
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Reset Active Document',
-                  onPressed: _confirmReset,
-                ),
-                const SizedBox(width: 16.0),
-              ],
-            ),
-      body: appState.rootEntity == null
-          ? const Center(child: CircularProgressIndicator())
-          : _isFullScreenWorkspace
-              ? SafeArea(
-                  child: _buildWorkspace(appState),
-                )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (isWide) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            width: 320.0,
-                            child: _buildLeftSidebar(appState),
-                          ),
-                          const VerticalDivider(width: 1.0, thickness: 1.0),
-                          Expanded(
-                            child: _buildWorkspace(appState),
-                          ),
-                          const VerticalDivider(width: 1.0, thickness: 1.0),
-                          SizedBox(
-                            width: 440.0,
-                            child: _buildRightSidebar(appState),
-                          ),
-                        ],
-                      );
-                    } else {
-                      return Column(
-                        children: [
-                          TabBar(
-                            controller: _tabController,
-                            labelColor: Theme.of(context).colorScheme.primary,
-                            unselectedLabelColor: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            tabs: const [
-                              Tab(
-                                icon: Icon(Icons.folder_shared_outlined),
-                                text: 'Documents',
-                              ),
-                              Tab(
-                                icon: Icon(Icons.edit_note_outlined),
-                                text: 'Workspace',
-                              ),
-                              Tab(
-                                icon: Icon(Icons.code_outlined),
-                                text: 'JSON-LD',
-                              ),
-                            ],
-                          ),
-                          Expanded(
-                            child: TabBarView(
+        body: appState.rootEntity == null
+            ? const Center(child: CircularProgressIndicator())
+            : _isFullScreenWorkspace
+                ? SafeArea(
+                    child: _buildWorkspace(appState),
+                  )
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (isWide) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(
+                              width: 320.0,
+                              child: _buildLeftSidebar(appState),
+                            ),
+                            const VerticalDivider(width: 1.0, thickness: 1.0),
+                            Expanded(
+                              child: _buildWorkspace(appState),
+                            ),
+                            const VerticalDivider(width: 1.0, thickness: 1.0),
+                            SizedBox(
+                              width: 440.0,
+                              child: _buildRightSidebar(appState),
+                            ),
+                          ],
+                        );
+                      } else {
+                        return Column(
+                          children: [
+                            TabBar(
                               controller: _tabController,
-                              physics: const NeverScrollableScrollPhysics(),
-                              children: [
-                                _buildLeftSidebar(appState),
-                                _buildWorkspace(appState),
-                                _buildRightSidebar(appState),
+                              labelColor: Theme.of(context).colorScheme.primary,
+                              unselectedLabelColor: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                              tabs: const [
+                                Tab(
+                                  icon: Icon(Icons.folder_shared_outlined),
+                                  text: 'Documents',
+                                ),
+                                Tab(
+                                  icon: Icon(Icons.edit_note_outlined),
+                                  text: 'Workspace',
+                                ),
+                                Tab(
+                                  icon: Icon(Icons.code_outlined),
+                                  text: 'JSON-LD',
+                                ),
                               ],
                             ),
-                          ),
-                        ],
-                      );
-                    }
-                  },
-                ),
+                            Expanded(
+                              child: TabBarView(
+                                controller: _tabController,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  _buildLeftSidebar(appState),
+                                  _buildWorkspace(appState),
+                                  _buildRightSidebar(appState),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                  ),
+      ),
     );
   }
 
@@ -777,15 +792,273 @@ class _HomePageState extends State<HomePage>
               'No active document. Create one in Documents tab to begin.'));
     }
 
+    if (_showTreeView) {
+      return Stack(
+        children: [
+          _buildTreeViewWorkspace(appState),
+          Positioned(
+            bottom: 20.0,
+            right: 20.0,
+            child: FloatingActionButton.small(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              elevation: 4.0,
+              tooltip: _isFullScreenWorkspace
+                  ? 'Exit Fullscreen'
+                  : 'Fullscreen Workspace',
+              onPressed: () {
+                setState(() {
+                  _isFullScreenWorkspace = !_isFullScreenWorkspace;
+                });
+              },
+              child: Icon(
+                _isFullScreenWorkspace
+                    ? Icons.fullscreen_exit
+                    : Icons.fullscreen,
+                size: 20.0,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     final activeColumns = _resolveActiveColumns(root);
     final isWide = MediaQuery.of(context).size.width > 950.0;
 
+    final mainColumnList = isWide
+        ? Scrollbar(
+            controller: _columnScrollController,
+            thumbVisibility: true,
+            child: ListView.separated(
+              controller: _columnScrollController,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.all(16.0),
+              itemCount: activeColumns.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 16.0),
+              itemBuilder: (context, index) {
+                return _buildColumnPane(
+                    appState, activeColumns[index], index, activeColumns);
+              },
+            ),
+          )
+        : _buildMobileColumnView(appState, activeColumns);
+
+    Widget workspaceBody;
+
+    if (_isFullScreenWorkspace) {
+      workspaceBody = Container(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        child: CustomPaint(
+          painter: GraphBackgroundPainter(
+            gridColor: Theme.of(context).colorScheme.outline.withOpacity(0.08),
+            spacing: 40.0,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Full Screen Blueprint Status Watermark
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0, vertical: 12.0),
+                decoration: BoxDecoration(
+                  color:
+                      Theme.of(context).colorScheme.surface.withOpacity(0.92),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.architecture,
+                      size: 18.0,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 10.0),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            Text(
+                              '📐 BLUEPRINT STORYBOARD WORKBENCH  •  PATH: ',
+                              style: TextStyle(
+                                fontSize: 11.0,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                            ),
+                            ...activeColumns.map((col) {
+                              final isLast = col == activeColumns.last;
+                              return Row(
+                                children: [
+                                  Text(
+                                    col.type.replaceAll('schema:', ''),
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: isLast
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .outline,
+                                    ),
+                                  ),
+                                  if (!isLast)
+                                    const Icon(
+                                      Icons.chevron_right,
+                                      size: 14.0,
+                                      color: Colors.grey,
+                                    ),
+                                ],
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(child: mainColumnList),
+            ],
+          ),
+        ),
+      );
+    } else {
+      workspaceBody = Container(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Elegant workspace toolbar showing total active depth and full screen toggle
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.view_column_outlined,
+                    size: 18.0,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8.0),
+                  const Text(
+                    'Workspace',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.0,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: Icon(
+                      _isFullScreenWorkspace
+                          ? Icons.fullscreen_exit
+                          : Icons.fullscreen,
+                      size: 18.0,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    tooltip: _isFullScreenWorkspace
+                        ? 'Exit Fullscreen'
+                        : 'Fullscreen Workspace',
+                    onPressed: () {
+                      setState(() {
+                        _isFullScreenWorkspace = !_isFullScreenWorkspace;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8.0),
+                  TextButton.icon(
+                    icon: const Icon(Icons.open_in_new, size: 12.0),
+                    label: const Text(
+                      'Documentation',
+                      style: TextStyle(fontSize: 11.0),
+                    ),
+                    onPressed: () async {
+                      final focused = activeColumns.last;
+                      final cleanType = focused.type.replaceAll('schema:', '');
+                      final url =
+                          'https://schema.org/docs/search_results.html?q=${cleanType}';
+                      final uri = Uri.parse(url);
+                      try {
+                        final launched = await launchUrl(uri);
+                        if (!launched) {
+                          throw Exception('Launch failed');
+                        }
+                      } catch (e) {
+                        Clipboard.setData(ClipboardData(text: url));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Schema.org documentation URL copied! 🔗\n${url}',
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            // Scrollable Column Path
+            Expanded(child: mainColumnList),
+          ],
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        workspaceBody,
+        Positioned(
+          bottom: 20.0,
+          right: 20.0,
+          child: FloatingActionButton.small(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            elevation: 4.0,
+            tooltip: _isFullScreenWorkspace
+                ? 'Exit Fullscreen'
+                : 'Fullscreen Workspace',
+            onPressed: () {
+              setState(() {
+                _isFullScreenWorkspace = !_isFullScreenWorkspace;
+              });
+            },
+            child: Icon(
+              _isFullScreenWorkspace ? Icons.fullscreen_exit : Icons.fullscreen,
+              size: 20.0,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTreeViewWorkspace(AppState appState) {
+    final root = appState.rootEntity;
+    if (root == null) {
+      return const Center(
+          child: Text(
+              'No active document. Create one in Documents tab to begin.'));
+    }
+
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Elegant workspace toolbar showing total active depth and full screen toggle
+          // Header Row
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
@@ -793,13 +1066,13 @@ class _HomePageState extends State<HomePage>
             child: Row(
               children: [
                 Icon(
-                  Icons.view_column_outlined,
+                  Icons.account_tree_outlined,
                   size: 18.0,
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 8.0),
                 const Text(
-                  'Cascading Column Workspace',
+                  'Hierarchical Tree View Editor',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14.0,
@@ -813,8 +1086,7 @@ class _HomePageState extends State<HomePage>
                     style: TextStyle(fontSize: 11.0),
                   ),
                   onPressed: () async {
-                    final focused = activeColumns.last;
-                    final cleanType = focused.type.replaceAll('schema:', '');
+                    final cleanType = root.type.replaceAll('schema:', '');
                     final url =
                         'https://schema.org/docs/search_results.html?q=${cleanType}';
                     final uri = Uri.parse(url);
@@ -836,47 +1108,224 @@ class _HomePageState extends State<HomePage>
                     }
                   },
                 ),
-                const SizedBox(width: 8.0),
-                IconButton(
-                  icon: Icon(
-                    _isFullScreenWorkspace
-                        ? Icons.fullscreen_exit
-                        : Icons.fullscreen,
-                    size: 18.0,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  tooltip: _isFullScreenWorkspace
-                      ? 'Exit Fullscreen'
-                      : 'Fullscreen Workspace',
-                  onPressed: () {
-                    setState(() {
-                      _isFullScreenWorkspace = !_isFullScreenWorkspace;
-                    });
-                  },
-                ),
               ],
             ),
           ),
-          // Scrollable Column Path
+          // Scrollable Tree List
           Expanded(
-            child: isWide
-                ? Scrollbar(
-                    controller: _columnScrollController,
-                    thumbVisibility: true,
-                    child: ListView.separated(
-                      controller: _columnScrollController,
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.all(12.0),
-                      itemCount: activeColumns.length,
-                      separatorBuilder: (context, index) =>
-                          const VerticalDivider(width: 1.0, thickness: 1.0),
-                      itemBuilder: (context, index) {
-                        return _buildColumnPane(appState, activeColumns[index],
-                            index, activeColumns);
-                      },
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildTreeViewNode(appState, root,
+                  isRoot: true, keyName: 'Root Document'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTreeViewNode(
+    AppState appState,
+    SchemaEntity entity, {
+    bool isRoot = false,
+    String keyName = 'Root Document',
+  }) {
+    final typeLabel = entity.type.startsWith('schema:')
+        ? entity.type.substring(7)
+        : entity.type;
+    final schemaClass = SchemaService.instance.classes[entity.type];
+    final classComment = schemaClass?.comment ?? 'No description available.';
+
+    return Card(
+      elevation: 0.0,
+      margin: const EdgeInsets.symmetric(vertical: 6.0),
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4.0),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outlineVariant,
+          width: 0.8,
+        ),
+      ),
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        leading: Icon(
+          isRoot ? Icons.hub_outlined : Icons.subdirectory_arrow_right_outlined,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6.0,
+          runSpacing: 4.0,
+          children: [
+            Text(
+              '${keyName}: ',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13.0,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 2.0,
+              ),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(4.0),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                ),
+              ),
+              child: Text(
+                typeLabel,
+                style: TextStyle(
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        subtitle: Text(
+          '${entity.properties.length} active fields',
+          style: const TextStyle(fontSize: 11.0),
+        ),
+        trailing: isRoot
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.delete_outline,
+                    size: 16.0, color: Colors.redAccent),
+                onPressed: () {
+                  _confirmDeleteNested(appState, entity);
+                },
+              ),
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  classComment,
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontStyle: FontStyle.italic,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(height: 12.0),
+                const Divider(),
+                const SizedBox(height: 8.0),
+                ...entity.properties.entries.map((entry) {
+                  final propName = entry.key.startsWith('schema:')
+                      ? entry.key.substring(7)
+                      : entry.key;
+                  final values = entry.value;
+
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4.0),
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(4.0),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outlineVariant
+                            .withOpacity(0.5),
+                      ),
                     ),
-                  )
-                : _buildMobileColumnView(appState, activeColumns),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              propName,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 12.0),
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle_outline,
+                                      size: 14.0),
+                                  onPressed: () => _onAddValuePressed(
+                                      appState, entity, entry.key),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline,
+                                      size: 14.0, color: Colors.redAccent),
+                                  onPressed: () {
+                                    appState.removePropertyFromEntity(
+                                        entity, entry.key);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4.0),
+                        ...values.map((val) {
+                          if (val.value is SchemaEntity) {
+                            return _buildTreeViewNode(
+                              appState,
+                              val.value as SchemaEntity,
+                              isRoot: false,
+                              keyName: propName,
+                            );
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildValueEditor(
+                                      appState, entity, entry.key, val),
+                                ),
+                                if (values.length > 1)
+                                  IconButton(
+                                    icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                        size: 14.0,
+                                        color: Colors.redAccent),
+                                    onPressed: () {
+                                      appState.removePropertyValue(
+                                          entity, entry.key, val.id);
+                                    },
+                                  ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                const SizedBox(height: 12.0),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.add, size: 14.0),
+                  label:
+                      const Text('Add Field', style: TextStyle(fontSize: 11.0)),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                  ),
+                  onPressed: () => _showAddPropertyDialog(appState, entity),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -3399,13 +3848,19 @@ class _HomePageState extends State<HomePage>
   Widget _buildLeftSidebar(AppState appState) {
     final allCategoryClasses = SchemaService.instance.classes.values.toList();
     final lowercaseClassQuery = _classSearchQuery.trim().toLowerCase();
-    final filteredClasses = allCategoryClasses.where((cls) {
+
+    // Sort starting classes alphabetically for smooth, predictable navigation
+    final sortedClasses = List<SchemaClass>.from(allCategoryClasses)
+      ..sort((a, b) => a.label.compareTo(b.label));
+
+    final filteredClasses = sortedClasses.where((cls) {
       if (lowercaseClassQuery.isEmpty) {
         return true;
       }
       return cls.label.toLowerCase().contains(lowercaseClassQuery) ||
           cls.id.toLowerCase().contains(lowercaseClassQuery);
     }).toList();
+
     final lowercaseMarkupQuery = _markupSearchQuery.trim().toLowerCase();
     final filteredDocuments = appState.documents.where((doc) {
       if (lowercaseMarkupQuery.isEmpty) {
@@ -3414,98 +3869,217 @@ class _HomePageState extends State<HomePage>
       return doc.name.toLowerCase().contains(lowercaseMarkupQuery) ||
           doc.type.toLowerCase().contains(lowercaseMarkupQuery);
     }).toList();
+
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainerLow ??
           Theme.of(context).colorScheme.surface.withOpacity(0.5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-            child: Row(
-              children: [
-                Text(
-                  'My Active Markups',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+      child: CustomScrollView(
+        slivers: [
+          // 1. Dashboard Gradient Statistics Banner
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [primaryColor, primaryColor.withOpacity(0.7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.add_box_outlined, size: 20.0),
-                  tooltip: 'Create New Document',
-                  onPressed: () => _showCreateDocDialog(appState),
-                ),
-              ],
+                borderRadius: BorderRadius.circular(4.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.18),
+                    blurRadius: 8.0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'DASHBOARD METRICS',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10.0,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Icon(Icons.dashboard_customize_outlined,
+                          color: Colors.white70, size: 14.0),
+                    ],
+                  ),
+                  const SizedBox(height: 12.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${appState.documents.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Text(
+                            'Active Documents',
+                            style: TextStyle(
+                                color: Colors.white70, fontSize: 10.0),
+                          ),
+                        ],
+                      ),
+                      Container(
+                          width: 1.0, height: 28.0, color: Colors.white24),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${allCategoryClasses.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Text(
+                            'Supported Types',
+                            style: TextStyle(
+                                color: Colors.white70, fontSize: 10.0),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 4.0,
-            ),
-            child: TextField(
-              controller: _searchMarkupController,
-              decoration: InputDecoration(
-                hintText: 'Search active markups...',
-                prefixIcon: const Icon(Icons.search, size: 16.0),
-                suffixIcon: _markupSearchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 14.0),
-                        onPressed: () {
-                          _searchMarkupController.clear();
-                          setState(() {
-                            _markupSearchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                isDense: true,
-                contentPadding: const EdgeInsets.all(8.0),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
+
+          // 2. Active Markups Pinned Search Header
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SliverHeaderDelegate(
+              minHeight: 110.0,
+              maxHeight: 110.0,
+              child: Container(
+                color: Theme.of(context).colorScheme.surfaceContainerLow ??
+                    Theme.of(context).colorScheme.surface,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.folder_shared_outlined,
+                            size: 16.0, color: primaryColor),
+                        const SizedBox(width: 8.0),
+                        Text(
+                          'My Active Markups',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.add_box_outlined, size: 20.0),
+                          tooltip: 'Create New Document',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => _showCreateDocDialog(appState),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8.0),
+                    TextField(
+                      controller: _searchMarkupController,
+                      decoration: InputDecoration(
+                        hintText: 'Search active markups...',
+                        prefixIcon: const Icon(Icons.search, size: 16.0),
+                        suffixIcon: _markupSearchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 14.0),
+                                onPressed: () {
+                                  _searchMarkupController.clear();
+                                  setState(() {
+                                    _markupSearchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.all(8.0),
+                        border: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                        ),
+                      ),
+                      onChanged: (val) {
+                        setState(() {
+                          _markupSearchQuery = val;
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ),
-              onChanged: (val) {
-                setState(() {
-                  _markupSearchQuery = val;
-                });
-              },
             ),
           ),
-          Container(
-            height: 140.0,
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: filteredDocuments.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No active markups found.',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12.0,
+
+          // 3. Active Markups Sliver List
+          filteredDocuments.isEmpty
+              ? const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Center(
+                      child: Text(
+                        'No active markups found.',
+                        style: TextStyle(
+                            fontStyle: FontStyle.italic, fontSize: 12.0),
                       ),
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredDocuments.length,
-                    itemBuilder: (context, index) {
+                  ),
+                )
+              : SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
                       final doc = filteredDocuments[index];
                       final originalIndex = appState.documents.indexOf(doc);
                       final isSelected =
                           appState.selectedDocumentIndex == originalIndex;
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4.0),
-                        elevation: 0.0,
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primaryContainer
-                            : Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHigh,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.only(
-                            left: 12.0,
-                            right: 6.0,
+
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 4.0, horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(4.0),
+                          border: Border(
+                            left: BorderSide(
+                              color: isSelected
+                                  ? primaryColor
+                                  : Colors.grey.withOpacity(0.3),
+                              width: 4.0,
+                            ),
                           ),
+                        ),
+                        child: ListTile(
+                          contentPadding:
+                              const EdgeInsets.only(left: 12.0, right: 4.0),
                           dense: true,
                           title: Text(
                             doc.name,
@@ -3515,9 +4089,9 @@ class _HomePageState extends State<HomePage>
                                   : FontWeight.normal,
                               fontSize: 12.0,
                               color: isSelected
-                                  ? Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimaryContainer
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer
                                   : Theme.of(context).colorScheme.onSurface,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -3526,21 +4100,22 @@ class _HomePageState extends State<HomePage>
                             doc.type.replaceAll('schema:', ''),
                             style: const TextStyle(fontSize: 10.0),
                           ),
-                          onTap: () => appState.selectDocument(originalIndex),
+                          onTap: () {
+                            appState.selectDocument(originalIndex);
+                            setState(() {
+                              _columnPath =
+                                  []; // Reset active workspace cascade columns when selecting new doc
+                            });
+                          },
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(
-                                  Icons.edit_outlined,
-                                  size: 14.0,
-                                ),
+                                icon:
+                                    const Icon(Icons.edit_outlined, size: 14.0),
                                 tooltip: 'Rename',
                                 onPressed: () => _showRenameDialog(
-                                  appState,
-                                  originalIndex,
-                                  doc.name,
-                                ),
+                                    appState, originalIndex, doc.name),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.copy, size: 14.0),
@@ -3550,11 +4125,8 @@ class _HomePageState extends State<HomePage>
                               ),
                               if (appState.documents.length > 1)
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    size: 14.0,
-                                    color: Colors.redAccent,
-                                  ),
+                                  icon: const Icon(Icons.delete_outline,
+                                      size: 14.0, color: Colors.redAccent),
                                   tooltip: 'Delete',
                                   onPressed: () =>
                                       appState.deleteDocument(originalIndex),
@@ -3564,76 +4136,122 @@ class _HomePageState extends State<HomePage>
                         ),
                       );
                     },
+                    childCount: filteredDocuments.length,
                   ),
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
-            child: Text(
-              'Instantiate New Class Type',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+
+          // Divider Break
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Divider(),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: TextField(
-              controller: _searchClassController,
-              decoration: InputDecoration(
-                hintText: 'Search 800+ types (e.g. Recipe)...',
-                prefixIcon: const Icon(Icons.search, size: 18.0),
-                suffixIcon: _classSearchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16.0),
-                        onPressed: () {
-                          _searchClassController.clear();
-                          setState(() {
-                            _classSearchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                isDense: true,
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
+
+          // 4. Instantiate New Class Pinned Header
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SliverHeaderDelegate(
+              minHeight: 90.0,
+              maxHeight: 90.0,
+              child: Container(
+                color: Theme.of(context).colorScheme.surfaceContainerLow ??
+                    Theme.of(context).colorScheme.surface,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.add_circle_outline,
+                            size: 16.0, color: primaryColor),
+                        const SizedBox(width: 8.0),
+                        Text(
+                          'Instantiate New Class Type',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8.0),
+                    TextField(
+                      controller: _searchClassController,
+                      decoration: InputDecoration(
+                        hintText: 'Search 800+ types (e.g. Recipe)...',
+                        prefixIcon: const Icon(Icons.search, size: 16.0),
+                        suffixIcon: _classSearchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 14.0),
+                                onPressed: () {
+                                  _searchClassController.clear();
+                                  setState(() {
+                                    _classSearchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.all(8.0),
+                        border: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                        ),
+                      ),
+                      onChanged: (val) {
+                        setState(() {
+                          _classSearchQuery = val;
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ),
-              onChanged: (val) {
-                setState(() {
-                  _classSearchQuery = val;
-                });
-              },
             ),
           ),
-          const SizedBox(height: 8.0),
-          Expanded(
-            child: filteredClasses.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No classes found.',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12.0,
+
+          // 5. Instantiate Class Types Sliver List
+          filteredClasses.isEmpty
+              ? const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Center(
+                      child: Text(
+                        'No classes found.',
+                        style: TextStyle(
+                            fontStyle: FontStyle.italic, fontSize: 12.0),
                       ),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    itemCount: filteredClasses.length,
-                    itemBuilder: (context, index) {
+                  ),
+                )
+              : SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
                       final cls = filteredClasses[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4.0),
-                        elevation: 0.0,
-                        color: Theme.of(context).colorScheme.surfaceContainer,
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 4.0, horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(4.0),
+                          border: Border(
+                            left: BorderSide(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondary
+                                  .withOpacity(0.6),
+                              width: 4.0,
+                            ),
+                          ),
+                        ),
                         child: ListTile(
                           title: Text(
                             cls.label,
                             style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.5,
-                            ),
+                                fontWeight: FontWeight.bold, fontSize: 12.5),
                           ),
                           subtitle: Text(
                             cls.comment,
@@ -3642,29 +4260,31 @@ class _HomePageState extends State<HomePage>
                             style: const TextStyle(fontSize: 10.5),
                           ),
                           dense: true,
-                          trailing: const Icon(
-                            Icons.add_circle_outline,
-                            size: 14.0,
-                          ),
+                          trailing:
+                              const Icon(Icons.add_circle_outline, size: 14.0),
                           onTap: () {
                             appState.createNewDocument(
-                              'New ${cls.label} Document',
-                              cls.id,
-                            );
+                                'New ${cls.label} Document', cls.id);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  'Created new ${cls.label} document successfully!',
-                                ),
+                                    'Created new ${cls.label} document successfully!'),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
+                            setState(() {
+                              _columnPath =
+                                  []; // Reset workspace cascade path for new documents
+                            });
                           },
                         ),
                       );
                     },
+                    childCount: filteredClasses.length,
                   ),
-          ),
+                ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 24.0)),
         ],
       ),
     );
@@ -3807,6 +4427,81 @@ class _HomePageState extends State<HomePage>
         ],
       ),
     );
+  }
+}
+
+class GraphBackgroundPainter extends CustomPainter {
+  final Color gridColor;
+  final double spacing;
+
+  GraphBackgroundPainter({
+    required this.gridColor,
+    this.spacing = 40.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = gridColor
+      ..strokeWidth = 0.5;
+
+    for (double x = 0; x <= size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    for (double y = 0; y <= size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _TreeNode {
+  final String label;
+  final String type;
+  final int depth;
+  final SchemaEntity entity;
+  final String? relationLabel;
+
+  _TreeNode({
+    required this.label,
+    required this.type,
+    required this.depth,
+    required this.entity,
+    this.relationLabel,
+  });
+}
+
+class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  _SliverHeaderDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overridesMinMax) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _SliverHeaderDelegate oldDelegate) {
+    return oldDelegate.minHeight != minHeight ||
+        oldDelegate.maxHeight != maxHeight ||
+        oldDelegate.child != child;
   }
 }
 

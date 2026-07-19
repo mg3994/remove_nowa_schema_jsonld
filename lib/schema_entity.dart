@@ -34,6 +34,22 @@ class SchemaEntity {
     final String typeName =
         type.startsWith('schema:') ? type.substring(7) : type;
     result['@type'] = typeName;
+
+    // Add dynamic @id based on document name if it is not a default untitled string
+    final cleanName = name.trim();
+    final bool isUntitled = cleanName.isEmpty ||
+        cleanName == 'Untitled Document' ||
+        cleanName == 'Untitled Object' ||
+        cleanName == 'Schema Document' ||
+        cleanName.startsWith('New ');
+    if (!isUntitled) {
+      final safeId = cleanName
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^\w\s\-]'), '')
+          .replaceAll(RegExp(r'\s+'), '-');
+      result['@id'] = '#${safeId}';
+    }
+
     properties.forEach((propId, values) {
       if (values.isEmpty) {
         return;
