@@ -18,8 +18,7 @@ class HomePage extends StatefulWidget {
   }
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final TextEditingController _importController = TextEditingController();
@@ -43,6 +42,7 @@ class _HomePageState extends State<HomePage>
 
   bool _showTreeView = false;
   bool _isFullScreenWorkspace = false;
+  String? _focusedEntityId;
 
   final TransformationController _transformationController =
       TransformationController();
@@ -86,8 +86,9 @@ class _HomePageState extends State<HomePage>
     final Set<String> visited = {};
     while (current != null && !visited.contains(current)) {
       visited.add(current!);
-      final label =
-          current!.startsWith('schema:') ? current?.substring(7) : current;
+      final label = current!.startsWith('schema:')
+          ? current?.substring(7)
+          : current;
       path.insert(0, label!);
       final cls = classes[current!];
       current = (cls != null && cls!.subClassOf.isNotEmpty)
@@ -194,477 +195,432 @@ class _HomePageState extends State<HomePage>
       drawer: _isFullScreenWorkspace
           ? null
           : Drawer(
-              child: Column(
+        child: Column(
+          children: [
+             Container(
+               padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 24.0),
+              decoration: BoxDecoration(
+                 gradient: LinearGradient(
+                   colors: [
+                     Theme.of(context).colorScheme.primary,
+                     Theme.of(context).colorScheme.secondary,
+                   ],
+                   begin: Alignment.topLeft,
+                   end: Alignment.bottomRight,
+                 ),
+                 boxShadow: [
+                   BoxShadow(
+                     color: Colors.black.withOpacity(0.15),
+                     blurRadius: 10,
+                     offset: const Offset(0, 4),
+                   ),
+                 ],
+              ),
+               child: Stack(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 24.0),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                   Row(
+                     children: [
+                       Container(
+                         decoration: BoxDecoration(
+                           borderRadius: BorderRadius.circular(16.0),
+                           boxShadow: [
+                             BoxShadow(
+                               color: Colors.black.withOpacity(0.2),
+                               blurRadius: 6,
+                               offset: const Offset(0, 2),
+                             ),
+                           ],
+                         ),
+                         child: ClipRRect(
+                           borderRadius: BorderRadius.circular(16.0),
+                           child: Image.asset(
+                              'assets/json_ld.png',
+                             width: 68.0,
+                             height: 68.0,
+                             fit: BoxFit.cover,
+                           ),
                         ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16.0),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16.0),
-                                child: Image.asset(
-                                  'assets/json_ld.png',
-                                  width: 68.0,
-                                  height: 68.0,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16.0),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'JSON LD',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 22.0,
-                                      color: Colors.white,
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                                  const Text(
-                                    'Visual Editor',
-                                    style: TextStyle(
-                                      fontSize: 15.0,
-                                      fontWeight: FontWeight.w300,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6.0),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0, vertical: 2.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(12.0),
-                                    ),
-                                    child: const Text(
-                                      'v1.0.0 • by Antinna',
-                                      style: TextStyle(
-                                        fontSize: 9.0,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                       ),
+                       const SizedBox(width: 16.0),
+                       Expanded(
+                         child: Column(
+                           mainAxisAlignment: MainAxisAlignment.center,
+                           crossAxisAlignment: CrossAxisAlignment.start,
+                           children: [
+                             const Text(
+                               'JSON LD',
+                               style: TextStyle(
+                                 fontWeight: FontWeight.bold,
+                                 fontSize: 22.0,
+                                 color: Colors.white,
+                                 letterSpacing: 1.2,
+                               ),
+                             ),
+                             const Text(
+                               'Visual Editor',
+                               style: TextStyle(
+                                 fontSize: 15.0,
+                                 fontWeight: FontWeight.w300,
+                                 color: Colors.white70,
+                               ),
+                             ),
+                             const SizedBox(height: 6.0),
+                             Container(
+                               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                               decoration: BoxDecoration(
+                                 color: Colors.white.withOpacity(0.2),
+                                 borderRadius: BorderRadius.circular(12.0),
+                               ),
+                               child: const Text(
+                                 'v1.0.0 • by Antinna',
+                                 style: TextStyle(
+                                   fontSize: 9.0,
+                                   fontWeight: FontWeight.bold,
+                                   color: Colors.white,
+                                 ),
+                               ),
+                             ),
+                           ],
                         ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Material(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: const CircleBorder(),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 18.0,
-                              ),
-                              onPressed: () {
-                                _scaffoldKey.currentState?.closeDrawer();
-                              },
-                            ),
-                          ),
+                       ),
+                     ],
+                   ),
+                   Positioned(
+                     top: 0,
+                     right: 0,
+                     child: Material(
+                       color: Colors.white.withOpacity(0.2),
+                       shape: const CircleBorder(),
+                       child: IconButton(
+                         icon: const Icon(
+                           Icons.close,
+                           color: Colors.white,
+                           size: 18.0,
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0, vertical: 4.0),
-                    child: Card(
-                      elevation: 0.0,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.06),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.12),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.info_outline,
-                              color: Theme.of(context).colorScheme.primary),
-                        ),
-                        title: const Text(
-                          'About App',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        trailing: const Icon(Icons.chevron_right, size: 18.0),
-                        onTap: () {
-                          Navigator.pop(context); // close drawer
-                          _showAboutApp();
-                        },
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0, vertical: 4.0),
-                    child: Card(
-                      elevation: 0.0,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .secondary
-                          .withOpacity(0.06),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .secondary
-                              .withOpacity(0.12),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondary
-                                .withOpacity(0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.privacy_tip_outlined,
-                              color: Theme.of(context).colorScheme.secondary),
-                        ),
-                        title: const Text(
-                          'Privacy Policy',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        trailing: const Icon(Icons.chevron_right, size: 18.0),
-                        onTap: () {
-                          Navigator.pop(context); // close drawer
-                          _showPrivacyPolicy();
-                        },
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0, vertical: 4.0),
-                    child: Card(
-                      elevation: 0.0,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.06),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.12),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.gavel_outlined,
-                              color: Theme.of(context).colorScheme.primary),
-                        ),
-                        title: const Text(
-                          'Terms & Conditions',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        trailing: const Icon(Icons.chevron_right, size: 18.0),
-                        onTap: () {
-                          Navigator.pop(context); // close drawer
-                          _showTermsAndConditions();
-                        },
-                      ),
-                    ),
-                  ),
-                  const Divider(indent: 16.0, endIndent: 16.0, height: 24.0),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Connect with Antinna',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.0,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      children: [
-                        const SocialCard(
-                          platform: 'GitHub',
-                          profileName: 'Antinna',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://github.com/antinna',
-                        ),
-                        const SocialCard(
-                          platform: 'YouTube',
-                          profileName: 'Antinna',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://www.youtube.com/antinna',
-                        ),
-                        const SocialCard(
-                          platform: ' X (Twitter)',
-                          profileName: 'antinna_yt',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://x.com/antinna_yt',
-                        ),
-                        const SocialCard(
-                          platform: 'Instagram',
-                          profileName: 'antinna.yt',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://www.instagram.com/antinna.yt/',
-                        ),
-                        const SocialCard(
-                          platform: 'Facebook',
-                          profileName: 'Antinna Profile',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url:
-                              'https://www.facebook.com/profile.php?id=100083138576317',
-                        ),
-                        const SocialCard(
-                          platform: 'Substack',
-                          profileName: 'Antinna Newsletter',
-                          imageAsset: 'assets/antinna_copyrights.png',
-                          url: 'https://antinna.substack.com/',
-                        ),
-                      ],
+                         onPressed: () {
+                           _scaffoldKey.currentState?.closeDrawer();
+                         },
+                       ),
                     ),
                   ),
                 ],
               ),
             ),
+             const SizedBox(height: 16.0),
+             Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+               child: Card(
+                 elevation: 0.0,
+                 color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                 shape: RoundedRectangleBorder(
+                   borderRadius: BorderRadius.circular(12.0),
+                   side: BorderSide(
+                     color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                     width: 1.0,
+                   ),
+                 ),
+                 child: ListTile(
+                   leading: Container(
+                     padding: const EdgeInsets.all(8.0),
+                     decoration: BoxDecoration(
+                       color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                       shape: BoxShape.circle,
+                     ),
+                     child: Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+                   ),
+                   title: const Text(
+                     'About App',
+                     style: TextStyle(fontWeight: FontWeight.bold),
+                   ),
+                   trailing: const Icon(Icons.chevron_right, size: 18.0),
+                   onTap: () {
+                     Navigator.pop(context); // close drawer
+                     _showAboutApp();
+                   },
+                 ),
+               ),
+            ),
+             Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+               child: Card(
+                 elevation: 0.0,
+                 color: Theme.of(context).colorScheme.secondary.withOpacity(0.06),
+                 shape: RoundedRectangleBorder(
+                   borderRadius: BorderRadius.circular(12.0),
+                   side: BorderSide(
+                     color: Theme.of(context).colorScheme.secondary.withOpacity(0.12),
+                     width: 1.0,
+                   ),
+                 ),
+                 child: ListTile(
+                   leading: Container(
+                     padding: const EdgeInsets.all(8.0),
+                     decoration: BoxDecoration(
+                       color: Theme.of(context).colorScheme.secondary.withOpacity(0.12),
+                       shape: BoxShape.circle,
+                     ),
+                     child: Icon(Icons.privacy_tip_outlined, color: Theme.of(context).colorScheme.secondary),
+                   ),
+                   title: const Text(
+                     'Privacy Policy',
+                     style: TextStyle(fontWeight: FontWeight.bold),
+                   ),
+                   trailing: const Icon(Icons.chevron_right, size: 18.0),
+                   onTap: () {
+                     Navigator.pop(context); // close drawer
+                     _showPrivacyPolicy();
+                   },
+                 ),
+               ),
+            ),
+             Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+               child: Card(
+                 elevation: 0.0,
+                 color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                 shape: RoundedRectangleBorder(
+                   borderRadius: BorderRadius.circular(12.0),
+                   side: BorderSide(
+                     color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                     width: 1.0,
+                   ),
+                 ),
+                 child: ListTile(
+                   leading: Container(
+                     padding: const EdgeInsets.all(8.0),
+                     decoration: BoxDecoration(
+                       color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                       shape: BoxShape.circle,
+                     ),
+                     child: Icon(Icons.gavel_outlined, color: Theme.of(context).colorScheme.primary),
+                   ),
+                   title: const Text(
+                     'Terms & Conditions',
+                     style: TextStyle(fontWeight: FontWeight.bold),
+                   ),
+                   trailing: const Icon(Icons.chevron_right, size: 18.0),
+                   onTap: () {
+                     Navigator.pop(context); // close drawer
+                     _showTermsAndConditions();
+                   },
+                 ),
+               ),
+            ),
+             const Divider(indent: 16.0, endIndent: 16.0, height: 24.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Connect with Antinna',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.0,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                children: [
+                  const SocialCard(
+                    platform: 'GitHub',
+                    profileName: 'Antinna',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://github.com/antinna',
+                  ),
+                  const SocialCard(
+                    platform: 'YouTube',
+                    profileName: 'Antinna',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://www.youtube.com/antinna',
+                  ),
+                  const SocialCard(
+                    platform: ' X (Twitter)',
+                    profileName: 'antinna_yt',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://x.com/antinna_yt',
+                  ),
+                  const SocialCard(
+                    platform: 'Instagram',
+                    profileName: 'antinna.yt',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://www.instagram.com/antinna.yt/',
+                  ),
+                  const SocialCard(
+                    platform: 'Facebook',
+                    profileName: 'Antinna Profile',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://www.facebook.com/profile.php?id=100083138576317',
+                  ),
+                  const SocialCard(
+                    platform: 'Substack',
+                    profileName: 'Antinna Newsletter',
+                    imageAsset: 'assets/antinna_copyrights.png',
+                    url: 'https://antinna.substack.com/',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
       appBar: _isFullScreenWorkspace
           ? null
           : AppBar(
-              automaticallyImplyLeading: false,
-              title: Row(
+         automaticallyImplyLeading: false,
+        title: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.hub_outlined, size: 28.0),
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              tooltip: 'Open Settings & Socials',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: 12.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.hub_outlined, size: 28.0),
-                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    tooltip: 'Open Settings & Socials',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12.0),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Json LD Visual Editor',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18.0,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          isWide
-                              ? 'Fully compliant with current https://schema.org JSON-LD specification'
-                              : 'Visual Schema IDE',
-                          style: TextStyle(
-                            fontSize: 10.0,
-                            fontWeight: FontWeight.normal,
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ],
+                  const Text(
+                    'Json LD Visual Editor',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18.0,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (isWide) ...[
-                    const SizedBox(width: 16.0),
-                    _buildStatusBadge(appState),
-                    const SizedBox(width: 8.0),
-                    _buildAutosaveBadge(appState),
-                  ],
+                  Text(
+                    isWide
+                        ? 'Structured Schema.org Metadata Visualizer & Creator'
+                        : 'Visual Schema Creator',
+                    style: TextStyle(
+                      fontSize: 10.0,
+                      fontWeight: FontWeight.normal,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ],
               ),
-              actions: [
-                Row(
-                  children: [
-                    const Text(
-                      'Tree View',
-                      style: TextStyle(
-                          fontSize: 12.0, fontWeight: FontWeight.bold),
-                    ),
-                    Switch(
-                      value: _showTreeView,
-                      onChanged: (val) {
-                        setState(() {
-                          _showTreeView = val;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 12.0),
-                IconButton(
-                  icon: Icon(
-                    appState.theme == darkTheme
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                  ),
-                  tooltip: 'Toggle Dark/Light Mode',
-                  onPressed: () {
-                    appState.changeTheme(
-                      appState.theme == darkTheme ? lightTheme : darkTheme,
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Reset Active Document',
-                  onPressed: _confirmReset,
-                ),
-                const SizedBox(width: 16.0),
-              ],
             ),
+            if (isWide) ...[
+              const SizedBox(width: 16.0),
+              _buildStatusBadge(appState),
+              const SizedBox(width: 8.0),
+              _buildAutosaveBadge(appState),
+            ],
+          ],
+        ),
+        actions: [
+          Row(
+            children: [
+              const Text(
+                'Tree View',
+                style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold),
+              ),
+              Switch(
+                value: _showTreeView,
+                onChanged: (val) {
+                  setState(() {
+                    _showTreeView = val;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(width: 12.0),
+          IconButton(
+            icon: Icon(
+              appState.theme == darkTheme ? Icons.light_mode : Icons.dark_mode,
+            ),
+            tooltip: 'Toggle Dark/Light Mode',
+            onPressed: () {
+              appState.changeTheme(
+                appState.theme == darkTheme ? lightTheme : darkTheme,
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Reset Active Document',
+            onPressed: _confirmReset,
+          ),
+          const SizedBox(width: 16.0),
+        ],
+      ),
       body: appState.rootEntity == null
           ? const Center(child: CircularProgressIndicator())
           : _isFullScreenWorkspace
               ? SafeArea(
-                  child: _showTreeView
-                      ? _buildTreeViewWorkspace(appState)
-                      : _buildWorkspace(appState),
+                  child: _buildWorkspace(appState),
                 )
               : LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (isWide) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            width: 320.0,
-                            child: _buildLeftSidebar(appState),
+              builder: (context, constraints) {
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: 320.0,
+                        child: _buildLeftSidebar(appState),
+                      ),
+                      const VerticalDivider(width: 1.0, thickness: 1.0),
+                      Expanded(
+                        child: _buildWorkspace(appState),
+                      ),
+                      const VerticalDivider(width: 1.0, thickness: 1.0),
+                      SizedBox(
+                        width: 440.0,
+                        child: _buildRightSidebar(appState),
+                      ),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: Theme.of(context).colorScheme.primary,
+                        unselectedLabelColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurfaceVariant,
+                        tabs: const [
+                          Tab(
+                            icon: Icon(Icons.folder_shared_outlined),
+                            text: 'Documents',
                           ),
-                          const VerticalDivider(width: 1.0, thickness: 1.0),
-                          Expanded(
-                            child: _showTreeView
-                                ? _buildTreeViewWorkspace(appState)
-                                : _buildWorkspace(appState),
+                          Tab(
+                            icon: Icon(Icons.edit_note_outlined),
+                            text: 'Workspace',
                           ),
-                          const VerticalDivider(width: 1.0, thickness: 1.0),
-                          SizedBox(
-                            width: 440.0,
-                            child: _buildRightSidebar(appState),
-                          ),
-                        ],
-                      );
-                    } else {
-                      return Column(
-                        children: [
-                          TabBar(
-                            controller: _tabController,
-                            labelColor: Theme.of(context).colorScheme.primary,
-                            unselectedLabelColor: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            tabs: const [
-                              Tab(
-                                icon: Icon(Icons.folder_shared_outlined),
-                                text: 'Documents',
-                              ),
-                              Tab(
-                                icon: Icon(Icons.edit_note_outlined),
-                                text: 'Workspace',
-                              ),
-                              Tab(
-                                icon: Icon(Icons.code_outlined),
-                                text: 'JSON-LD',
-                              ),
-                            ],
-                          ),
-                          Expanded(
-                            child: TabBarView(
-                              controller: _tabController,
-                              physics: const NeverScrollableScrollPhysics(),
-                              children: [
-                                _buildLeftSidebar(appState),
-                                _showTreeView
-                                    ? _buildTreeViewWorkspace(appState)
-                                    : _buildWorkspace(appState),
-                                _buildRightSidebar(appState),
-                              ],
-                            ),
+                          Tab(
+                            icon: Icon(Icons.code_outlined),
+                            text: 'JSON-LD',
                           ),
                         ],
-                      );
-                    }
-                  },
-                ),
+                      ),
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            _buildLeftSidebar(appState),
+                            _buildWorkspace(appState),
+                            _buildRightSidebar(appState),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+              },
+            ),
     );
   }
 
@@ -676,15 +632,10 @@ class _HomePageState extends State<HomePage>
 
     final Color bgColor = isSaving
         ? colorScheme.secondaryContainer
-        : (isError
-            ? colorScheme.errorContainer
-            : (colorScheme.surfaceContainerHighest ??
-                Colors.grey.withOpacity(0.15)));
+        : (isError ? colorScheme.errorContainer : (colorScheme.surfaceContainerHighest ?? Colors.grey.withOpacity(0.15)));
     final Color fgColor = isSaving
         ? colorScheme.onSecondaryContainer
-        : (isError
-            ? colorScheme.onErrorContainer
-            : colorScheme.onSurfaceVariant);
+        : (isError ? colorScheme.onErrorContainer : colorScheme.onSurfaceVariant);
     final IconData icon = isSaving
         ? Icons.sync_outlined
         : (isError ? Icons.error_outline : Icons.cloud_done_outlined);
@@ -775,26 +726,227 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildWorkspace(AppState appState) {
     final root = appState.rootEntity;
-    final path = _getInheritancePath(root!.type);
+    if (root == null) {
+      return const Center(child: Text('No active document. Create one in Documents tab to begin.'));
+    }
+
+    // Resolve focused entity
+    SchemaEntity focusedEntity = root;
+    if (_focusedEntityId != null) {
+      final found = _findEntityById(root, _focusedEntityId!);
+      if (found != null) {
+        focusedEntity = found;
+      } else {
+        _focusedEntityId = null;
+      }
+    }
+
+    final isWide = MediaQuery.of(context).size.width > 950.0;
+
+    if (isWide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Left structural explorer tree
+          SizedBox(
+            width: 320.0,
+            child: _buildWorkspaceOutlinePanel(appState, root, focusedEntity),
+          ),
+          const VerticalDivider(width: 1.0, thickness: 1.0),
+          // Right focused active inspector editor
+          Expanded(
+            child: _buildFocusedInspectorPanel(appState, root, focusedEntity),
+          ),
+        ],
+      );
+    } else {
+      // Mobile responsive adaptive switcher using existing _showTreeView state
+      if (_showTreeView) {
+        return _buildWorkspaceOutlinePanel(appState, root, focusedEntity);
+      } else {
+        return _buildFocusedInspectorPanel(appState, root, focusedEntity);
+      }
+    }
+  }
+
+  Widget _buildWorkspaceOutlinePanel(AppState appState, SchemaEntity root, SchemaEntity focused) {
+    final List<_TreeNode> nodes = [];
+    _collectTreeNodes(root, 0, null, nodes);
+
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.account_tree_outlined,
+                size: 18.0,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8.0),
+              Text(
+                'Hierarchy Outline',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+                child: Text(
+                  '${nodes.length} nodes',
+                  style: TextStyle(
+                    fontSize: 10.0,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12.0),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(4.0),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+              ),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                itemCount: nodes.length,
+                itemBuilder: (context, index) {
+                  final node = nodes[index];
+                  final isFocused = node.entity.id == focused.id;
+
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      left: node.depth * 14.0 + 8.0,
+                      right: 8.0,
+                      top: 2.0,
+                      bottom: 2.0,
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _focusedEntityId = node.entity.id;
+                          _showTreeView = false; // Auto transition mobile view to editor
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: isFocused
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(4.0),
+                          border: isFocused
+                              ? Border(
+                                  left: BorderSide(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    width: 4.0,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              node.depth == 0
+                                  ? Icons.hub_outlined
+                                  : Icons.subdirectory_arrow_right_outlined,
+                              size: 14.0,
+                              color: isFocused
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).colorScheme.outline,
+                            ),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (node.relationLabel != null)
+                                    Text(
+                                      '${node.relationLabel} ➔',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: isFocused
+                                            ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.8)
+                                            : Theme.of(context).colorScheme.outline,
+                                      ),
+                                    ),
+                                  Text(
+                                    node.label,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: isFocused ? FontWeight.bold : FontWeight.normal,
+                                      color: isFocused
+                                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                                          : Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    node.type.replaceAll('schema:', ''),
+                                    style: TextStyle(
+                                      fontSize: 9.0,
+                                      fontStyle: FontStyle.italic,
+                                      color: isFocused
+                                          ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.6)
+                                          : Theme.of(context).colorScheme.outline,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFocusedInspectorPanel(AppState appState, SchemaEntity root, SchemaEntity focused) {
+    final breadcrumbs = _getBreadcrumbs(root, focused.id);
+
     return Container(
       color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Breadcrumbs Bar
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12.0,
-              vertical: 8.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
             ),
             child: Row(
               children: [
                 Icon(
-                  Icons.account_tree,
+                  Icons.folder_open_outlined,
                   size: 16.0,
                   color: Theme.of(context).colorScheme.primary,
                 ),
@@ -803,27 +955,36 @@ class _HomePageState extends State<HomePage>
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: path.map((segment) {
-                        final isLast = segment == path.last;
+                      children: breadcrumbs.map((seg) {
+                        final isLast = seg == breadcrumbs.last;
                         return Row(
                           children: [
-                            Text(
-                              segment,
-                              style: TextStyle(
-                                fontSize: 11.0,
-                                fontWeight: isLast
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: isLast
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).colorScheme.outline,
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _focusedEntityId = seg.value.id;
+                                });
+                              },
+                              child: Text(
+                                seg.key,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
+                                  color: isLast
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                                  decoration: isLast ? TextDecoration.none : TextDecoration.underline,
+                                ),
                               ),
                             ),
                             if (!isLast)
-                              const Icon(
-                                Icons.chevron_right,
-                                size: 12.0,
-                                color: Colors.grey,
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6.0),
+                                child: Icon(
+                                  Icons.chevron_right_outlined,
+                                  size: 12.0,
+                                  color: Colors.grey,
+                                ),
                               ),
                           ],
                         );
@@ -838,9 +999,8 @@ class _HomePageState extends State<HomePage>
                     style: TextStyle(fontSize: 11.0),
                   ),
                   onPressed: () async {
-                    final cleanType = root!.type.replaceAll('schema:', '');
-                    final url =
-                        'https://schema.org/docs/search_results.html?q=${cleanType}';
+                    final cleanType = focused.type.replaceAll('schema:', '');
+                    final url = 'https://schema.org/docs/search_results.html?q=${cleanType}';
                     final uri = Uri.parse(url);
                     try {
                       final launched = await launchUrl(uri);
@@ -860,28 +1020,11 @@ class _HomePageState extends State<HomePage>
                     }
                   },
                 ),
-                const SizedBox(width: 8.0),
-                IconButton(
-                  icon: Icon(
-                    _isFullScreenWorkspace
-                        ? Icons.fullscreen_exit
-                        : Icons.fullscreen,
-                    size: 18.0,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  tooltip: _isFullScreenWorkspace
-                      ? 'Exit Fullscreen'
-                      : 'Fullscreen Workspace',
-                  onPressed: () {
-                    setState(() {
-                      _isFullScreenWorkspace = !_isFullScreenWorkspace;
-                    });
-                  },
-                ),
               ],
             ),
           ),
           const SizedBox(height: 16.0),
+          // Active Entity Headers and Add Property trigger
           Row(
             children: [
               Expanded(
@@ -889,8 +1032,8 @@ class _HomePageState extends State<HomePage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      root!.name,
-                      maxLines: 2,
+                      focused.name.isNotEmpty ? focused.name : 'Untitled Object',
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
@@ -898,12 +1041,11 @@ class _HomePageState extends State<HomePage>
                     ),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Visual Builder • ${root?.type}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      'Editing: ${focused.type}',
+                      style: TextStyle(
                         fontSize: 12.0,
-                        color: Colors.grey,
+                        color: Theme.of(context).colorScheme.outline,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -911,278 +1053,22 @@ class _HomePageState extends State<HomePage>
               ),
               const SizedBox(width: 8.0),
               ElevatedButton.icon(
-                icon: const Icon(Icons.add_circle_outline, size: 18.0),
-                label: const Text('Add Property'),
-                onPressed: () => _showAddPropertyDialog(appState, root!),
+                icon: const Icon(Icons.add_circle_outline, size: 16.0),
+                label: const Text('Add Field'),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                ),
+                onPressed: () => _showAddPropertyDialog(appState, focused),
               ),
             ],
           ),
-          const SizedBox(height: 12.0),
-          Expanded(
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color:
-                          Theme.of(context).colorScheme.surfaceContainerLowest,
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        width: 1.0,
-                      ),
-                    ),
-                    child: InteractiveViewer(
-                      transformationController: _transformationController,
-                      boundaryMargin: const EdgeInsets.all(1500.0),
-                      minScale: 0.15,
-                      maxScale: 2.5,
-                      child: CustomPaint(
-                        painter: GraphBackgroundPainter(
-                          gridColor: Theme.of(context)
-                              .colorScheme
-                              .outline
-                              .withOpacity(0.08),
-                          spacing: 40.0,
-                        ),
-                        child: Container(
-                          width: 2500.0,
-                          height: 2500.0,
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 1400.0,
-                            height: 2200.0,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(4.0),
-                              border: Border.all(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withOpacity(0.3),
-                                width: 2.0,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 16.0,
-                                  spreadRadius: 4.0,
-                                  offset: const Offset(4, 4),
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.all(40.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.architecture,
-                                          size: 16.0,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                        ),
-                                        const SizedBox(width: 8.0),
-                                        Text(
-                                          '📐 DRAFT BOARD ARTBOARD • 1400px × 2200px • COMPLIANT VIEWPORT',
-                                          style: TextStyle(
-                                            fontSize: 11.0,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.0,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .outline,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Text(
-                                      'SCALE 100% • OFF-LINE SCHEMA CANVAS',
-                                      style: TextStyle(
-                                        fontSize: 10.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .outline
-                                            .withOpacity(0.6),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16.0),
-                                Divider(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .outline
-                                      .withOpacity(0.12),
-                                  thickness: 1.0,
-                                ),
-                                const SizedBox(height: 24.0),
-                                Expanded(
-                                  child: SingleChildScrollView(
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    child: Align(
-                                      alignment: Alignment.topCenter,
-                                      child: SizedBox(
-                                        width: 1300.0,
-                                        child: _buildEntityEditorCard(
-                                            appState, root!,
-                                            isRoot: true),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 16.0,
-                  right: 16.0,
-                  child: Card(
-                    elevation: 4.0,
-                    shadowColor: Colors.black.withOpacity(0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.0),
-                    ),
-                    color:
-                        Theme.of(context).colorScheme.surface.withOpacity(0.92),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12.0, vertical: 4.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.zoom_out, size: 20.0),
-                            tooltip: 'Zoom Out',
-                            onPressed: () {
-                              final current = _transformationController.value;
-                              final scale = current.getMaxScaleOnAxis();
-                              if (scale > 0.2) {
-                                final next = Matrix4.identity()
-                                  ..scale(scale - 0.15);
-                                _transformationController.value = next;
-                              }
-                            },
-                          ),
-                          Text(
-                            '${(_canvasScale * 100).toInt()}%',
-                            style: const TextStyle(
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.zoom_in, size: 20.0),
-                            tooltip: 'Zoom In',
-                            onPressed: () {
-                              final current = _transformationController.value;
-                              final scale = current.getMaxScaleOnAxis();
-                              if (scale < 2.4) {
-                                final next = Matrix4.identity()
-                                  ..scale(scale + 0.15);
-                                _transformationController.value = next;
-                              }
-                            },
-                          ),
-                          const SizedBox(width: 4.0),
-                          Container(
-                            width: 1.0,
-                            height: 20.0,
-                            color: Colors.grey.withOpacity(0.3),
-                          ),
-                          const SizedBox(width: 4.0),
-                          IconButton(
-                            icon: const Icon(Icons.center_focus_strong,
-                                size: 20.0),
-                            tooltip: 'Reset View / Fit Screen',
-                            onPressed: () {
-                              _transformationController.value =
-                                  Matrix4.identity();
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTreeViewWorkspace(AppState appState) {
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Interactive Entity Graph',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4.0),
-          const Text(
-            'Hierarchical visualization of your current Schema.org structured document.',
-            style: TextStyle(fontSize: 12.0, color: Colors.grey),
-          ),
           const SizedBox(height: 16.0),
+          // The Focused inspector details card
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12.0),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-              child: Scrollbar(
-                controller: _treeVerticalController,
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  controller: _treeVerticalController,
-                  scrollDirection: Axis.vertical,
-                  child: Scrollbar(
-                    controller: _treeHorizontalController,
-                    thumbVisibility: true,
-                    notificationPredicate: (notif) => notif.depth == 0,
-                    child: SingleChildScrollView(
-                      controller: _treeHorizontalController,
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: MediaQuery.of(context).size.width > 950.0
-                              ? MediaQuery.of(context).size.width - 64.0
-                              : 950.0,
-                          maxWidth: MediaQuery.of(context).size.width > 950.0
-                              ? MediaQuery.of(context).size.width - 64.0
-                              : 950.0,
-                        ),
-                        child: _buildTreeViewNode(appState.rootEntity!,
-                            isRoot: true),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            child: SingleChildScrollView(
+              child: _buildEntityEditorCard(appState, focused, isRoot: focused.id == root.id),
             ),
           ),
         ],
@@ -1190,131 +1076,23 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildTreeViewNode(
-    SchemaEntity entity, {
-    bool isRoot = false,
-    String keyName = 'Root Document',
-  }) {
-    final typeLabel = entity.type.startsWith('schema:')
-        ? entity.type.substring(7)
-        : entity.type;
-    return Card(
-      elevation: 0.0,
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          width: 0.8,
-        ),
-      ),
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        leading: Icon(
-          isRoot ? Icons.hub : Icons.subdirectory_arrow_right,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        title: Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 6.0,
-          runSpacing: 4.0,
-          children: [
-            Text(
-              '${keyName}: ',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13.0,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8.0,
-                vertical: 2.0,
-              ),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Text(
-                typeLabel,
-                style: TextStyle(
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-          ],
-        ),
-        subtitle: Text(
-          '${entity.properties.length} active fields',
-          style: const TextStyle(fontSize: 11.0),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: entity.properties.entries.map((entry) {
-                final propName = entry.key.startsWith('schema:')
-                    ? entry.key.substring(7)
-                    : entry.key;
-                final values = entry.value;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: values.map((val) {
-                    if (val.value is SchemaEntity) {
-                      return _buildTreeViewNode(
-                        val.value as SchemaEntity,
-                        isRoot: false,
-                        keyName: propName,
-                      );
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 4.0,
-                        horizontal: 12.0,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.arrow_right_alt,
-                            size: 14.0,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Text(
-                            '${propName}: ',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.0,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              val.value.toString() ?? '',
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
+  void _collectTreeNodes(SchemaEntity current, int depth, String? relation, List<_TreeNode> nodes) {
+    nodes.add(_TreeNode(
+      label: current.name.isNotEmpty ? current.name : current.type.replaceAll('schema:', ''),
+      type: current.type,
+      depth: depth,
+      entity: current,
+      relationLabel: relation,
+    ));
+
+    for (final entry in current.properties.entries) {
+      final propName = entry.key.replaceAll('schema:', '');
+      for (final val in entry.value) {
+        if (val.value is SchemaEntity) {
+          _collectTreeNodes(val.value as SchemaEntity, depth + 1, propName, nodes);
+        }
+      }
+    }
   }
 
   Widget _buildEntityEditorCard(
@@ -1334,24 +1112,24 @@ class _HomePageState extends State<HomePage>
           ? Theme.of(context).colorScheme.surfaceContainerLow
           : Theme.of(context).colorScheme.surfaceContainerLowest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4.0),
+        borderRadius: BorderRadius.circular(16.0),
         side: BorderSide(
           color: isRoot
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.25)
               : Theme.of(context).colorScheme.outline.withOpacity(0.12),
           width: 1.0,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(4.0),
+        borderRadius: BorderRadius.circular(16.0),
         child: Container(
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
                 color: isRoot
                     ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.secondary.withOpacity(0.8),
-                width: 6.0,
+                    : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                width: 5.0,
               ),
             ),
           ),
@@ -1373,15 +1151,32 @@ class _HomePageState extends State<HomePage>
                         isRoot
                             ? 'Root Entity: @type = ${typeLabel}'
                             : 'Nested Object: @type = ${typeLabel}',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8.0),
+                    if (isRoot)
+                      IconButton(
+                        icon: Icon(
+                          _isFullScreenWorkspace
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 24.0,
+                        ),
+                        tooltip: _isFullScreenWorkspace
+                            ? 'Exit Fullscreen Mode'
+                            : 'Enter Fullscreen Mode',
+                        onPressed: () {
+                          setState(() {
+                            _isFullScreenWorkspace = !_isFullScreenWorkspace;
+                          });
+                        },
+                      ),
                     if (!isRoot)
                       IconButton(
                         icon: const Icon(
@@ -1467,8 +1262,9 @@ class _HomePageState extends State<HomePage>
     List<SchemaValue> values,
   ) {
     final propDef = SchemaService.instance.properties[propId];
-    final propName =
-        propId.startsWith('schema:') ? propId.substring(7) : propId;
+    final propName = propId.startsWith('schema:')
+        ? propId.substring(7)
+        : propId;
     final comment = propDef?.comment ?? 'Custom user extension field';
     final List<String> ranges = propDef?.ranges ?? [];
     return Container(
@@ -1476,18 +1272,9 @@ class _HomePageState extends State<HomePage>
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.35),
-        borderRadius: BorderRadius.circular(4.0),
-        border: Border(
-          left: BorderSide(
-            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.6),
-            width: 3.0,
-          ),
-          top: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
-          right: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
-          bottom: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.08),
         ),
       ),
       child: Column(
@@ -1525,7 +1312,8 @@ class _HomePageState extends State<HomePage>
                 children: [
                   if (ranges.isNotEmpty)
                     ...ranges.take(2).map((range) {
-                      final isPrim = range == 'schema:Text' ||
+                      final isPrim =
+                          range == 'schema:Text' ||
                           range == 'schema:URL' ||
                           range == 'schema:Number' ||
                           range == 'schema:Boolean' ||
@@ -1556,8 +1344,9 @@ class _HomePageState extends State<HomePage>
                               : Theme.of(context).colorScheme.primary,
                           onPressed: () {
                             if (isPrim) {
-                              final initialVal =
-                                  range == 'schema:Boolean' ? false : '';
+                              final initialVal = range == 'schema:Boolean'
+                                  ? false
+                                  : '';
                               appState.addPropertyToEntity(
                                 entity,
                                 propId,
@@ -1627,21 +1416,82 @@ class _HomePageState extends State<HomePage>
                           },
                         ),
                       ),
-                    _buildEntityEditorCard(appState, v.value as SchemaEntity),
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(4.0),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.layers_outlined,
+                            size: 18.0,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 12.0),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Nested: ${(v.value as SchemaEntity).type.replaceAll('schema:', '')}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                                if ((v.value as SchemaEntity).name.isNotEmpty)
+                                  Text(
+                                    (v.value as SchemaEntity).name,
+                                    style: TextStyle(
+                                      fontSize: 11.0,
+                                      color: Theme.of(context).colorScheme.outline,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.gps_fixed, size: 12.0),
+                            label: const Text(
+                              'Inspect',
+                              style: TextStyle(fontSize: 11.0),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4.0),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _focusedEntityId = (v.value as SchemaEntity).id;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               );
             } else {
               return Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
+                padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: _buildValueEditor(appState, entity, propId, v),
                     ),
-                    if (values.length > 1) const SizedBox(width: 4.0),
+                    if (values.length > 1)
+                      const SizedBox(width: 4.0),
                     if (values.length > 1)
                       IconButton(
                         icon: const Icon(
@@ -1706,9 +1556,7 @@ class _HomePageState extends State<HomePage>
       final subs = classToSubclasses[baseClass] ?? [];
       for (var sub in subs) {
         if (!classes.contains(sub)) {
-          final baseLabel = baseClass.startsWith('schema:')
-              ? baseClass.substring(7)
-              : baseClass;
+          final baseLabel = baseClass.startsWith('schema:') ? baseClass.substring(7) : baseClass;
           typeOptions.add(MapEntry(sub, 'Subtype of $baseLabel'));
         }
       }
@@ -1730,23 +1578,16 @@ class _HomePageState extends State<HomePage>
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           final filteredOptions = uniqueTypeOptions.where((option) {
-            final label = option.key.startsWith('schema:')
-                ? option.key.substring(7)
-                : option.key;
+            final label = option.key.startsWith('schema:') ? option.key.substring(7) : option.key;
             final query = searchVal.toLowerCase();
-            return label.toLowerCase().contains(query) ||
-                option.value.toLowerCase().contains(query);
+            return label.toLowerCase().contains(query) || option.value.toLowerCase().contains(query);
           }).toList();
 
           return AlertDialog(
             title: const Text('Add Value - Select Compliant Type'),
             content: SizedBox(
-              width: MediaQuery.of(context).size.width > 560
-                  ? 480.0
-                  : MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height > 600
-                  ? 440.0
-                  : MediaQuery.of(context).size.height * 0.6,
+              width: MediaQuery.of(context).size.width > 560 ? 480.0 : MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height > 600 ? 440.0 : MediaQuery.of(context).size.height * 0.6,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1784,23 +1625,15 @@ class _HomePageState extends State<HomePage>
                           const SizedBox(height: 6.0),
                           ...filteredOptions.map((option) {
                             final clsId = option.key;
-                            final isSubclass =
-                                option.value != 'Base expected type';
-                            final label = clsId.startsWith('schema:')
-                                ? clsId.substring(7)
-                                : clsId;
-                            final comment = SchemaService
-                                    .instance.classes[clsId]?.comment ??
-                                '';
+                            final isSubclass = option.value != 'Base expected type';
+                            final label = clsId.startsWith('schema:') ? clsId.substring(7) : clsId;
+                            final comment = SchemaService.instance.classes[clsId]?.comment ?? '';
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4.0),
                               child: ListTile(
                                 leading: Icon(
-                                  isSubclass
-                                      ? Icons.subdirectory_arrow_right
-                                      : Icons.playlist_add_circle_outlined,
-                                  color:
-                                      isSubclass ? Colors.orange : Colors.blue,
+                                  isSubclass ? Icons.subdirectory_arrow_right : Icons.playlist_add_circle_outlined,
+                                  color: isSubclass ? Colors.orange : Colors.blue,
                                 ),
                                 title: Wrap(
                                   spacing: 6.0,
@@ -1809,28 +1642,20 @@ class _HomePageState extends State<HomePage>
                                   children: [
                                     Text(
                                       'Create "${label}"',
-                                      style: const TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.bold),
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 6.0, vertical: 2.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                                       decoration: BoxDecoration(
-                                        color: isSubclass
-                                            ? Colors.orange.withOpacity(0.1)
-                                            : Colors.blue.withOpacity(0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
+                                        color: isSubclass ? Colors.orange.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8.0),
                                       ),
                                       child: Text(
                                         option.value,
                                         style: TextStyle(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
-                                          color: isSubclass
-                                              ? Colors.orange.shade700
-                                              : Colors.blue.shade700,
+                                          color: isSubclass ? Colors.orange.shade700 : Colors.blue.shade700,
                                         ),
                                       ),
                                     ),
@@ -1851,8 +1676,7 @@ class _HomePageState extends State<HomePage>
                                     type: clsId,
                                     properties: {},
                                   );
-                                  appState.addPropertyToEntity(
-                                      entity, propId, nested);
+                                  appState.addPropertyToEntity(entity, propId, nested);
                                   Navigator.pop(context);
                                 },
                               ),
@@ -1883,9 +1707,7 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 title: Text(
                                   'Add "${label}" Field',
-                                  style: const TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.bold),
+                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
                                 ),
                                 dense: true,
                                 onTap: () {
@@ -2083,7 +1905,8 @@ class _HomePageState extends State<HomePage>
             prefixIcon: inputIcon != null ? Icon(inputIcon, size: 14.0) : null,
             hintText: 'Enter value...',
             isDense: true,
-            suffixIcon: (ranges.contains('schema:Date') ||
+            suffixIcon:
+                (ranges.contains('schema:Date') ||
                     ranges.contains('schema:DateTime'))
                 ? IconButton(
                     icon: const Icon(Icons.date_range, size: 14.0),
@@ -2095,8 +1918,10 @@ class _HomePageState extends State<HomePage>
                         lastDate: DateTime(2100),
                       );
                       if (picked != null) {
-                        final dateStr =
-                            picked.toIso8601String().split('T').first;
+                        final dateStr = picked
+                            .toIso8601String()
+                            .split('T')
+                            .first;
                         appState.updatePropertyValue(
                           parentEntity,
                           propId,
@@ -2199,8 +2024,13 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildRightSidebar(AppState appState) {
+    final rootName = appState.rootEntity?.name ?? 'document';
+    final cleanName = rootName.replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(' ', '_');
+    final docFilename = '${cleanName.isNotEmpty ? cleanName : 'schema'}.jsonld';
+
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHigh ??
+      color:
+          Theme.of(context).colorScheme.surfaceContainerHigh ??
           Theme.of(context).colorScheme.surface.withOpacity(0.95),
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -2208,47 +2038,51 @@ class _HomePageState extends State<HomePage>
         children: [
           Row(
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(4.0),
-                  border: Border.all(
-                    color:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(4.0),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8.0,
+                        height: 8.0,
+                        decoration: const BoxDecoration(
+                          color: Colors.greenAccent,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.greenAccent,
+                              blurRadius: 4.0,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: Text(
+                          docFilename,
+                          style: const TextStyle(
+                            fontFamily: 'Courier',
+                            fontSize: 11.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8.0,
-                      height: 8.0,
-                      decoration: const BoxDecoration(
-                        color: Colors.greenAccent,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.greenAccent,
-                            blurRadius: 4.0,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8.0),
-                    const Text(
-                      'schema.jsonld',
-                      style: TextStyle(
-                        fontFamily: 'Courier',
-                        fontSize: 11.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8.0),
               IconButton(
                 icon: const Icon(Icons.copy, size: 16.0),
                 tooltip: 'Copy JSON-LD',
@@ -2266,20 +2100,12 @@ class _HomePageState extends State<HomePage>
                 icon: const Icon(Icons.download, size: 16.0),
                 tooltip: 'Download .jsonld file',
                 onPressed: () async {
-                  final rootName = appState.rootEntity?.name ?? 'document';
-                  final cleanName = rootName
-                      .replaceAll(RegExp(r'[^\w\s\-]'), '')
-                      .replaceAll(' ', '_');
-                  final filename =
-                      '${cleanName.isNotEmpty ? cleanName : 'schema'}.jsonld';
                   try {
-                    final savedPath =
-                        await dl.downloadFile(appState.jsonLdOutput, filename);
+                    final savedPath = await dl.downloadFile(appState.jsonLdOutput, docFilename);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(
-                              'Saved "${filename}" successfully! 💾\nLocation: ${savedPath ?? "Downloads"}'),
+                          content: Text('Saved "${docFilename}" successfully! 💾\nLocation: ${savedPath ?? "Downloads"}'),
                           behavior: SnackBarBehavior.floating,
                           duration: const Duration(seconds: 4),
                         ),
@@ -2360,22 +2186,18 @@ class _HomePageState extends State<HomePage>
                         fontSize: 10.5,
                         height: 1.3,
                         color: Colors.grey,
-                        fontFamily:
-                            Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                        fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
                       ),
                       children: [
                         const TextSpan(
-                          text:
-                              'This document contains schema.org context fields. You can validate it directly on Google\'s Rich Results Test tool to boost SEO rankings!\n\n',
+                          text: 'This document contains schema.org context fields. You can validate it directly on Google\'s Rich Results Test tool to boost SEO rankings!\n\n',
                         ),
                         WidgetSpan(
                           child: InkWell(
                             onTap: () async {
-                              final url = Uri.parse(
-                                  'https://search.google.com/test/rich-results');
+                              final url = Uri.parse('https://search.google.com/test/rich-results');
                               if (await canLaunchUrl(url)) {
-                                await launchUrl(url,
-                                    mode: LaunchMode.externalApplication);
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
                               }
                             },
                             child: Row(
@@ -2391,8 +2213,7 @@ class _HomePageState extends State<HomePage>
                                   'https://search.google.com/test/rich-results',
                                   style: TextStyle(
                                     fontSize: 10.5,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(context).colorScheme.primary,
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
                                   ),
@@ -2436,17 +2257,15 @@ class _HomePageState extends State<HomePage>
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(
-                      lineCount,
-                      (i) => Text(
-                            '${i + 1}',
-                            style: const TextStyle(
-                              fontFamily: 'Courier',
-                              fontSize: 12.0,
-                              height: 1.4,
-                              color: Color(0xFF858585),
-                            ),
-                          )),
+                  children: List.generate(lineCount, (i) => Text(
+                    '${i + 1}',
+                    style: const TextStyle(
+                      fontFamily: 'Courier',
+                      fontSize: 12.0,
+                      height: 1.4,
+                      color: Color(0xFF858585),
+                    ),
+                  )),
                 ),
               ),
               const SizedBox(width: 12.0),
@@ -2581,9 +2400,45 @@ class _HomePageState extends State<HomePage>
     return TextSpan(children: children);
   }
 
+  SchemaEntity? _findEntityById(SchemaEntity current, String id) {
+    if (current.id == id) return current;
+    for (final propValues in current.properties.values) {
+      for (final val in propValues) {
+        if (val.value is SchemaEntity) {
+          final found = _findEntityById(val.value as SchemaEntity, id);
+          if (found != null) return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  List<MapEntry<String, SchemaEntity>> _getBreadcrumbs(SchemaEntity root, String targetId) {
+    List<MapEntry<String, SchemaEntity>>? dfs(SchemaEntity current, List<MapEntry<String, SchemaEntity>> currentPath) {
+      final label = current.type.replaceAll('schema:', '');
+      final newPath = [...currentPath, MapEntry(label, current)];
+      if (current.id == targetId) {
+        return newPath;
+      }
+      for (final entry in current.properties.entries) {
+        final propName = entry.key.replaceAll('schema:', '');
+        for (final val in entry.value) {
+          if (val.value is SchemaEntity) {
+            final nestedEntity = val.value as SchemaEntity;
+            final res = dfs(nestedEntity, [...currentPath, MapEntry(propName, current)]);
+            if (res != null) return res;
+          }
+        }
+      }
+      return null;
+    }
+    return dfs(root, []) ?? [MapEntry(root.type.replaceAll('schema:', ''), root)];
+  }
+
   void _confirmChangeRootType(AppState appState, String newType) {
-    final typeLabel =
-        newType.startsWith('schema:') ? newType.substring(7) : newType;
+    final typeLabel = newType.startsWith('schema:')
+        ? newType.substring(7)
+        : newType;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2722,17 +2577,14 @@ class _HomePageState extends State<HomePage>
             final query = _propertySearchQuery.toLowerCase();
             return label.contains(query) || comment.contains(query);
           }).toList();
-          final recProps =
-              allProps.where((p) => recommended.contains(p.id)).toList();
+          final recProps = allProps
+              .where((p) => recommended.contains(p.id))
+              .toList();
           return AlertDialog(
             title: Text('Configure Properties for ${typeLabel}'),
             content: SizedBox(
-              width: MediaQuery.of(context).size.width > 600
-                  ? 520.0
-                  : MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height > 650
-                  ? 480.0
-                  : MediaQuery.of(context).size.height * 0.65,
+              width: MediaQuery.of(context).size.width > 600 ? 520.0 : MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height > 650 ? 480.0 : MediaQuery.of(context).size.height * 0.65,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -2758,8 +2610,9 @@ class _HomePageState extends State<HomePage>
                             style: TextStyle(
                               fontSize: 10.0,
                               fontWeight: FontWeight.bold,
-                              decoration:
-                                  isAdded ? TextDecoration.lineThrough : null,
+                              decoration: isAdded
+                                  ? TextDecoration.lineThrough
+                                  : null,
                             ),
                           ),
                           backgroundColor: Theme.of(
@@ -2826,8 +2679,8 @@ class _HomePageState extends State<HomePage>
                             itemBuilder: (context, index) {
                               final prop = filteredProps[index];
                               final propLabel = prop.label;
-                              final isAlreadyAdded =
-                                  entity.properties.containsKey(prop.id);
+                              final isAlreadyAdded = entity.properties
+                                  .containsKey(prop.id);
                               return ListTile(
                                 title: Row(
                                   children: [
@@ -2921,7 +2774,8 @@ class _HomePageState extends State<HomePage>
   ) {
     final ranges = prop.ranges;
     final nonPrimitiveClasses = ranges.where((r) {
-      final isPrim = r == 'schema:Text' ||
+      final isPrim =
+          r == 'schema:Text' ||
           r == 'schema:URL' ||
           r == 'schema:Number' ||
           r == 'schema:Boolean' ||
@@ -2951,9 +2805,7 @@ class _HomePageState extends State<HomePage>
         final subs = classToSubclasses[baseClass] ?? [];
         for (var sub in subs) {
           if (!nonPrimitiveClasses.contains(sub)) {
-            final baseLabel = baseClass.startsWith('schema:')
-                ? baseClass.substring(7)
-                : baseClass;
+            final baseLabel = baseClass.startsWith('schema:') ? baseClass.substring(7) : baseClass;
             typeOptions.add(MapEntry(sub, 'Subtype of $baseLabel'));
           }
         }
@@ -2975,23 +2827,16 @@ class _HomePageState extends State<HomePage>
         builder: (context) => StatefulBuilder(
           builder: (context, setDialogState) {
             final filteredOptions = uniqueTypeOptions.where((option) {
-              final label = option.key.startsWith('schema:')
-                  ? option.key.substring(7)
-                  : option.key;
+              final label = option.key.startsWith('schema:') ? option.key.substring(7) : option.key;
               final query = searchVal.toLowerCase();
-              return label.toLowerCase().contains(query) ||
-                  option.value.toLowerCase().contains(query);
+              return label.toLowerCase().contains(query) || option.value.toLowerCase().contains(query);
             }).toList();
 
             return AlertDialog(
               title: Text('Select Input Type for "${prop.label}"'),
               content: SizedBox(
-                width: MediaQuery.of(context).size.width > 560
-                    ? 480.0
-                    : MediaQuery.of(context).size.width * 0.9,
-                height: MediaQuery.of(context).size.height > 600
-                    ? 400.0
-                    : MediaQuery.of(context).size.height * 0.6,
+                width: MediaQuery.of(context).size.width > 560 ? 480.0 : MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -3019,23 +2864,15 @@ class _HomePageState extends State<HomePage>
                         children: [
                           ...filteredOptions.map((option) {
                             final clsId = option.key;
-                            final isSubclass =
-                                option.value != 'Base expected type';
-                            final label = clsId.startsWith('schema:')
-                                ? clsId.substring(7)
-                                : clsId;
-                            final comment = SchemaService
-                                    .instance.classes[clsId]?.comment ??
-                                '';
+                            final isSubclass = option.value != 'Base expected type';
+                            final label = clsId.startsWith('schema:') ? clsId.substring(7) : clsId;
+                            final comment = SchemaService.instance.classes[clsId]?.comment ?? '';
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4.0),
                               child: ListTile(
                                 leading: Icon(
-                                  isSubclass
-                                      ? Icons.subdirectory_arrow_right
-                                      : Icons.playlist_add_circle_outlined,
-                                  color:
-                                      isSubclass ? Colors.orange : Colors.blue,
+                                  isSubclass ? Icons.subdirectory_arrow_right : Icons.playlist_add_circle_outlined,
+                                  color: isSubclass ? Colors.orange : Colors.blue,
                                 ),
                                 title: Wrap(
                                   spacing: 6.0,
@@ -3044,28 +2881,20 @@ class _HomePageState extends State<HomePage>
                                   children: [
                                     Text(
                                       'Create "${label}"',
-                                      style: const TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.bold),
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 6.0, vertical: 2.0),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                                       decoration: BoxDecoration(
-                                        color: isSubclass
-                                            ? Colors.orange.withOpacity(0.1)
-                                            : Colors.blue.withOpacity(0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
+                                        color: isSubclass ? Colors.orange.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8.0),
                                       ),
                                       child: Text(
                                         option.value,
                                         style: TextStyle(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
-                                          color: isSubclass
-                                              ? Colors.orange.shade700
-                                              : Colors.blue.shade700,
+                                          color: isSubclass ? Colors.orange.shade700 : Colors.blue.shade700,
                                         ),
                                       ),
                                     ),
@@ -3086,8 +2915,7 @@ class _HomePageState extends State<HomePage>
                                     type: clsId,
                                     properties: {},
                                   );
-                                  appState.addPropertyToEntity(
-                                      entity, prop.id, nested);
+                                  appState.addPropertyToEntity(entity, prop.id, nested);
                                   Navigator.pop(context);
                                 },
                               ),
@@ -3096,18 +2924,14 @@ class _HomePageState extends State<HomePage>
                           Card(
                             margin: const EdgeInsets.symmetric(vertical: 4.0),
                             child: ListTile(
-                              leading: const Icon(Icons.edit_note,
-                                  color: Colors.green),
+                              leading: const Icon(Icons.edit_note, color: Colors.green),
                               title: const Text(
                                 'Add simple text input field',
-                                style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
                               ),
                               dense: true,
                               onTap: () {
-                                appState.addPropertyToEntity(
-                                    entity, prop.id, '');
+                                appState.addPropertyToEntity(entity, prop.id, '');
                                 Navigator.pop(context);
                               },
                             ),
@@ -3235,12 +3059,8 @@ class _HomePageState extends State<HomePage>
       builder: (context) => AlertDialog(
         title: const Text('Import JSON-LD Schema'),
         content: SizedBox(
-          width: MediaQuery.of(context).size.width > 560
-              ? 500.0
-              : MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height > 550
-              ? 350.0
-              : MediaQuery.of(context).size.height * 0.5,
+          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 550 ? 350.0 : MediaQuery.of(context).size.height * 0.5,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -3329,7 +3149,6 @@ class _HomePageState extends State<HomePage>
       return cls.label.toLowerCase().contains(lowercaseClassQuery) ||
           cls.id.toLowerCase().contains(lowercaseClassQuery);
     }).toList();
-
     final lowercaseMarkupQuery = _markupSearchQuery.trim().toLowerCase();
     final filteredDocuments = appState.documents.where((doc) {
       if (lowercaseMarkupQuery.isEmpty) {
@@ -3338,116 +3157,38 @@ class _HomePageState extends State<HomePage>
       return doc.name.toLowerCase().contains(lowercaseMarkupQuery) ||
           doc.type.toLowerCase().contains(lowercaseMarkupQuery);
     }).toList();
-
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: CustomScrollView(
-        slivers: [
-          // 1. Premium Metrics Dashboard Card
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.2),
-                      blurRadius: 8.0,
-                      offset: const Offset(0, 4.0),
-                    ),
-                  ],
+      color:
+          Theme.of(context).colorScheme.surfaceContainerLow ??
+          Theme.of(context).colorScheme.surface.withOpacity(0.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+            child: Row(
+              children: [
+                Text(
+                  'My Active Markups',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Active Documents',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4.0),
-                          Text(
-                            '${appState.documents.length} Markups',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4.0),
-                          const Text(
-                            'Saved locally • Autosave enabled',
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 10.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.folder_open_outlined,
-                      color: Colors.white.withOpacity(0.9),
-                      size: 44.0,
-                    ),
-                  ],
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.add_box_outlined, size: 20.0),
+                  tooltip: 'Create New Document',
+                  onPressed: () => _showCreateDocDialog(appState),
                 ),
-              ),
+              ],
             ),
           ),
-
-          // 2. Active Markups Header Title
-          SliverToBoxAdapter(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  Text(
-                    'My Active Markups',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.add_box_outlined, size: 20.0),
-                    tooltip: 'Create New Document',
-                    onPressed: () => _showCreateDocDialog(appState),
-                  ),
-                ],
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
             ),
-          ),
-
-          // 3. Persistent Search Bar Header
-          SliverAppBar(
-            pinned: true,
-            elevation: 0.0,
-            automaticallyImplyLeading: false,
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-            toolbarHeight: 52.0,
-            titleSpacing: 16.0,
-            title: TextField(
+            child: TextField(
               controller: _searchMarkupController,
               decoration: InputDecoration(
                 hintText: 'Search active markups...',
@@ -3464,13 +3205,9 @@ class _HomePageState extends State<HomePage>
                       )
                     : null,
                 isDense: true,
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                contentPadding: const EdgeInsets.all(8.0),
                 border: const OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                  borderSide: BorderSide.none,
                 ),
               ),
               onChanged: (val) {
@@ -3480,287 +3217,198 @@ class _HomePageState extends State<HomePage>
               },
             ),
           ),
-
-          // 4. Documents List Section
-          if (filteredDocuments.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Center(
-                  child: Text(
-                    'No active markups found.',
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      fontSize: 12.0,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final doc = filteredDocuments[index];
-                    final originalIndex = appState.documents.indexOf(doc);
-                    final isSelected =
-                        appState.selectedDocumentIndex == originalIndex;
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4.0),
-                      elevation: isSelected ? 1.0 : 0.0,
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.primaryContainer
-                          : Theme.of(context).colorScheme.surface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4.0),
-                        side: BorderSide(
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .outlineVariant
-                                  .withOpacity(0.5),
-                          width: isSelected ? 1.5 : 0.8,
-                        ),
+          Container(
+            height: 140.0,
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: filteredDocuments.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No active markups found.',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 12.0,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border(
-                              left: BorderSide(
-                                color: isSelected
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.transparent,
-                                width: 4.0,
-                              ),
-                            ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: filteredDocuments.length,
+                    itemBuilder: (context, index) {
+                      final doc = filteredDocuments[index];
+                      final originalIndex = appState.documents.indexOf(doc);
+                      final isSelected =
+                          appState.selectedDocumentIndex == originalIndex;
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4.0),
+                        elevation: 0.0,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primaryContainer
+                            : Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHigh,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.only(
+                            left: 12.0,
+                            right: 6.0,
                           ),
-                          child: ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 12.0),
-                            dense: true,
-                            title: Text(
-                              doc.name,
-                              style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                fontSize: 13.0,
-                                color: isSelected
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .onPrimaryContainer
-                                    : Theme.of(context).colorScheme.onSurface,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                          dense: true,
+                          title: Text(
+                            doc.name,
+                            style: TextStyle(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              fontSize: 12.0,
+                              color: isSelected
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer
+                                  : Theme.of(context).colorScheme.onSurface,
                             ),
-                            subtitle: Text(
-                              doc.type.replaceAll('schema:', ''),
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                color: isSelected
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .onPrimaryContainer
-                                        .withOpacity(0.8)
-                                    : Colors.grey,
-                              ),
-                            ),
-                            onTap: () {
-                              appState.selectDocument(originalIndex);
-                              if (MediaQuery.of(context).size.width < 1100) {
-                                _tabController.animateTo(1);
-                              }
-                            },
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined,
-                                      size: 14.0),
-                                  tooltip: 'Rename',
-                                  onPressed: () => _showRenameDialog(
-                                    appState,
-                                    originalIndex,
-                                    doc.name,
-                                  ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            doc.type.replaceAll('schema:', ''),
+                            style: const TextStyle(fontSize: 10.0),
+                          ),
+                          onTap: () => appState.selectDocument(originalIndex),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                  size: 14.0,
                                 ),
+                                tooltip: 'Rename',
+                                onPressed: () => _showRenameDialog(
+                                  appState,
+                                  originalIndex,
+                                  doc.name,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.copy, size: 14.0),
+                                tooltip: 'Duplicate',
+                                onPressed: () =>
+                                    appState.duplicateDocument(originalIndex),
+                              ),
+                              if (appState.documents.length > 1)
                                 IconButton(
-                                  icon: const Icon(Icons.copy, size: 14.0),
-                                  tooltip: 'Duplicate',
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 14.0,
+                                    color: Colors.redAccent,
+                                  ),
+                                  tooltip: 'Delete',
                                   onPressed: () =>
-                                      appState.duplicateDocument(originalIndex),
+                                      appState.deleteDocument(originalIndex),
                                 ),
-                                if (appState.documents.length > 1)
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      size: 14.0,
-                                      color: Colors.redAccent,
-                                    ),
-                                    tooltip: 'Delete',
-                                    onPressed: () =>
-                                        appState.deleteDocument(originalIndex),
-                                  ),
-                              ],
-                            ),
+                            ],
                           ),
                         ),
-                      ),
-                    );
-                  },
-                  childCount: filteredDocuments.length,
-                ),
-              ),
-            ),
-
-          // 5. Section Divider & Header
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Divider(height: 32.0, thickness: 1.0),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 12.0),
-                  child: Text(
-                    'Instantiate New Class Type',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      );
+                    },
                   ),
-                ),
-              ],
+          ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+            child: Text(
+              'Instantiate New Class Type',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
-
-          // 6. Search Bar for 800+ types
-          SliverToBoxAdapter(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-              child: TextField(
-                controller: _searchClassController,
-                decoration: InputDecoration(
-                  hintText: 'Search 800+ types (e.g. Recipe)...',
-                  prefixIcon: const Icon(Icons.search, size: 18.0),
-                  suffixIcon: _classSearchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 16.0),
-                          onPressed: () {
-                            _searchClassController.clear();
-                            setState(() {
-                              _classSearchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
-                  isDense: true,
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12.0, vertical: 8.0),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged: (val) {
-                  setState(() {
-                    _classSearchQuery = val;
-                  });
-                },
-              ),
-            ),
-          ),
-
-          // 7. Schema Classes List Sliver
-          if (filteredClasses.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Center(
-                  child: Text(
-                    'No classes found.',
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      fontSize: 12.0,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final cls = filteredClasses[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4.0),
-                      elevation: 0.0,
-                      color: Theme.of(context).colorScheme.surface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4.0),
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .outlineVariant
-                              .withOpacity(0.5),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          cls.label,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13.0,
-                          ),
-                        ),
-                        subtitle: Text(
-                          cls.comment,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 10.5, color: Colors.grey),
-                        ),
-                        dense: true,
-                        trailing: Icon(
-                          Icons.add_circle_outline,
-                          size: 16.0,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        onTap: () {
-                          appState.createNewDocument(
-                            'New ${cls.label} Document',
-                            cls.id,
-                          );
-                          if (MediaQuery.of(context).size.width < 1100) {
-                            _tabController.animateTo(1);
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  'Created new ${cls.label} document successfully!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TextField(
+              controller: _searchClassController,
+              decoration: InputDecoration(
+                hintText: 'Search 800+ types (e.g. Recipe)...',
+                prefixIcon: const Icon(Icons.search, size: 18.0),
+                suffixIcon: _classSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 16.0),
+                        onPressed: () {
+                          _searchClassController.clear();
+                          setState(() {
+                            _classSearchQuery = '';
+                          });
                         },
-                      ),
-                    );
-                  },
-                  childCount: filteredClasses.length,
+                      )
+                    : null,
+                isDense: true,
+                border: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 ),
               ),
+              onChanged: (val) {
+                setState(() {
+                  _classSearchQuery = val;
+                });
+              },
             ),
+          ),
+          const SizedBox(height: 8.0),
+          Expanded(
+            child: filteredClasses.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No classes found.',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 12.0,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    itemCount: filteredClasses.length,
+                    itemBuilder: (context, index) {
+                      final cls = filteredClasses[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4.0),
+                        elevation: 0.0,
+                        color: Theme.of(context).colorScheme.surfaceContainer,
+                        child: ListTile(
+                          title: Text(
+                            cls.label,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                          subtitle: Text(
+                            cls.comment,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 10.5),
+                          ),
+                          dense: true,
+                          trailing: const Icon(
+                            Icons.add_circle_outline,
+                            size: 14.0,
+                          ),
+                          onTap: () {
+                            appState.createNewDocument(
+                              'New ${cls.label} Document',
+                              cls.id,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Created new ${cls.label} document successfully!',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
     );
@@ -3808,12 +3456,8 @@ class _HomePageState extends State<HomePage>
           ],
         ),
         content: SizedBox(
-          width: MediaQuery.of(context).size.width > 560
-              ? 500.0
-              : MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height > 600
-              ? 400.0
-              : MediaQuery.of(context).size.height * 0.6,
+          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
           child: const SingleChildScrollView(
             child: Text(
               'Privacy Policy for JSON LD Visual Editor\n\n'
@@ -3866,12 +3510,8 @@ class _HomePageState extends State<HomePage>
           ],
         ),
         content: SizedBox(
-          width: MediaQuery.of(context).size.width > 560
-              ? 500.0
-              : MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height > 600
-              ? 400.0
-              : MediaQuery.of(context).size.height * 0.6,
+          width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height > 600 ? 400.0 : MediaQuery.of(context).size.height * 0.6,
           child: const SingleChildScrollView(
             child: Text(
               'Terms & Conditions for JSON LD Visual Editor\n\n'
@@ -3906,27 +3546,41 @@ class _HomePageState extends State<HomePage>
   }
 }
 
-class GraphBackgroundPainter extends CustomPainter {
+class _TreeNode {
+  final String label;
+  final String type;
+  final int depth;
+  final SchemaEntity entity;
+  final String? relationLabel;
+
+  _TreeNode({
+    required this.label,
+    required this.type,
+    required this.depth,
+    required this.entity,
+    this.relationLabel,
+  });
+}
+
+class GridBackgroundPainter extends CustomPainter {
   final Color gridColor;
   final double spacing;
 
-  GraphBackgroundPainter({
+  GridBackgroundPainter({
     required this.gridColor,
-    this.spacing = 40.0,
+    this.spacing = 30.0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    final Paint paint = Paint()
       ..color = gridColor
-      ..strokeWidth = 0.5;
+      ..strokeWidth = 1.0;
 
-    for (double x = 0; x <= size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-
-    for (double y = 0; y <= size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 1.0, paint);
+      }
     }
   }
 
@@ -3972,20 +3626,14 @@ class _CreateDocDialogState extends State<_CreateDocDialog> {
       final label = cls.label.toLowerCase();
       final comment = cls.comment.toLowerCase();
       final id = cls.id.toLowerCase();
-      return label.contains(query) ||
-          comment.contains(query) ||
-          id.contains(query);
+      return label.contains(query) || comment.contains(query) || id.contains(query);
     }).toList();
 
     return AlertDialog(
       title: const Text('Create New Schema Document'),
       content: SizedBox(
-        width: MediaQuery.of(context).size.width > 560
-            ? 500.0
-            : MediaQuery.of(context).size.width * 0.9,
-        height: MediaQuery.of(context).size.height > 600
-            ? 520.0
-            : MediaQuery.of(context).size.height * 0.75,
+        width: MediaQuery.of(context).size.width > 560 ? 500.0 : MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height > 600 ? 520.0 : MediaQuery.of(context).size.height * 0.75,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -4058,9 +3706,7 @@ class _CreateDocDialogState extends State<_CreateDocDialog> {
                               title: Text(
                                 cls.label,
                                 style: TextStyle(
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
                               subtitle: Text(
@@ -4074,8 +3720,7 @@ class _CreateDocDialogState extends State<_CreateDocDialog> {
                               trailing: isSelected
                                   ? Icon(
                                       Icons.check_circle,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
+                                      color: Theme.of(context).colorScheme.primary,
                                       size: 18.0,
                                     )
                                   : null,
