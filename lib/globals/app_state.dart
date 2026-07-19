@@ -333,7 +333,11 @@ class AppState extends ChangeNotifier {
       _jsonLdOutput = '{}';
     } else {
       try {
-        final map = root.toJsonLd(isRoot: true);
+        final Map<String, String> idToName = {};
+        for (final doc in _documents) {
+          idToName[doc.id] = doc.name;
+        }
+        final map = root.toJsonLd(isRoot: true, docIdToName: idToName);
         final encoder = const JsonEncoder.withIndent('  ');
         _jsonLdOutput = encoder.convert(map);
       } catch (e) {

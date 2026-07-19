@@ -26,7 +26,7 @@ class SchemaEntity {
 
   String name;
 
-  Map<String, dynamic> toJsonLd({bool isRoot = false}) {
+  Map<String, dynamic> toJsonLd({bool isRoot = false, Map<String, String>? docIdToName}) {
     final Map<String, dynamic> result = {};
     if (isRoot) {
       result['@context'] = 'https://schema.org';
@@ -35,19 +35,20 @@ class SchemaEntity {
         type.startsWith('schema:') ? type.substring(7) : type;
     result['@type'] = typeName;
 
-    // Add dynamic @id based on document name if it is not a default untitled string
-    final cleanName = name.trim();
-    final bool isUntitled = cleanName.isEmpty ||
-        cleanName == 'Untitled Document' ||
-        cleanName == 'Untitled Object' ||
-        cleanName == 'Schema Document' ||
-        cleanName.startsWith('New ');
-    if (!isUntitled) {
-      final safeId = cleanName
-          .toLowerCase()
-          .replaceAll(RegExp(r'[^\w\s\-]'), '')
-          .replaceAll(RegExp(r'\s+'), '-');
-      result['@id'] = '#${safeId}';
+    // Helper to check if a name represents a custom renamed node
+    bool isNameRenamed(String nameValue) {
+      final clean = nameValue.trim();
+      return clean.isNotEmpty &&
+          clean != 'Untitled Document' &&
+          clean != 'Untitled Object' &&
+          clean != 'Schema Document' &&
+          !clean.startsWith('New ');
+    }
+
+    // Dynamic @id generation based on renamed name
+    if (isNameRenamed(name)) {
+      final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
+      result['@id'] = '#$safeId';
     }
 
     properties.forEach((propId, values) {
@@ -59,9 +60,16 @@ class SchemaEntity {
       final List<dynamic> jsonValues = [];
       for (var val in values) {
         if (val.value is SchemaEntity) {
-          jsonValues.add((val.value as SchemaEntity).toJsonLd(isRoot: false));
+          jsonValues.add((val.value as SchemaEntity).toJsonLd(isRoot: false, docIdToName: docIdToName));
         } else if (val.value is Map && (val.value as Map).containsKey('@id')) {
-          jsonValues.add({'@id': '#${(val.value as Map)['@id']}'});
+          final targetDocId = (val.value as Map)['@id'] as String;
+          final targetDocName = docIdToName?[targetDocId] ?? (val.value as Map)['docName'] ?? '';
+          if (isNameRenamed(targetDocName)) {
+            final safeLinkedId = targetDocName.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
+            jsonValues.add({'@id': '#$safeLinkedId'});
+          } else {
+            jsonValues.add({'@id': '#$targetDocId'});
+          }
         } else if (val.value is String) {
           final String strVal = val.value as String;
           if (strVal.startsWith('schema:') && _isEnumerationValue(strVal)) {
