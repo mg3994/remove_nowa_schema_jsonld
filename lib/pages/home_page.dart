@@ -65,11 +65,10 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _markupSearchFocusNode.addListener(() {
-      setState(() {});
       if (_markupSearchFocusNode.hasFocus) {
         if (_sidebarScrollController.hasClients) {
           _sidebarScrollController.animateTo(
-            0.0,
+            150.0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
@@ -1214,30 +1213,51 @@ class _HomePageState extends State<HomePage>
               '${node.entity!.properties.length} fields',
               style: const TextStyle(fontSize: 10.0),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 14.0),
-                  tooltip: 'Rename Object',
-                  onPressed: () {
-                    _showSubNodeRenameDialog(appState, node.entity!);
-                  },
+            trailing: PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 18.0),
+              tooltip: 'Actions',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onSelected: (action) {
+                if (action == 'rename') {
+                  _showSubNodeRenameDialog(appState, node.entity!);
+                } else if (action == 'add_field') {
+                  _showAddPropertyDialog(appState, node.entity!);
+                } else if (action == 'delete') {
+                  _confirmDeleteNested(appState, node.entity!);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem<String>(
+                  value: 'rename',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined, size: 14.0),
+                      SizedBox(width: 8.0),
+                      Text('Rename Object', style: TextStyle(fontSize: 12.0)),
+                    ],
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline, size: 14.0),
-                  tooltip: 'Add Field',
-                  onPressed: () {
-                    _showAddPropertyDialog(appState, node.entity!);
-                  },
+                const PopupMenuItem<String>(
+                  value: 'add_field',
+                  child: Row(
+                    children: [
+                      Icon(Icons.add_circle_outline, size: 14.0),
+                      SizedBox(width: 8.0),
+                      Text('Add Field', style: TextStyle(fontSize: 12.0)),
+                    ],
+                  ),
                 ),
                 if (node.depth > 0)
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 14.0, color: Colors.redAccent),
-                    tooltip: 'Delete Object',
-                    onPressed: () {
-                      _confirmDeleteNested(appState, node.entity!);
-                    },
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline, size: 14.0, color: Colors.redAccent),
+                        SizedBox(width: 8.0),
+                        Text('Delete Object', style: TextStyle(fontSize: 12.0, color: Colors.redAccent)),
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -1275,20 +1295,38 @@ class _HomePageState extends State<HomePage>
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline, size: 14.0),
-                  tooltip: 'Add Value',
-                  onPressed: () => _onAddValuePressed(appState, node.parentEntity!, propKey),
+            trailing: PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 18.0),
+              tooltip: 'Actions',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onSelected: (action) {
+                if (action == 'add_value') {
+                  _onAddValuePressed(appState, node.parentEntity!, propKey);
+                } else if (action == 'delete_field') {
+                  appState.removePropertyFromEntity(node.parentEntity!, propKey);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem<String>(
+                  value: 'add_value',
+                  child: Row(
+                    children: [
+                      Icon(Icons.add_circle_outline, size: 14.0),
+                      SizedBox(width: 8.0),
+                      Text('Add Value', style: TextStyle(fontSize: 12.0)),
+                    ],
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 14.0, color: Colors.redAccent),
-                  tooltip: 'Delete Field',
-                  onPressed: () {
-                    appState.removePropertyFromEntity(node.parentEntity!, propKey);
-                  },
+                const PopupMenuItem<String>(
+                  value: 'delete_field',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 14.0, color: Colors.redAccent),
+                      SizedBox(width: 8.0),
+                      Text('Delete Field', style: TextStyle(fontSize: 12.0, color: Colors.redAccent)),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1469,9 +1507,10 @@ class _HomePageState extends State<HomePage>
         : entity.type;
     final schemaClass = SchemaService.instance.classes[entity.type];
     final classComment = schemaClass?.comment ?? 'No description available.';
+    final bool isWide = MediaQuery.of(context).size.width > 950.0;
 
     return Container(
-      width: 360.0,
+      width: isWide ? 360.0 : double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 6.0),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -2720,47 +2759,90 @@ class _HomePageState extends State<HomePage>
         );
       }
     }
-    if (linkableDocs.isNotEmpty) {
+    final bool hasComplexRanges = ranges.any((r) {
+      final String cleanR = r.replaceAll('schema:', '');
+      return !['Text', 'URL', 'Boolean', 'Number', 'Integer', 'Float', 'Date', 'DateTime', 'Time', 'DataType'].contains(cleanR);
+    });
+
+    if (hasComplexRanges) {
+      final String propName = propId.startsWith('schema:') ? propId.substring(7) : propId;
       return Row(
         children: [
           Expanded(child: editorWidget),
           const SizedBox(width: 8.0),
-          PopupMenuButton<SchemaEntity>(
-            icon: Icon(
-              Icons.link,
-              color: Theme.of(context).colorScheme.primary,
-              size: 20.0,
+          if (linkableDocs.isNotEmpty)
+            PopupMenuButton<SchemaEntity>(
+              icon: Icon(
+                Icons.link,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20.0,
+              ),
+              tooltip: 'Link to a semantically compliant open markup document',
+              onSelected: (doc) {
+                appState.updatePropertyValue(parentEntity, propId, sValue.id, {
+                  '@id': doc.id,
+                  'docName': doc.name,
+                });
+              },
+              itemBuilder: (context) => linkableDocs.map((doc) {
+                final typeLabel = doc.type.startsWith('schema:')
+                    ? doc.type.substring(7)
+                    : doc.type;
+                return PopupMenuItem<SchemaEntity>(
+                  value: doc,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.insert_drive_file_outlined,
+                        size: 14.0,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      const SizedBox(width: 8.0),
+                      Text(
+                        '${doc.name} (${typeLabel})',
+                        style: const TextStyle(fontSize: 12.0),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            )
+          else
+            IconButton(
+              icon: Icon(
+                Icons.link,
+                color: Colors.grey.withOpacity(0.5),
+                size: 20.0,
+              ),
+              tooltip: 'No linkable documents available. Tap for info.',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Row(
+                      children: [
+                        Icon(Icons.link, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 8.0),
+                        const Text('Semantic Document Linking'),
+                      ],
+                    ),
+                    content: Text(
+                      'You can link this property ("$propName") to another document matching the expected type(s): ${ranges.map((r) => r.replaceAll("schema:", "")).join(", ")}.\n\n'
+                      'To make a document linkable, ensure you:\n'
+                      '1. Create a matching document in the "Documents" tab.\n'
+                      '2. Rename it (give it a custom name) so a valid "@id" is automatically generated.\n\n'
+                      'Once done, it will appear here as a linkable option!',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Got it!'),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-            tooltip: 'Link to a semantically compliant open markup document',
-            onSelected: (doc) {
-              appState.updatePropertyValue(parentEntity, propId, sValue.id, {
-                '@id': doc.id,
-                'docName': doc.name,
-              });
-            },
-            itemBuilder: (context) => linkableDocs.map((doc) {
-              final typeLabel = doc.type.startsWith('schema:')
-                  ? doc.type.substring(7)
-                  : doc.type;
-              return PopupMenuItem<SchemaEntity>(
-                value: doc,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.insert_drive_file_outlined,
-                      size: 14.0,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 8.0),
-                    Text(
-                      '${doc.name} (${typeLabel})',
-                      style: const TextStyle(fontSize: 12.0),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
         ],
       );
     }
@@ -3977,6 +4059,7 @@ class _HomePageState extends State<HomePage>
     }).toList();
 
     final primaryColor = Theme.of(context).colorScheme.primary;
+    final bool isSearchActive = _markupSearchFocusNode.hasFocus || _markupSearchQuery.isNotEmpty;
 
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainerLow ??
@@ -3984,9 +4067,10 @@ class _HomePageState extends State<HomePage>
       child: CustomScrollView(
         controller: _sidebarScrollController,
         slivers: [
-          // 1. Dashboard Gradient Statistics Banner
-          if (!_markupSearchFocusNode.hasFocus && _markupSearchQuery.isEmpty)
-            SliverToBoxAdapter(
+          // 1. Dashboard Gradient Statistics Banner (Maintained as stable sliver to prevent focus loss)
+          SliverToBoxAdapter(
+            child: Visibility(
+              visible: !isSearchActive,
               child: Container(
                 margin: const EdgeInsets.all(16.0),
                 padding: const EdgeInsets.all(16.0),
@@ -4068,8 +4152,9 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ),
+          ),
 
-          // 2. Active Markups Pinned Search Header
+          // 2. Active Markups Pinned Search Header (Always stable structural index)
           SliverToBoxAdapter(
             child: Container(
               color: Theme.of(context).colorScheme.surfaceContainerLow ?? Theme.of(context).colorScheme.surface,
@@ -4102,7 +4187,7 @@ class _HomePageState extends State<HomePage>
                     decoration: InputDecoration(
                       hintText: 'Search active markups...',
                       prefixIcon: const Icon(Icons.search, size: 16.0),
-                      suffixIcon: _markupSearchQuery.isNotEmpty || _markupSearchFocusNode.hasFocus
+                      suffixIcon: isSearchActive
                           ? IconButton(
                               icon: const Icon(Icons.close, size: 14.0),
                               onPressed: () {
@@ -4217,18 +4302,21 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
 
-          // Bottom sections (Divider & Instantiate New Class Type) are hidden when search is focused/active to allow "My Active Markups" to fully expand
-          if (!_markupSearchFocusNode.hasFocus && _markupSearchQuery.isEmpty) ...[
-            // Divider Break
-            const SliverToBoxAdapter(
-              child: Padding(
+          // Divider Break (Conditional rendering inside a stable container)
+          SliverToBoxAdapter(
+            child: Visibility(
+              visible: !isSearchActive,
+              child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Divider(),
               ),
             ),
+          ),
 
-            // 4. Instantiate New Class Pinned Header
-            SliverToBoxAdapter(
+          // 4. Instantiate New Class Pinned Header
+          SliverToBoxAdapter(
+            child: Visibility(
+              visible: !isSearchActive,
               child: Container(
                 color: Theme.of(context).colorScheme.surfaceContainerLow ?? Theme.of(context).colorScheme.surface,
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -4278,25 +4366,28 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ),
+          ),
 
-            // 5. Instantiate Class Types Sliver List
-            filteredClasses.isEmpty
-                ? const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Center(
-                        child: Text(
-                          'No classes found.',
-                          style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12.0),
-                        ),
+          // 5. Instantiate Class Types Sliver List (Stable indices, items set to 0 when search active)
+          filteredClasses.isEmpty
+              ? const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Center(
+                      child: Text(
+                        'No classes found.',
+                        style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12.0),
                       ),
                     ),
-                  )
-                : SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final cls = filteredClasses[index];
-                        return Container(
+                  ),
+                )
+              : SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final cls = filteredClasses[index];
+                      return Visibility(
+                        visible: !isSearchActive,
+                        child: Container(
                           margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -4334,14 +4425,14 @@ class _HomePageState extends State<HomePage>
                               });
                             },
                           ),
-                        );
-                      },
-                      childCount: filteredClasses.length,
-                    ),
+                        ),
+                      );
+                    },
+                    childCount: isSearchActive ? 0 : filteredClasses.length,
                   ),
+                ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24.0)),
-          ],
+          const SliverToBoxAdapter(child: SizedBox(height: 24.0)),
         ],
       ),
     );
