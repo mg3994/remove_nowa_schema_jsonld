@@ -16,6 +16,7 @@ class SchemaEntity {
     required this.type,
     required this.properties,
     this.name = 'Untitled Document',
+    this.baseUri,
   });
 
   final String id;
@@ -26,13 +27,19 @@ class SchemaEntity {
 
   String name;
 
+  String? baseUri;
+
   Map<String, dynamic> toJsonLd({bool isRoot = false, Map<String, String>? docIdToName}) {
     final Map<String, dynamic> result = {};
     if (isRoot) {
-      result['@context'] = {
-        '@vocab': 'https://schema.org/',
-        '@base': 'https://example.com/things/',
-      };
+      if (baseUri == null || baseUri!.trim().isEmpty) {
+        result['@context'] = 'https://schema.org';
+      } else {
+        result['@context'] = {
+          '@vocab': 'https://schema.org/',
+          '@base': baseUri!.trim(),
+        };
+      }
     }
     final String typeName =
         type.startsWith('schema:') ? type.substring(7) : type;
@@ -53,14 +60,16 @@ class SchemaEntity {
           !clean.endsWith(' Reference');
     }
 
+    final String effectiveBase = (baseUri != null && baseUri!.trim().isNotEmpty) ? baseUri!.trim() : 'https://example.com/things/';
+
     // Dynamic @id generation based on renamed name or preserved absolute URIs
     if (!isReverseMap) {
       if (isNameRenamed(name)) {
         final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
         result['@id'] = '#$safeId';
-      } else if (id.startsWith('https://example.com/things/')) {
+      } else if (id.startsWith(effectiveBase)) {
         // Form relative ID if it matches the base URL
-        result['@id'] = id.substring('https://example.com/things/'.length);
+        result['@id'] = id.substring(effectiveBase.length);
       } else if (id.startsWith('http://') || id.startsWith('https://')) {
         result['@id'] = id;
       }
@@ -84,8 +93,8 @@ class SchemaEntity {
             jsonValues.add({'@id': '#$safeLinkedId'});
           } else {
             // Keep absolute URLs and pre-anchored IDs exactly as-is without adding '#' double prefixes
-            if (targetDocId.startsWith('https://example.com/things/')) {
-              jsonValues.add({'@id': targetDocId.substring('https://example.com/things/'.length)});
+            if (targetDocId.startsWith(effectiveBase)) {
+              jsonValues.add({'@id': targetDocId.substring(effectiveBase.length)});
             } else if (targetDocId.startsWith('http://') || targetDocId.startsWith('https://') || targetDocId.startsWith('#')) {
               jsonValues.add({'@id': targetDocId});
             } else {
@@ -129,11 +138,15 @@ class SchemaEntity {
       type: type,
       properties: clonedProps,
       name: name,
+      baseUri: baseUri,
     );
   }
 
   Map<String, dynamic> serializeProperties() {
     final Map<String, dynamic> serialized = {};
+    if (baseUri != null) {
+      serialized['_baseUri'] = baseUri;
+    }
     properties.forEach((propId, values) {
       final List<dynamic> listData = [];
       for (var val in values) {

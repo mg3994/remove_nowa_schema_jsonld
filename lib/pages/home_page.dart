@@ -216,7 +216,7 @@ class _HomePageState extends State<HomePage>
       onWillPop: () async {
         // 1. Check if any textfield or input currently has focus (keyboard visible)
         if (FocusManager.instance.primaryFocus != null &&
-            FocusManager.instance.primaryFocus!.hasPrimaryFocus) {
+            FocusManager.instance.primaryFocus!.context?.widget is EditableText) {
           FocusManager.instance.primaryFocus!.unfocus();
           return false; // Dismiss keyboard, consume back event, do not exit
         }
@@ -1722,6 +1722,10 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                   const SizedBox(height: 12.0),
+                  if (depth == 0) ...[
+                    _BaseUriField(appState: appState, entity: entity),
+                    const SizedBox(height: 12.0),
+                  ],
                   const Divider(),
                   const SizedBox(height: 8.0),
                   if (entity.properties.isEmpty)
@@ -4627,6 +4631,130 @@ class _HomePageState extends State<HomePage>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BaseUriField extends StatefulWidget {
+  final AppState appState;
+  final SchemaEntity entity;
+
+  const _BaseUriField({
+    Key? key,
+    required this.appState,
+    required this.entity,
+  }) : super(key: key);
+
+  @override
+  State<_BaseUriField> createState() => _BaseUriFieldState();
+}
+
+class _BaseUriFieldState extends State<_BaseUriField> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.entity.baseUri ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _BaseUriField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.entity.baseUri != oldWidget.entity.baseUri &&
+        widget.entity.baseUri != _controller.text) {
+      _controller.text = widget.entity.baseUri ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(4.0),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.link,
+                size: 14.0,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 6.0),
+              const Text(
+                'Document Base URI (@base)',
+                style: TextStyle(
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6.0),
+          Text(
+            'If empty, defaults to "@context": "https://schema.org". Otherwise, structured context with custom base URI is exported.',
+            style: TextStyle(
+              fontSize: 9.5,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          SizedBox(
+            height: 32.0,
+            child: TextField(
+              controller: _controller,
+              style: const TextStyle(fontSize: 11.5, fontFamily: 'monospace'),
+              decoration: InputDecoration(
+                hintText: 'e.g. https://example.com/things/',
+                hintStyle: TextStyle(
+                  fontSize: 11.5,
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 8.0,
+                ),
+                border: const OutlineInputBorder(),
+                suffixIcon: _controller.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 12.0),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          setState(() {
+                            _controller.clear();
+                          });
+                          widget.entity.baseUri = null;
+                          widget.appState.persistDocument(widget.entity);
+                          widget.appState.generateJsonLdOutput();
+                        },
+                      )
+                    : null,
+              ),
+              onChanged: (val) {
+                widget.entity.baseUri = val.trim().isEmpty ? null : val.trim();
+                widget.appState.persistDocument(widget.entity);
+                widget.appState.generateJsonLdOutput();
+                setState(() {});
+              },
+            ),
           ),
         ],
       ),

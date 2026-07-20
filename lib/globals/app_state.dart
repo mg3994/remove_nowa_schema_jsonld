@@ -87,14 +87,14 @@ class AppState extends ChangeNotifier {
       if (savedDocs.isNotEmpty) {
         _documents.clear();
         for (var d in savedDocs) {
-          final props = SchemaEntity.deserializeProperties(
-            json.decode(d.propertiesJson) as Map<String, dynamic>,
-          );
+          final rawProps = json.decode(d.propertiesJson) as Map<String, dynamic>;
+          final props = SchemaEntity.deserializeProperties(rawProps);
           _documents.add(SchemaEntity(
             id: d.id,
             name: d.name,
             type: d.type,
             properties: props,
+            baseUri: rawProps['_baseUri']?.toString(),
           ));
         }
       }
@@ -222,6 +222,7 @@ class AppState extends ChangeNotifier {
       final doc = _documents[index];
       doc.name = newName;
       persistDocument(doc);
+      generateJsonLdOutput();
       notifyListeners();
     }
   }
