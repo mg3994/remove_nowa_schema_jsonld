@@ -220,9 +220,14 @@ class _HomePageState extends State<HomePage>
           FocusManager.instance.primaryFocus!.unfocus();
           return false; // Dismiss keyboard, consume back event, do not exit
         }
+        if (_markupSearchFocusNode.hasFocus) {
+          _markupSearchFocusNode.unfocus();
+          return false;
+        }
 
         // 2. If we have active cascading column nodes open, pressing physical back goes back to the previous node
-        if (_columnPath.isNotEmpty && _tabController.index == 1) {
+        final bool isWorkspaceActive = isWide || _tabController.index == 1;
+        if (_columnPath.isNotEmpty && isWorkspaceActive) {
           setState(() {
             _columnPath.removeLast();
           });
@@ -922,7 +927,7 @@ class _HomePageState extends State<HomePage>
     }
 
     final activeColumns = _resolveActiveColumns(root);
-    final isWide = MediaQuery.of(context).size.width > 950.0;
+    final isWide = MediaQuery.of(context).size.width >= 1100;
 
     final mainColumnList = isWide
         ? Scrollbar(
@@ -2628,6 +2633,77 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  void _showEditValueObjectDialog(
+    AppState appState,
+    SchemaEntity entity,
+    String propId,
+    SchemaValue sValue,
+    Map mapVal,
+  ) {
+    final valueController = TextEditingController(text: mapVal['@value']?.toString() ?? '');
+    final languageController = TextEditingController(text: mapVal['@language']?.toString() ?? '');
+    final typeController = TextEditingController(text: mapVal['@type']?.toString() ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Value Object', style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: valueController,
+                  decoration: const InputDecoration(
+                    labelText: 'Value (@value)',
+                    hintText: 'e.g. Plumbing Service',
+                  ),
+                ),
+                const SizedBox(height: 12.0),
+                TextField(
+                  controller: languageController,
+                  decoration: const InputDecoration(
+                    labelText: 'Language (@language)',
+                    hintText: 'e.g. en, hi, es',
+                  ),
+                ),
+                const SizedBox(height: 12.0),
+                TextField(
+                  controller: typeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Datatype Type (@type)',
+                    hintText: 'e.g. xsd:date',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final Map<String, dynamic> newMap = {'@value': valueController.text};
+                if (languageController.text.trim().isNotEmpty) {
+                  newMap['@language'] = languageController.text.trim();
+                }
+                if (typeController.text.trim().isNotEmpty) {
+                  newMap['@type'] = typeController.text.trim();
+                }
+                appState.updatePropertyValue(entity, propId, sValue.id, newMap);
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildValueEditor(
     AppState appState,
     SchemaEntity parentEntity,
@@ -2636,6 +2712,79 @@ class _HomePageState extends State<HomePage>
   ) {
     if (sValue.value is SchemaEntity) {
       return _buildEntityEditorCard(appState, sValue.value as SchemaEntity);
+    }
+    if (sValue.value is Map && (sValue.value as Map).containsKey('@value')) {
+      final mapVal = sValue.value as Map;
+      final valueStr = mapVal['@value']?.toString() ?? '';
+      final lang = mapVal['@language']?.toString();
+      final type = mapVal['@type']?.toString();
+      final displayDetails = [
+        if (lang != null) 'Language: $lang',
+        if (type != null) 'Type: $type',
+      ].join(' • ');
+
+      return Card(
+        color: Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.18),
+        elevation: 0.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4.0),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.3),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+          child: Row(
+            children: [
+              Icon(
+                Icons.translate_outlined,
+                size: 16.0,
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
+              const SizedBox(width: 8.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      valueStr,
+                      style: const TextStyle(
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (displayDetails.isNotEmpty)
+                      Text(
+                        displayDetails,
+                        style: TextStyle(
+                          fontSize: 10.0,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 14.0),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () {
+                  _showEditValueObjectDialog(appState, parentEntity, propId, sValue, mapVal);
+                },
+              ),
+              const SizedBox(width: 4.0),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 14.0, color: Colors.redAccent),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () {
+                  appState.removePropertyValue(parentEntity, propId, sValue.id);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
     }
     if (sValue.value is Map && (sValue.value as Map).containsKey('@id')) {
       final mapVal = sValue.value as Map;
@@ -3144,7 +3293,7 @@ class _HomePageState extends State<HomePage>
     final cleanCode = code.isEmpty ? '{}' : code;
     final lines = cleanCode.split('\n');
     final lineCount = lines.length;
-    final bool isMobile = MediaQuery.of(context).size.width < 950.0;
+    final bool isMobile = MediaQuery.of(context).size.width < 1100.0;
 
     final Widget view = SingleChildScrollView(
       scrollDirection: Axis.vertical,

@@ -459,8 +459,10 @@ class SchemaService {
       debugPrint(
         'Loaded all ${classes.length} classes, ${properties.length} properties, and ${_enumerationValues.length} enums from local cache!',
       );
+      _fetchAndCacheLatestSchema();
+    } else {
+      await _fetchAndCacheLatestSchema();
     }
-    _fetchAndCacheLatestSchema();
   }
 
   Future<bool> _loadFromCache() async {

@@ -85,6 +85,9 @@ class SchemaEntity {
       for (var val in values) {
         if (val.value is SchemaEntity) {
           jsonValues.add((val.value as SchemaEntity).toJsonLd(isRoot: false, docIdToName: docIdToName));
+        } else if (val.value is Map && (val.value as Map).containsKey('@value')) {
+          // Rule 1: Preserve Value Objects exactly as imported, do NOT add node metadata!
+          jsonValues.add(val.value);
         } else if (val.value is Map && (val.value as Map).containsKey('@id')) {
           final targetDocId = (val.value as Map)['@id'] as String;
           final targetDocName = docIdToName?[targetDocId] ?? (val.value as Map)['docName'] ?? '';
@@ -235,7 +238,18 @@ class SchemaEntity {
       final List<SchemaValue> values = [];
       void parseValue(dynamic singleVal) {
         if (singleVal is Map<String, dynamic>) {
-          if (singleVal.containsKey('@id')) {
+          if (singleVal.containsKey('@value')) {
+            // Rule 3: Detect Value Objects (contains @value)
+            // Preserve the Value Object exactly as imported!
+            values.add(
+              SchemaValue(
+                id: DateTime.now().microsecondsSinceEpoch.toString() +
+                    '_' +
+                    singleVal.hashCode.toString(),
+                value: Map<String, dynamic>.from(singleVal),
+              ),
+            );
+          } else if (singleVal.containsKey('@id')) {
             final refId = singleVal['@id'].toString().replaceAll('#', '');
             values.add(
               SchemaValue(
