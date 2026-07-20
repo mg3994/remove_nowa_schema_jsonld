@@ -46,6 +46,8 @@ class _HomePageState extends State<HomePage>
   final Set<String> _collapsedEntityIds = {};
   bool _isFullScreenWorkspace = false;
   List<String> _columnPath = [];
+  List<String> _treeInspectPath = [];
+  DateTime? _lastBackTime;
   final ScrollController _columnScrollController = ScrollController();
   final ScrollController _sidebarScrollController = ScrollController();
   final FocusNode _markupSearchFocusNode = FocusNode();
@@ -84,6 +86,9 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onTabChanged() {
+    if (_tabController.index == 2) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
     setState(() {});
   }
 

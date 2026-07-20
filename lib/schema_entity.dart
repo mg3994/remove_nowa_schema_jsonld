@@ -33,7 +33,11 @@ class SchemaEntity {
     }
     final String typeName =
         type.startsWith('schema:') ? type.substring(7) : type;
-    result['@type'] = typeName;
+    final bool isReverseMap = typeName == '@reverse';
+
+    if (!isReverseMap) {
+      result['@type'] = typeName;
+    }
 
     // Helper to check if a name represents a custom renamed node
     bool isNameRenamed(String nameValue) {
@@ -47,11 +51,13 @@ class SchemaEntity {
     }
 
     // Dynamic @id generation based on renamed name or preserved absolute URIs
-    if (isNameRenamed(name)) {
-      final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
-      result['@id'] = '#$safeId';
-    } else if (id.startsWith('http://') || id.startsWith('https://')) {
-      result['@id'] = id;
+    if (!isReverseMap) {
+      if (isNameRenamed(name)) {
+        final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
+        result['@id'] = '#$safeId';
+      } else if (id.startsWith('http://') || id.startsWith('https://')) {
+        result['@id'] = id;
+      }
     }
 
     properties.forEach((propId, values) {
@@ -204,7 +210,7 @@ class SchemaEntity {
       if (key == '@context' || key == '@type') {
         return;
       }
-      final String propId = key.contains(':') ? key : 'schema:${key}';
+      final String propId = key == '@reverse' ? 'schema:@reverse' : (key.contains(':') ? key : 'schema:${key}');
       final List<SchemaValue> values = [];
       void parseValue(dynamic singleVal) {
         if (singleVal is Map<String, dynamic>) {
@@ -228,7 +234,7 @@ class SchemaEntity {
                 id: DateTime.now().microsecondsSinceEpoch.toString() +
                     '_' +
                     singleVal.hashCode.toString(),
-                value: SchemaEntity.fromJsonLd(singleVal),
+                value: SchemaEntity.fromJsonLd(singleVal, defaultType: key == '@reverse' ? 'schema:@reverse' : null),
               ),
             );
           }
