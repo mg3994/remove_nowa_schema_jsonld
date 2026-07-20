@@ -42,13 +42,16 @@ class SchemaEntity {
           clean != 'Untitled Document' &&
           clean != 'Untitled Object' &&
           clean != 'Schema Document' &&
-          !clean.startsWith('New ');
+          !clean.startsWith('New ') &&
+          !clean.endsWith(' Reference');
     }
 
-    // Dynamic @id generation based on renamed name
+    // Dynamic @id generation based on renamed name or preserved absolute URIs
     if (isNameRenamed(name)) {
       final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
       result['@id'] = '#$safeId';
+    } else if (id.startsWith('http://') || id.startsWith('https://')) {
+      result['@id'] = id;
     }
 
     properties.forEach((propId, values) {
@@ -68,7 +71,12 @@ class SchemaEntity {
             final safeLinkedId = targetDocName.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
             jsonValues.add({'@id': '#$safeLinkedId'});
           } else {
-            jsonValues.add({'@id': '#$targetDocId'});
+            // Keep absolute URLs and pre-anchored IDs exactly as-is without adding '#' double prefixes
+            if (targetDocId.startsWith('http://') || targetDocId.startsWith('https://') || targetDocId.startsWith('#')) {
+              jsonValues.add({'@id': targetDocId});
+            } else {
+              jsonValues.add({'@id': '#$targetDocId'});
+            }
           }
         } else if (val.value is String) {
           final String strVal = val.value as String;
