@@ -29,7 +29,10 @@ class SchemaEntity {
   Map<String, dynamic> toJsonLd({bool isRoot = false, Map<String, String>? docIdToName}) {
     final Map<String, dynamic> result = {};
     if (isRoot) {
-      result['@context'] = 'https://schema.org';
+      result['@context'] = {
+        '@vocab': 'https://schema.org/',
+        '@base': 'https://example.com/things/',
+      };
     }
     final String typeName =
         type.startsWith('schema:') ? type.substring(7) : type;
@@ -55,6 +58,9 @@ class SchemaEntity {
       if (isNameRenamed(name)) {
         final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
         result['@id'] = '#$safeId';
+      } else if (id.startsWith('https://example.com/things/')) {
+        // Form relative ID if it matches the base URL
+        result['@id'] = id.substring('https://example.com/things/'.length);
       } else if (id.startsWith('http://') || id.startsWith('https://')) {
         result['@id'] = id;
       }
@@ -78,7 +84,9 @@ class SchemaEntity {
             jsonValues.add({'@id': '#$safeLinkedId'});
           } else {
             // Keep absolute URLs and pre-anchored IDs exactly as-is without adding '#' double prefixes
-            if (targetDocId.startsWith('http://') || targetDocId.startsWith('https://') || targetDocId.startsWith('#')) {
+            if (targetDocId.startsWith('https://example.com/things/')) {
+              jsonValues.add({'@id': targetDocId.substring('https://example.com/things/'.length)});
+            } else if (targetDocId.startsWith('http://') || targetDocId.startsWith('https://') || targetDocId.startsWith('#')) {
               jsonValues.add({'@id': targetDocId});
             } else {
               jsonValues.add({'@id': '#$targetDocId'});

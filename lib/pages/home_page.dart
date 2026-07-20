@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage>
   List<String> _columnPath = [];
   List<String> _treeInspectPath = [];
   DateTime? _lastBackTime;
+  bool _useDoubleBackStrategy = false; // Configurable exit strategy: true for Double-Back, false for Confirmation Dialog!
   final ScrollController _columnScrollController = ScrollController();
   final ScrollController _sidebarScrollController = ScrollController();
   final FocusNode _markupSearchFocusNode = FocusNode();
@@ -213,14 +214,58 @@ class _HomePageState extends State<HomePage>
     final isWide = MediaQuery.of(context).size.width >= 1100;
     return WillPopScope(
       onWillPop: () async {
-        // If we have active cascading column nodes open, pressing physical back goes back to the previous node
+        // 1. Check if any textfield or input currently has focus (keyboard visible)
+        if (FocusManager.instance.primaryFocus != null &&
+            FocusManager.instance.primaryFocus!.hasPrimaryFocus) {
+          FocusManager.instance.primaryFocus!.unfocus();
+          return false; // Dismiss keyboard, consume back event, do not exit
+        }
+
+        // 2. If we have active cascading column nodes open, pressing physical back goes back to the previous node
         if (_columnPath.isNotEmpty && _tabController.index == 1) {
           setState(() {
             _columnPath.removeLast();
           });
           return false; // Intercept & do not exit app
         }
-        return true; // Let standard back exit/pop occur
+
+        // 3. App Exit Flow (Supports both strategies: Double-Back or Confirmation Dialog)
+        if (_useDoubleBackStrategy) {
+          final now = DateTime.now();
+          if (_lastBackTime == null ||
+              now.difference(_lastBackTime!) > const Duration(milliseconds: 2000)) {
+            _lastBackTime = now;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Press back again to exit.'),
+                duration: Duration(milliseconds: 1500),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            return false; // Intercept & do not exit
+          }
+          return true; // Exit
+        } else {
+          // Confirmation Dialog Strategy
+          final bool? shouldExit = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Exit App'),
+              content: const Text('Are you sure you want to exit the app?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Exit'),
+                ),
+              ],
+            ),
+          );
+          return shouldExit ?? false;
+        }
       },
       child: Scaffold(
         key: _scaffoldKey,
@@ -1131,75 +1176,6 @@ class _HomePageState extends State<HomePage>
     return nodes;
   }
 
-  void _showEntityBottomSheet(BuildContext context, AppState appState, SchemaEntity entity) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16.0)),
-              ),
-              child: Column(
-                children: [
-                  // Bottom sheet handle/header
-                  Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.edit_note_outlined,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8.0),
-                        Expanded(
-                          child: Text(
-                            'Edit: ${entity.name.isNotEmpty ? entity.name : entity.type.replaceAll("schema:", "")}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15.0,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Entity Editor Card
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.all(16.0),
-                      child: _buildEntityEditorCard(appState, entity),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   Widget _buildFlatTreeNodeRow(AppState appState, _FlatTreeNode node) {
     final primaryColor = Theme.of(context).colorScheme.primary;
 
@@ -1224,7 +1200,34 @@ class _HomePageState extends State<HomePage>
             visualDensity: VisualDensity.compact,
             contentPadding: const EdgeInsets.only(left: 8.0, right: 4.0),
             onTap: () {
-              _showEntityBottomSheet(context, appState, node.entity!);
+              // Find path to this entity from root
+              final List<String> path = [];
+              SchemaEntity? current = appState.rootEntity;
+              bool findPath(SchemaEntity ent) {
+                if (ent.id == node.entity!.id) {
+                  return true;
+                }
+                for (final entry in ent.properties.entries) {
+                  for (final val in entry.value) {
+                    if (val.value is SchemaEntity) {
+                      final child = val.value as SchemaEntity;
+                      path.add(child.id);
+                      if (findPath(child)) {
+                        return true;
+                      }
+                      path.removeLast();
+                    }
+                  }
+                }
+                return false;
+              }
+              if (current != null) {
+                findPath(current);
+              }
+              setState(() {
+                _columnPath = path;
+                _showTreeView = false; // Smoothly slide into active workspace column pane!
+              });
             },
             leading: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1274,7 +1277,7 @@ class _HomePageState extends State<HomePage>
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
-              '${node.entity!.properties.length} fields  •  Tap to Edit',
+              '${node.entity!.properties.length} fields  •  Tap to Open',
               style: const TextStyle(fontSize: 10.0),
             ),
             trailing: PopupMenuButton<String>(
@@ -1347,7 +1350,34 @@ class _HomePageState extends State<HomePage>
             visualDensity: VisualDensity.compact,
             contentPadding: const EdgeInsets.only(left: 12.0, right: 4.0),
             onTap: () {
-              _showEntityBottomSheet(context, appState, node.parentEntity!);
+              // Find path to parent entity from root
+              final List<String> path = [];
+              SchemaEntity? current = appState.rootEntity;
+              bool findPath(SchemaEntity ent) {
+                if (ent.id == node.parentEntity!.id) {
+                  return true;
+                }
+                for (final entry in ent.properties.entries) {
+                  for (final val in entry.value) {
+                    if (val.value is SchemaEntity) {
+                      final child = val.value as SchemaEntity;
+                      path.add(child.id);
+                      if (findPath(child)) {
+                        return true;
+                      }
+                      path.removeLast();
+                    }
+                  }
+                }
+                return false;
+              }
+              if (current != null) {
+                findPath(current);
+              }
+              setState(() {
+                _columnPath = path;
+                _showTreeView = false; // Smoothly slide into active workspace column pane!
+              });
             },
             leading: Icon(
               Icons.dns_outlined,
