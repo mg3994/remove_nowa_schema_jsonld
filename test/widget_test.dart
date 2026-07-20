@@ -50,6 +50,39 @@ void main() {
     expect(descObj['@type'], isNull);
   });
 
+  test('Value Object with xsd:date type includes xsd namespace in @context', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "startDate": {
+        "@value": "2026-07-20",
+        "@type": "xsd:date"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    // 1. With baseUri = null (default fallback)
+    final compiledNullBase = doc.toJsonLd(isRoot: true);
+    expect(compiledNullBase['@context'], isMap);
+    expect(compiledNullBase['@context']['@vocab'], equals("https://schema.org/"));
+    expect(compiledNullBase['@context']['xsd'], equals("http://www.w3.org/2001/XMLSchema#"));
+
+    // 2. With a custom baseUri
+    doc.baseUri = "https://example.com/events/";
+    final compiledWithBase = doc.toJsonLd(isRoot: true);
+    expect(compiledWithBase['@context'], isMap);
+    expect(compiledWithBase['@context']['@vocab'], equals("https://schema.org/"));
+    expect(compiledWithBase['@context']['@base'], equals("https://example.com/events/"));
+    expect(compiledWithBase['@context']['xsd'], equals("http://www.w3.org/2001/XMLSchema#"));
+
+    // Verify the value object is preserved perfectly
+    final dateObj = compiledWithBase['startDate'];
+    expect(dateObj, isMap);
+    expect(dateObj['@value'], equals("2026-07-20"));
+    expect(dateObj['@type'], equals("xsd:date"));
+  });
+
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
     // Initialize SharedPreferences with mock values
     SharedPreferences.setMockInitialValues({});

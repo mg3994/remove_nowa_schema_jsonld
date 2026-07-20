@@ -29,15 +29,53 @@ class SchemaEntity {
 
   String? baseUri;
 
+  bool _hasXsdType(dynamic val) {
+    if (val is SchemaEntity) {
+      for (var values in val.properties.values) {
+        for (var sv in values) {
+          if (_hasXsdType(sv.value)) {
+            return true;
+          }
+        }
+      }
+    } else if (val is Map) {
+      final t = val['@type']?.toString();
+      if (t != null && t.startsWith('xsd:')) {
+        return true;
+      }
+      for (var entry in val.entries) {
+        if (_hasXsdType(entry.value)) {
+          return true;
+        }
+      }
+    } else if (val is List) {
+      for (var item in val) {
+        if (_hasXsdType(item)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   Map<String, dynamic> toJsonLd({bool isRoot = false, Map<String, String>? docIdToName}) {
     final Map<String, dynamic> result = {};
     if (isRoot) {
+      final bool needsXsd = _hasXsdType(this);
       if (baseUri == null || baseUri!.trim().isEmpty) {
-        result['@context'] = 'https://schema.org';
+        if (needsXsd) {
+          result['@context'] = {
+            '@vocab': 'https://schema.org/',
+            'xsd': 'http://www.w3.org/2001/XMLSchema#',
+          };
+        } else {
+          result['@context'] = 'https://schema.org';
+        }
       } else {
         result['@context'] = {
           '@vocab': 'https://schema.org/',
           '@base': baseUri!.trim(),
+          if (needsXsd) 'xsd': 'http://www.w3.org/2001/XMLSchema#',
         };
       }
     }
