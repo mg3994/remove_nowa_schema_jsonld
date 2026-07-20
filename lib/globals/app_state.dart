@@ -222,7 +222,6 @@ class AppState extends ChangeNotifier {
       final doc = _documents[index];
       doc.name = newName;
       persistDocument(doc);
-      generateJsonLdOutput();
       notifyListeners();
     }
   }

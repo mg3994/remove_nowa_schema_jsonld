@@ -1119,24 +1119,80 @@ class _HomePageState extends State<HomePage>
             keyName: propLabel,
             parentEntity: entity,
           ));
-        } else {
-          final valNodeId = '${entity.id}_val_${val.id}';
-          nodes.add(_FlatTreeNode(
-            id: valNodeId,
-            depth: depth + 2,
-            label: '',
-            typeLabel: '',
-            isValue: true,
-            entity: entity,
-            propertyKey: propKey,
-            schemaValue: val,
-            parentEntity: entity,
-          ));
         }
       }
     }
 
     return nodes;
+  }
+
+  void _showEntityBottomSheet(BuildContext context, AppState appState, SchemaEntity entity) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16.0)),
+              ),
+              child: Column(
+                children: [
+                  // Bottom sheet handle/header
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.edit_note_outlined,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: Text(
+                            'Edit: ${entity.name.isNotEmpty ? entity.name : entity.type.replaceAll("schema:", "")}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15.0,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Entity Editor Card
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildEntityEditorCard(appState, entity),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildFlatTreeNodeRow(AppState appState, _FlatTreeNode node) {
@@ -1152,7 +1208,7 @@ class _HomePageState extends State<HomePage>
         padding: EdgeInsets.only(left: indent, right: 16.0, top: 4.0, bottom: 4.0),
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            color: Theme.of(context).colorScheme.surfaceContainerLow ?? Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(6.0),
             border: Border.all(
               color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
@@ -1162,6 +1218,9 @@ class _HomePageState extends State<HomePage>
             dense: true,
             visualDensity: VisualDensity.compact,
             contentPadding: const EdgeInsets.only(left: 8.0, right: 4.0),
+            onTap: () {
+              _showEntityBottomSheet(context, appState, node.entity!);
+            },
             leading: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1210,7 +1269,7 @@ class _HomePageState extends State<HomePage>
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
-              '${node.entity!.properties.length} fields',
+              '${node.entity!.properties.length} fields  •  Tap to Edit',
               style: const TextStyle(fontSize: 10.0),
             ),
             trailing: PopupMenuButton<String>(
@@ -1272,7 +1331,7 @@ class _HomePageState extends State<HomePage>
         padding: EdgeInsets.only(left: indent, right: 16.0, top: 2.0, bottom: 2.0),
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHigh.withOpacity(0.4),
+            color: ((Theme.of(context).colorScheme.surfaceContainerHigh ?? Theme.of(context).colorScheme.surfaceVariant)).withOpacity(0.4),
             borderRadius: BorderRadius.circular(4.0),
             border: Border.all(
               color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3),
@@ -1282,18 +1341,39 @@ class _HomePageState extends State<HomePage>
             dense: true,
             visualDensity: VisualDensity.compact,
             contentPadding: const EdgeInsets.only(left: 12.0, right: 4.0),
+            onTap: () {
+              _showEntityBottomSheet(context, appState, node.parentEntity!);
+            },
             leading: Icon(
               Icons.dns_outlined,
               size: 14.0,
               color: Theme.of(context).colorScheme.secondary,
             ),
-            title: Text(
-              node.label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 11.5,
-              ),
-              overflow: TextOverflow.ellipsis,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  node.label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11.5,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (values.isNotEmpty) ...[
+                  const SizedBox(height: 2.0),
+                  Text(
+                    values.map((v) => v.value is SchemaEntity ? '(Object)' : '"${v.value}"').join(', '),
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
             ),
             trailing: PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, size: 18.0),
@@ -1333,39 +1413,6 @@ class _HomePageState extends State<HomePage>
           ),
         ),
       );
-    } else if (node.isValue) {
-      final propKey = node.propertyKey!;
-      final val = node.schemaValue!;
-      final values = node.parentEntity!.properties[propKey] ?? [];
-
-      return Padding(
-        padding: EdgeInsets.only(left: indent, right: 16.0, top: 1.0, bottom: 1.0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(4.0),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.2),
-            ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildValueEditor(appState, node.parentEntity!, propKey, val),
-              ),
-              if (values.length > 1)
-                IconButton(
-                  icon: const Icon(Icons.remove_circle_outline, size: 14.0, color: Colors.redAccent),
-                  tooltip: 'Remove Value',
-                  onPressed: () {
-                    appState.removePropertyValue(node.parentEntity!, propKey, val.id);
-                  },
-                ),
-            ],
-          ),
-        ),
-      );
     }
 
     return const SizedBox.shrink();
@@ -1387,7 +1434,7 @@ class _HomePageState extends State<HomePage>
           // Header Row
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-            color: Theme.of(context).colorScheme.surfaceContainer,
+            color: Theme.of(context).colorScheme.surfaceContainer ?? Theme.of(context).colorScheme.surface,
             child: Row(
               children: [
                 Icon(
@@ -1397,7 +1444,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 const SizedBox(width: 8.0),
                 const Text(
-                  'Hierarchical Tree View Editor',
+                  'Hierarchical Structure Map',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14.0,
@@ -1435,14 +1482,27 @@ class _HomePageState extends State<HomePage>
               ],
             ),
           ),
-          // Scrollable Tree List
+          // Scrollable Tree List - Spacious panning/dragging viewport with horizontal support
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: flatNodes.length,
-              itemBuilder: (context, index) {
-                return _buildFlatTreeNodeRow(appState, flatNodes[index]);
-              },
+            child: Scrollbar(
+              controller: _treeVerticalController,
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                controller: _treeVerticalController,
+                scrollDirection: Axis.vertical,
+                child: SingleChildScrollView(
+                  controller: _treeHorizontalController,
+                  scrollDirection: Axis.horizontal,
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    width: 750.0, // Plentiful space for any nesting level to avoid squeezing!
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: flatNodes.map((node) => _buildFlatTreeNodeRow(appState, node)).toList(),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -1507,10 +1567,9 @@ class _HomePageState extends State<HomePage>
         : entity.type;
     final schemaClass = SchemaService.instance.classes[entity.type];
     final classComment = schemaClass?.comment ?? 'No description available.';
-    final bool isWide = MediaQuery.of(context).size.width > 950.0;
 
     return Container(
-      width: isWide ? 360.0 : double.infinity,
+      width: 360.0,
       margin: const EdgeInsets.symmetric(horizontal: 6.0),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -1711,7 +1770,7 @@ class _HomePageState extends State<HomePage>
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.35),
+        color: (Theme.of(context).colorScheme.surfaceContainer ?? Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.35),
         borderRadius: BorderRadius.circular(4.0),
         border: Border(
           left: BorderSide(
@@ -2096,7 +2155,7 @@ class _HomePageState extends State<HomePage>
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 2.0),
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.35),
+        color: (Theme.of(context).colorScheme.surfaceContainer ?? Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.35),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withOpacity(0.08),
@@ -2759,90 +2818,47 @@ class _HomePageState extends State<HomePage>
         );
       }
     }
-    final bool hasComplexRanges = ranges.any((r) {
-      final String cleanR = r.replaceAll('schema:', '');
-      return !['Text', 'URL', 'Boolean', 'Number', 'Integer', 'Float', 'Date', 'DateTime', 'Time', 'DataType'].contains(cleanR);
-    });
-
-    if (hasComplexRanges) {
-      final String propName = propId.startsWith('schema:') ? propId.substring(7) : propId;
+    if (linkableDocs.isNotEmpty) {
       return Row(
         children: [
           Expanded(child: editorWidget),
           const SizedBox(width: 8.0),
-          if (linkableDocs.isNotEmpty)
-            PopupMenuButton<SchemaEntity>(
-              icon: Icon(
-                Icons.link,
-                color: Theme.of(context).colorScheme.primary,
-                size: 20.0,
-              ),
-              tooltip: 'Link to a semantically compliant open markup document',
-              onSelected: (doc) {
-                appState.updatePropertyValue(parentEntity, propId, sValue.id, {
-                  '@id': doc.id,
-                  'docName': doc.name,
-                });
-              },
-              itemBuilder: (context) => linkableDocs.map((doc) {
-                final typeLabel = doc.type.startsWith('schema:')
-                    ? doc.type.substring(7)
-                    : doc.type;
-                return PopupMenuItem<SchemaEntity>(
-                  value: doc,
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.insert_drive_file_outlined,
-                        size: 14.0,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      const SizedBox(width: 8.0),
-                      Text(
-                        '${doc.name} (${typeLabel})',
-                        style: const TextStyle(fontSize: 12.0),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            )
-          else
-            IconButton(
-              icon: Icon(
-                Icons.link,
-                color: Colors.grey.withOpacity(0.5),
-                size: 20.0,
-              ),
-              tooltip: 'No linkable documents available. Tap for info.',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Row(
-                      children: [
-                        Icon(Icons.link, color: Theme.of(context).colorScheme.primary),
-                        const SizedBox(width: 8.0),
-                        const Text('Semantic Document Linking'),
-                      ],
-                    ),
-                    content: Text(
-                      'You can link this property ("$propName") to another document matching the expected type(s): ${ranges.map((r) => r.replaceAll("schema:", "")).join(", ")}.\n\n'
-                      'To make a document linkable, ensure you:\n'
-                      '1. Create a matching document in the "Documents" tab.\n'
-                      '2. Rename it (give it a custom name) so a valid "@id" is automatically generated.\n\n'
-                      'Once done, it will appear here as a linkable option!',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Got it!'),
-                      ),
-                    ],
-                  ),
-                );
-              },
+          PopupMenuButton<SchemaEntity>(
+            icon: Icon(
+              Icons.link,
+              color: Theme.of(context).colorScheme.primary,
+              size: 20.0,
             ),
+            tooltip: 'Link to a semantically compliant open markup document',
+            onSelected: (doc) {
+              appState.updatePropertyValue(parentEntity, propId, sValue.id, {
+                '@id': doc.id,
+                'docName': doc.name,
+              });
+            },
+            itemBuilder: (context) => linkableDocs.map((doc) {
+              final typeLabel = doc.type.startsWith('schema:')
+                  ? doc.type.substring(7)
+                  : doc.type;
+              return PopupMenuItem<SchemaEntity>(
+                value: doc,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.insert_drive_file_outlined,
+                      size: 14.0,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                    const SizedBox(width: 8.0),
+                    Text(
+                      '${doc.name} (${typeLabel})',
+                      style: const TextStyle(fontSize: 12.0),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
         ],
       );
     }
@@ -3089,61 +3105,66 @@ class _HomePageState extends State<HomePage>
     final cleanCode = code.isEmpty ? '{}' : code;
     final lines = cleanCode.split('\n');
     final lineCount = lines.length;
+    final bool isMobile = MediaQuery.of(context).size.width < 950.0;
 
-    return SelectionArea(
+    final Widget view = SingleChildScrollView(
+      scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Line numbers gutter column
-              Container(
-                padding: const EdgeInsets.only(right: 12.0, left: 10.0),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    right: BorderSide(color: Color(0xFF3C3C3C), width: 1.0),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(
-                      lineCount,
-                      (i) => Text(
-                            '${i + 1}',
-                            style: const TextStyle(
-                              fontFamily: 'Courier',
-                              fontSize: 12.0,
-                              height: 1.4,
-                              color: Color(0xFF858585),
-                            ),
-                          )),
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Line numbers gutter column
+            Container(
+              padding: const EdgeInsets.only(right: 12.0, left: 10.0),
+              decoration: const BoxDecoration(
+                border: Border(
+                  right: BorderSide(color: Color(0xFF3C3C3C), width: 1.0),
                 ),
               ),
-              const SizedBox(width: 12.0),
-              // Code lines column
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: lines.map((line) {
-                  return RichText(
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontFamily: 'Courier',
-                        fontSize: 12.0,
-                        height: 1.4,
-                        color: Color(0xFFE4E4E4),
-                      ),
-                      children: _highlightJsonLine(line),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: List.generate(
+                    lineCount,
+                    (i) => Text(
+                          '${i + 1}',
+                          style: const TextStyle(
+                            fontFamily: 'Courier',
+                            fontSize: 12.0,
+                            height: 1.4,
+                            color: Color(0xFF858585),
+                          ),
+                        )),
+              ),
+            ),
+            const SizedBox(width: 12.0),
+            // Code lines column
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: lines.map((line) {
+                return RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontFamily: 'Courier',
+                      fontSize: 12.0,
+                      height: 1.4,
+                      color: Color(0xFFE4E4E4),
                     ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
+                    children: _highlightJsonLine(line),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ),
       ),
     );
+
+    if (isMobile) {
+      return view; // Omit SelectionArea on mobile viewports to prevent virtual keyboard popups entirely!
+    } else {
+      return SelectionArea(child: view);
+    }
   }
 
   List<TextSpan> _highlightJsonLine(String line) {
