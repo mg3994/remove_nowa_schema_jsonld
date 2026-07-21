@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:jsonld/globals/app_state.dart';
 import 'package:jsonld/schema_service.dart';
 import 'package:jsonld/globals/themes.dart';
@@ -1186,7 +1187,9 @@ class _HomePageState extends State<HomePage>
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     // Indentation padding
-    final double indent = node.depth * 16.0;
+    const indentStep = 20.0;
+    final visualDepth = math.min(node.depth, 10);
+    final double indent = visualDepth * indentStep;
 
     if (node.isEntity) {
       final isCollapsed = _collapsedEntityIds.contains(node.entity!.id);
@@ -1547,25 +1550,55 @@ class _HomePageState extends State<HomePage>
           ),
           // Scrollable Tree List - Spacious panning/dragging viewport with horizontal support
           Expanded(
-            child: Scrollbar(
-              controller: _treeVerticalController,
-              thumbVisibility: true,
-              child: SingleChildScrollView(
-                controller: _treeVerticalController,
-                scrollDirection: Axis.vertical,
-                child: SingleChildScrollView(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const indentStep = 20.0;
+                const minimumRowWidth = 420.0;
+                const horizontalPadding = 32.0;
+
+                final maxDepth = flatNodes.fold<int>(
+                  0,
+                  (current, node) => math.max(current, node.depth),
+                );
+
+                final requiredTreeWidth =
+                    (maxDepth * indentStep) + minimumRowWidth + horizontalPadding;
+
+                final treeWidth = math.max(
+                  constraints.maxWidth,
+                  requiredTreeWidth,
+                ).toDouble();
+
+                return Scrollbar(
                   controller: _treeHorizontalController,
-                  scrollDirection: Axis.horizontal,
-                  child: Container(
-                    padding: const EdgeInsets.all(16.0),
-                    width: 750.0, // Plentiful space for any nesting level to avoid squeezing!
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: flatNodes.map((node) => _buildFlatTreeNodeRow(appState, node)).toList(),
+                  thumbVisibility: true,
+                  interactive: true,
+                  child: SingleChildScrollView(
+                    controller: _treeHorizontalController,
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: treeWidth,
+                      height: constraints.maxHeight,
+                      child: Scrollbar(
+                        controller: _treeVerticalController,
+                        thumbVisibility: true,
+                        interactive: true,
+                        child: ListView.builder(
+                          controller: _treeVerticalController,
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: flatNodes.length,
+                          itemBuilder: (context, index) {
+                            return _buildFlatTreeNodeRow(
+                              appState,
+                              flatNodes[index],
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -4210,7 +4243,7 @@ class _HomePageState extends State<HomePage>
             onPressed: () {
               final text = _customPropController.text.trim();
               if (text.isNotEmpty) {
-                final propId = text.contains(':') ? text : 'schema:${text}';
+                final propId = (text.contains(':') || text.startsWith('@')) ? text : 'schema:${text}';
                 appState.addPropertyToEntity(entity, propId, '');
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
