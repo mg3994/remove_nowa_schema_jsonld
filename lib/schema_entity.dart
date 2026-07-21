@@ -362,7 +362,7 @@ class SchemaEntity {
       if (key == '@context' || key == '@type') {
         return;
       }
-      final String propId = key == '@reverse' ? 'schema:@reverse' : (key.contains(':') ? key : 'schema:${key}');
+      final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
       final List<SchemaValue> values = [];
       void parseValue(dynamic singleVal) {
         if (singleVal is Map<String, dynamic>) {
@@ -397,7 +397,7 @@ class SchemaEntity {
                 id: DateTime.now().microsecondsSinceEpoch.toString() +
                     '_' +
                     singleVal.hashCode.toString(),
-                value: SchemaEntity.fromJsonLd(singleVal, defaultType: key == '@reverse' ? 'schema:@reverse' : null),
+                value: SchemaEntity.fromJsonLd(singleVal, defaultType: key.startsWith('@') ? 'schema:$key' : null),
               ),
             );
           }
