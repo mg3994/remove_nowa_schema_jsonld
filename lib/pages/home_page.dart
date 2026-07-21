@@ -2614,6 +2614,34 @@ class _HomePageState extends State<HomePage>
                               ),
                             );
                           }).toList(),
+                          Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: ListTile(
+                              leading: const Icon(
+                                Icons.translate_outlined,
+                                color: Colors.purple,
+                              ),
+                              title: const Text(
+                                'Add JSON-LD Value Object (@value)',
+                                style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: const Text(
+                                'Create a literal value object with language or datatype metadata.',
+                                style: TextStyle(fontSize: 11.0),
+                              ),
+                              dense: true,
+                              onTap: () {
+                                appState.addPropertyToEntity(
+                                  entity,
+                                  propId,
+                                  {'@value': ''},
+                                );
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ),
                         ],
                       ],
                     ),
