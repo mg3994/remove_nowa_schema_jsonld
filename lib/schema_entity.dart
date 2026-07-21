@@ -177,7 +177,8 @@ class SchemaEntity {
           clean != 'Untitled Object' &&
           clean != 'Schema Document' &&
           !clean.startsWith('New ') &&
-          !clean.endsWith(' Reference');
+           !clean.endsWith(' Reference') &&
+           !clean.endsWith(' Markup');
     }
 
     final String effectiveBase = (baseUri != null && baseUri!.trim().isNotEmpty) ? baseUri!.trim() : 'https://example.com/things/';

@@ -46,6 +46,7 @@ class _HomePageState extends State<HomePage>
   final Set<String> _collapsedEntityIds = {};
   bool _isFullScreenWorkspace = false;
   List<String> _columnPath = [];
+  String? _highlightedPropertyId;
   List<String> _treeInspectPath = [];
   DateTime? _lastBackTime;
   bool _useDoubleBackStrategy = false; // Configurable exit strategy: true for Double-Back, false for Confirmation Dialog!
@@ -1231,7 +1232,18 @@ class _HomePageState extends State<HomePage>
               }
               setState(() {
                 _columnPath = path;
+                _highlightedPropertyId = null;
                 _showTreeView = false; // Smoothly slide into active workspace column pane!
+              });
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_columnScrollController.hasClients) {
+                  final double maxScroll = _columnScrollController.position.maxScrollExtent;
+                  _columnScrollController.animateTo(
+                    maxScroll,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                }
               });
             },
             leading: Row(
@@ -1381,7 +1393,18 @@ class _HomePageState extends State<HomePage>
               }
               setState(() {
                 _columnPath = path;
+                _highlightedPropertyId = node.propertyKey;
                 _showTreeView = false; // Smoothly slide into active workspace column pane!
+              });
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_columnScrollController.hasClients) {
+                  final double maxScroll = _columnScrollController.position.maxScrollExtent;
+                  _columnScrollController.animateTo(
+                    maxScroll,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                }
               });
             },
             leading: Icon(
@@ -1608,6 +1631,7 @@ class _HomePageState extends State<HomePage>
     final schemaClass = SchemaService.instance.classes[entity.type];
     final classComment = schemaClass?.comment ?? 'No description available.';
 
+    final bool isFocusedColumn = (entity == activeColumns.last);
     return Container(
       width: 360.0,
       margin: const EdgeInsets.symmetric(horizontal: 6.0),
@@ -1615,7 +1639,10 @@ class _HomePageState extends State<HomePage>
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(4.0),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
+          color: isFocusedColumn
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.outlineVariant,
+          width: isFocusedColumn ? 2.0 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
@@ -1810,23 +1837,34 @@ class _HomePageState extends State<HomePage>
     final comment = propDef?.comment ?? 'Custom user extension field';
     final List<String> ranges = propDef?.ranges ?? [];
 
+    final bool isHighlighted = (_highlightedPropertyId == propId);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: (Theme.of(context).colorScheme.surfaceContainer ?? Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.35),
+        color: isHighlighted
+            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.25)
+            : (Theme.of(context).colorScheme.surfaceContainer ?? Theme.of(context).colorScheme.surfaceVariant).withOpacity(0.35),
         borderRadius: BorderRadius.circular(4.0),
         border: Border(
           left: BorderSide(
-            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.6),
-            width: 3.0,
+            color: isHighlighted
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.tertiary.withOpacity(0.6),
+            width: isHighlighted ? 5.0 : 3.0,
           ),
           top: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
+              color: isHighlighted
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.08)),
           right: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
+              color: isHighlighted
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.08)),
           bottom: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.08)),
+              color: isHighlighted
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.08)),
         ),
       ),
       child: Column(
