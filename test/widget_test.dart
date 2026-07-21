@@ -83,6 +83,38 @@ void main() {
     expect(dateObj['@type'], equals("xsd:date"));
   });
 
+  test('Custom @type and additional Value Object properties are preserved and resolve namespaces', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": "https://schema.org",
+      "@type": "snomed:50731006",
+      "name": {
+        "@value": "Plumbing Service",
+        "@language": "en",
+        "@direction": "rtl",
+        "@index": "my-custom-index"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    final compiled = doc.toJsonLd(isRoot: true);
+
+    // Verify context contains snomed mapping
+    expect(compiled['@context'], isMap);
+    expect(compiled['@context']['snomed'], equals("http://purl.bioontology.org/ontology/SNOMEDCT/"));
+
+    // Verify root type is kept
+    expect(compiled['@type'], equals("snomed:50731006"));
+
+    // Verify value object retains direction and index
+    final nameObj = compiled['name'];
+    expect(nameObj, isMap);
+    expect(nameObj['@value'], equals("Plumbing Service"));
+    expect(nameObj['@language'], equals("en"));
+    expect(nameObj['@direction'], equals("rtl"));
+    expect(nameObj['@index'], equals("my-custom-index"));
+  });
+
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
     // Initialize SharedPreferences with mock values
     SharedPreferences.setMockInitialValues({});

@@ -2709,62 +2709,112 @@ class _HomePageState extends State<HomePage>
     final valueController = TextEditingController(text: mapVal['@value']?.toString() ?? '');
     final languageController = TextEditingController(text: mapVal['@language']?.toString() ?? '');
     final typeController = TextEditingController(text: mapVal['@type']?.toString() ?? '');
+    final indexController = TextEditingController(text: mapVal['@index']?.toString() ?? '');
+
+    String? selectedDirection = mapVal['@direction']?.toString();
+    if (selectedDirection != 'ltr' && selectedDirection != 'rtl') {
+      selectedDirection = null;
+    }
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Value Object', style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: valueController,
-                  decoration: const InputDecoration(
-                    labelText: 'Value (@value)',
-                    hintText: 'e.g. Plumbing Service',
-                  ),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Edit Value Object', style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: valueController,
+                      decoration: const InputDecoration(
+                        labelText: 'Value (@value)',
+                        hintText: 'e.g. Plumbing Service',
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    TextField(
+                      controller: languageController,
+                      decoration: const InputDecoration(
+                        labelText: 'Language (@language)',
+                        hintText: 'e.g. en, hi, es',
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    DropdownButtonFormField<String>(
+                      value: selectedDirection,
+                      decoration: const InputDecoration(
+                        labelText: 'Direction (@direction)',
+                      ),
+                      items: const [
+                        DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('(None)'),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'ltr',
+                          child: Text('Left-to-Right (ltr)'),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'rtl',
+                          child: Text('Right-to-Left (rtl)'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        setDialogState(() {
+                          selectedDirection = val;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12.0),
+                    TextField(
+                      controller: typeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Datatype Type (@type)',
+                        hintText: 'e.g. xsd:date',
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    TextField(
+                      controller: indexController,
+                      decoration: const InputDecoration(
+                        labelText: 'Index (@index)',
+                        hintText: 'e.g. 1, first, my-index',
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12.0),
-                TextField(
-                  controller: languageController,
-                  decoration: const InputDecoration(
-                    labelText: 'Language (@language)',
-                    hintText: 'e.g. en, hi, es',
-                  ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
                 ),
-                const SizedBox(height: 12.0),
-                TextField(
-                  controller: typeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Datatype Type (@type)',
-                    hintText: 'e.g. xsd:date',
-                  ),
+                ElevatedButton(
+                  onPressed: () {
+                    final Map<String, dynamic> newMap = {'@value': valueController.text};
+                    if (languageController.text.trim().isNotEmpty) {
+                      newMap['@language'] = languageController.text.trim();
+                    }
+                    if (selectedDirection != null) {
+                      newMap['@direction'] = selectedDirection;
+                    }
+                    if (typeController.text.trim().isNotEmpty) {
+                      newMap['@type'] = typeController.text.trim();
+                    }
+                    if (indexController.text.trim().isNotEmpty) {
+                      newMap['@index'] = indexController.text.trim();
+                    }
+                    appState.updatePropertyValue(entity, propId, sValue.id, newMap);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Save'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final Map<String, dynamic> newMap = {'@value': valueController.text};
-                if (languageController.text.trim().isNotEmpty) {
-                  newMap['@language'] = languageController.text.trim();
-                }
-                if (typeController.text.trim().isNotEmpty) {
-                  newMap['@type'] = typeController.text.trim();
-                }
-                appState.updatePropertyValue(entity, propId, sValue.id, newMap);
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -2784,9 +2834,13 @@ class _HomePageState extends State<HomePage>
       final valueStr = mapVal['@value']?.toString() ?? '';
       final lang = mapVal['@language']?.toString();
       final type = mapVal['@type']?.toString();
+      final dir = mapVal['@direction']?.toString();
+      final idx = mapVal['@index']?.toString();
       final displayDetails = [
         if (lang != null) 'Language: $lang',
+        if (dir != null) 'Direction: $dir',
         if (type != null) 'Type: $type',
+        if (idx != null) 'Index: $idx',
       ].join(' • ');
 
       return Card(

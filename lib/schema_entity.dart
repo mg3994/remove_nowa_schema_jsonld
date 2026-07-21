@@ -107,6 +107,13 @@ class SchemaEntity {
 
   void _collectUsedNamespaces(dynamic val, Set<String> used) {
     if (val is SchemaEntity) {
+      final t = val.type;
+      if (t.contains(':')) {
+        final prefix = t.split(':').first;
+        if (_namespaces.containsKey(prefix)) {
+          used.add(prefix);
+        }
+      }
       for (var values in val.properties.values) {
         for (var sv in values) {
           _collectUsedNamespaces(sv.value, used);
@@ -163,9 +170,9 @@ class SchemaEntity {
     }
     final String typeName =
         type.startsWith('schema:') ? type.substring(7) : type;
-    final bool isReverseMap = typeName == '@reverse';
+    final bool isKeyword = typeName.startsWith('@');
 
-    if (!isReverseMap) {
+    if (!isKeyword) {
       result['@type'] = typeName;
     }
 
@@ -184,7 +191,7 @@ class SchemaEntity {
     final String effectiveBase = (baseUri != null && baseUri!.trim().isNotEmpty) ? baseUri!.trim() : 'https://example.com/things/';
 
     // Dynamic @id generation based on renamed name or preserved absolute URIs
-    if (!isReverseMap) {
+    if (!isKeyword) {
       if (isNameRenamed(name)) {
         final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
         result['@id'] = '#$safeId';
