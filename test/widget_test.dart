@@ -115,6 +115,39 @@ void main() {
     expect(nameObj['@index'], equals("my-custom-index"));
   });
 
+  test('Custom context mapping and native language map containers are preserved perfectly', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": {
+        "@vocab": "https://schema.org/",
+        "name": {
+          "@container": "@language"
+        }
+      },
+      "@type": "LocalBusiness",
+      "name": {
+        "en": "Antinna Plumbing",
+        "hi": "एंटिन्ना प्लंबिंग"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    final compiled = doc.toJsonLd(isRoot: true);
+
+    // Verify context contains custom name mapping block exactly as imported
+    expect(compiled['@context'], isMap);
+    expect(compiled['@context']['name'], isMap);
+    expect(compiled['@context']['name']['@container'], equals("@language"));
+
+    // Verify name value retains original language map without wrong node promotion
+    final nameObj = compiled['name'];
+    expect(nameObj, isMap);
+    expect(nameObj['en'], equals("Antinna Plumbing"));
+    expect(nameObj['hi'], equals("एंटिन्ना प्लंबिंग"));
+    expect(nameObj.containsKey('@type'), isFalse);
+    expect(nameObj.containsKey('@id'), isFalse);
+  });
+
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
     // Initialize SharedPreferences with mock values
     SharedPreferences.setMockInitialValues({});

@@ -17,6 +17,7 @@ class SchemaEntity {
     required this.properties,
     this.name = 'Untitled Document',
     this.baseUri,
+    this.customContext,
   });
 
   final String id;
@@ -28,6 +29,8 @@ class SchemaEntity {
   String name;
 
   String? baseUri;
+
+  Map<String, dynamic>? customContext;
 
   static const Map<String, String> _namespaces = {
     'bibo': 'http://purl.org/ontology/bibo/',
@@ -143,12 +146,16 @@ class SchemaEntity {
       final Set<String> usedPrefixes = {};
       _collectUsedNamespaces(this, usedPrefixes);
 
-      final Map<String, String> extraContext = {};
+      final Map<String, dynamic> extraContext = {};
       for (var prefix in usedPrefixes) {
         final nsUrl = _namespaces[prefix];
         if (nsUrl != null) {
           extraContext[prefix] = nsUrl;
         }
+      }
+
+      if (customContext != null) {
+        extraContext.addAll(customContext!);
       }
 
       if (baseUri == null || baseUri!.trim().isEmpty) {
@@ -184,8 +191,8 @@ class SchemaEntity {
           clean != 'Untitled Object' &&
           clean != 'Schema Document' &&
           !clean.startsWith('New ') &&
-           !clean.endsWith(' Reference') &&
-           !clean.endsWith(' Markup');
+          !clean.endsWith(' Reference') &&
+          !clean.endsWith(' Markup');
     }
 
     final String effectiveBase = (baseUri != null && baseUri!.trim().isNotEmpty) ? baseUri!.trim() : 'https://example.com/things/';
@@ -270,6 +277,7 @@ class SchemaEntity {
       properties: clonedProps,
       name: name,
       baseUri: baseUri,
+      customContext: customContext != null ? Map<String, dynamic>.from(customContext!) : null,
     );
   }
 
@@ -277,6 +285,9 @@ class SchemaEntity {
     final Map<String, dynamic> serialized = {};
     if (baseUri != null) {
       serialized['_baseUri'] = baseUri;
+    }
+    if (customContext != null) {
+      serialized['_customContext'] = customContext;
     }
     properties.forEach((propId, values) {
       final List<dynamic> listData = [];
@@ -358,6 +369,18 @@ class SchemaEntity {
         json['@type']?.toString() ?? defaultType ?? 'schema:Thing';
     final String normalizedType = type.contains(':') ? type : 'schema:${type}';
     final Map<String, List<SchemaValue>> properties = {};
+
+    Map<String, dynamic>? customCtx;
+    final ctx = json['@context'];
+    if (ctx is Map) {
+      customCtx = {};
+      ctx.forEach((k, v) {
+        if (k != '@vocab' && k != '@base') {
+          customCtx![k.toString()] = v;
+        }
+      });
+    }
+
     json.forEach((key, val) {
       if (key == '@context' || key == '@type') {
         return;
@@ -365,10 +388,13 @@ class SchemaEntity {
       final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
       final List<SchemaValue> values = [];
       void parseValue(dynamic singleVal) {
-        if (singleVal is Map<String, dynamic>) {
-          if (singleVal.containsKey('@value')) {
-            // Rule 3: Detect Value Objects (contains @value)
-            // Preserve the Value Object exactly as imported!
+        if (singleVal is Map) {
+          final bool hasValue = singleVal.containsKey('@value');
+          final bool hasId = singleVal.containsKey('@id');
+          final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@'));
+
+          if (hasValue || (!hasId && !hasAtKeys)) {
+            // Rule 3 & 4: Preserve Value Objects, container/language mappings as-is as raw maps!
             values.add(
               SchemaValue(
                 id: DateTime.now().microsecondsSinceEpoch.toString() +
@@ -377,7 +403,7 @@ class SchemaEntity {
                 value: Map<String, dynamic>.from(singleVal),
               ),
             );
-          } else if (singleVal.containsKey('@id')) {
+          } else if (hasId) {
             final refId = singleVal['@id'].toString().replaceAll('#', '');
             values.add(
               SchemaValue(
@@ -397,7 +423,7 @@ class SchemaEntity {
                 id: DateTime.now().microsecondsSinceEpoch.toString() +
                     '_' +
                     singleVal.hashCode.toString(),
-                value: SchemaEntity.fromJsonLd(singleVal, defaultType: key.startsWith('@') ? 'schema:$key' : null),
+                value: SchemaEntity.fromJsonLd(Map<String, dynamic>.from(singleVal), defaultType: key.startsWith('@') ? 'schema:$key' : null),
               ),
             );
           }
@@ -456,6 +482,7 @@ class SchemaEntity {
       type: normalizedType,
       properties: properties,
       name: docName ?? '${type.split(':').last} Markup',
+      customContext: customCtx,
     );
   }
 }
