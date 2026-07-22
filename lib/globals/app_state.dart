@@ -95,6 +95,8 @@ class AppState extends ChangeNotifier {
             type: d.type,
             properties: props,
             baseUri: rawProps['_baseUri']?.toString(),
+            customContext: rawProps['_customContext'] != null ? Map<String, dynamic>.from(rawProps['_customContext'] as Map) : null,
+            ldVersion: rawProps['_ldVersion'] != null ? double.tryParse(rawProps['_ldVersion'].toString()) : null,
           ));
         }
       }

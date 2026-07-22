@@ -18,6 +18,7 @@ class SchemaEntity {
     this.name = 'Untitled Document',
     this.baseUri,
     this.customContext,
+    this.ldVersion,
   });
 
   final String id;
@@ -31,6 +32,8 @@ class SchemaEntity {
   String? baseUri;
 
   Map<String, dynamic>? customContext;
+
+  double? ldVersion;
 
   static const Map<String, String> _namespaces = {
     'bibo': 'http://purl.org/ontology/bibo/',
@@ -159,9 +162,10 @@ class SchemaEntity {
       }
 
       if (baseUri == null || baseUri!.trim().isEmpty) {
-        if (extraContext.isNotEmpty) {
+        if (extraContext.isNotEmpty || ldVersion != null) {
           result['@context'] = {
             '@vocab': 'https://schema.org/',
+            if (ldVersion != null) '@version': ldVersion,
             ...extraContext,
           };
         } else {
@@ -171,6 +175,7 @@ class SchemaEntity {
         result['@context'] = {
           '@vocab': 'https://schema.org/',
           '@base': baseUri!.trim(),
+          if (ldVersion != null) '@version': ldVersion,
           ...extraContext,
         };
       }
@@ -278,6 +283,7 @@ class SchemaEntity {
       name: name,
       baseUri: baseUri,
       customContext: customContext != null ? Map<String, dynamic>.from(customContext!) : null,
+      ldVersion: ldVersion,
     );
   }
 
@@ -288,6 +294,9 @@ class SchemaEntity {
     }
     if (customContext != null) {
       serialized['_customContext'] = customContext;
+    }
+    if (ldVersion != null) {
+      serialized['_ldVersion'] = ldVersion;
     }
     properties.forEach((propId, values) {
       final List<dynamic> listData = [];
@@ -370,12 +379,15 @@ class SchemaEntity {
     final String normalizedType = type.contains(':') ? type : 'schema:${type}';
     final Map<String, List<SchemaValue>> properties = {};
 
+    double? parsedLdVersion;
     Map<String, dynamic>? customCtx;
     final ctx = json['@context'];
     if (ctx is Map) {
       customCtx = {};
       ctx.forEach((k, v) {
-        if (k != '@vocab' && k != '@base') {
+        if (k == '@version') {
+          parsedLdVersion = double.tryParse(v.toString());
+        } else if (k != '@vocab' && k != '@base') {
           customCtx![k.toString()] = v;
         }
       });
@@ -483,6 +495,7 @@ class SchemaEntity {
       properties: properties,
       name: docName ?? '${type.split(':').last} Markup',
       customContext: customCtx,
+      ldVersion: parsedLdVersion,
     );
   }
 }
