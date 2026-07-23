@@ -462,7 +462,7 @@ class SchemaEntity {
                 value: Map<String, dynamic>.from(singleVal),
               ),
             );
-          } else if (hasId) {
+          } else if (hasId && !singleVal.containsKey('@type') && singleVal.keys.length <= 2) {
             final refId = singleVal['@id'].toString().replaceAll('#', '');
             values.add(
               SchemaValue(

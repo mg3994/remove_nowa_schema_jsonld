@@ -1,5 +1,5 @@
 name: jsonld
-description: A new Nowa project.
+description: JSON LD Visual Editor - A powerful, premium cascading column builder for Schema.org JSON-LD and YAML-LD.
 publish_to: none
 version: 1.0.0+1
 environment:

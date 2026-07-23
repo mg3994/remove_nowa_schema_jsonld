@@ -184,6 +184,72 @@ void main() {
     expect(yamlOutput, contains("en: Antinna Plumbing"));
   });
 
+  test('Advanced JSON-LD Keywords Support (reverse, included, nest, protected, propagate)', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": {
+        "@vocab": "https://schema.org/",
+        "id": {
+          "@id": "https://schema.org/identifier",
+          "@protected": true
+        },
+        "@propagate": false
+      },
+      "@type": "Person",
+      "name": "Alice",
+      "@reverse": {
+        "employee": {
+          "@type": "Organization",
+          "name": "Acme Corp"
+        }
+      },
+      "@nest": {
+        "telephone": "+1-555-0199",
+        "email": "info@example.com"
+      },
+      "@included": [
+        {
+          "@type": "Person",
+          "@id": "https://example.com/authors/jane",
+          "name": "Jane Doe"
+        }
+      ]
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    // Verify properties mapped to internal representation with correct schema prefixing
+    expect(doc.type, equals("schema:Person"));
+    expect(doc.properties.containsKey("schema:@reverse"), isTrue);
+    expect(doc.properties.containsKey("schema:@nest"), isTrue);
+    expect(doc.properties.containsKey("schema:@included"), isTrue);
+
+    final compiled = doc.toJsonLd(isRoot: true, targetVersion: '1.1');
+
+    // Verify context contains protected and propagate rules
+    expect(compiled['@context'], isMap);
+    expect(compiled['@context']['id'], isMap);
+    expect(compiled['@context']['id']['@protected'], isTrue);
+    expect(compiled['@context']['@propagate'], isFalse);
+
+    // Verify @reverse is compiled back perfectly
+    expect(compiled['@reverse'], isMap);
+    final employeeVal = compiled['@reverse']['employee'];
+    expect(employeeVal, isMap);
+    expect(employeeVal['@type'], equals("Organization"));
+    expect(employeeVal['name'], equals("Acme Corp"));
+
+    // Verify @nest is compiled back perfectly
+    expect(compiled['@nest'], isMap);
+    expect(compiled['@nest']['telephone'], equals("+1-555-0199"));
+    expect(compiled['@nest']['email'], equals("info@example.com"));
+
+    // Verify @included is compiled back perfectly
+    final includedVal = compiled['@included'];
+    final Map<String, dynamic> includedNode = (includedVal is List) ? includedVal.first as Map<String, dynamic> : includedVal as Map<String, dynamic>;
+    expect(includedNode['@type'], equals("Person"));
+    expect(includedNode['name'], equals("Jane Doe"));
+  });
+
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
     // Initialize SharedPreferences with mock values
     SharedPreferences.setMockInitialValues({});
