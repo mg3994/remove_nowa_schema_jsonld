@@ -34,6 +34,16 @@ class AppState extends ChangeNotifier {
 
   String _jsonLdOutput = '';
 
+  String _selectedLdVersion = '1.1';
+
+  String get selectedLdVersion => _selectedLdVersion;
+
+  void generateJsonLdOutputWithVersion(String version) {
+    _selectedLdVersion = version;
+    generateJsonLdOutput();
+    notifyListeners();
+  }
+
   Timer? _debounceTimer;
   String _saveStatus = 'Saved';
 
@@ -340,9 +350,17 @@ class AppState extends ChangeNotifier {
         for (final doc in _documents) {
           idToName[doc.id] = doc.name;
         }
-        final map = root.toJsonLd(isRoot: true, docIdToName: idToName);
-        final encoder = const JsonEncoder.withIndent('  ');
-        _jsonLdOutput = encoder.convert(map);
+        final map = root.toJsonLd(
+          isRoot: true,
+          docIdToName: idToName,
+          targetVersion: _selectedLdVersion,
+        );
+        if (_selectedLdVersion == 'yaml-ld') {
+          _jsonLdOutput = root.convertToYaml(map);
+        } else {
+          final encoder = const JsonEncoder.withIndent('  ');
+          _jsonLdOutput = encoder.convert(map);
+        }
       } catch (e) {
         _jsonLdOutput = 'Error generating JSON-LD: ${e}';
       }

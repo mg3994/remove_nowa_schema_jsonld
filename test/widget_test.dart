@@ -148,6 +148,42 @@ void main() {
     expect(nameObj.containsKey('@id'), isFalse);
   });
 
+  test('JSON-LD 1.0 down-conversion expands language maps and YAML-LD serialization converts cleanly', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": {
+        "@vocab": "https://schema.org/",
+        "name": {
+          "@container": "@language"
+        }
+      },
+      "@type": "LocalBusiness",
+      "name": {
+        "en": "Antinna Plumbing",
+        "hi": "एंटिन्ना प्लंबिंग"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    // 1. Verify JSON-LD 1.0 down-conversion expands container maps
+    final compiled10 = doc.toJsonLd(isRoot: true, targetVersion: '1.0');
+    expect(compiled10['@context'], isMap);
+    expect(compiled10['@context'].containsKey('@version'), isFalse); // Omit @version in 1.0
+
+    final nameList = compiled10['name'];
+    expect(nameList, isList); // Should expand to a list of explicit objects
+    expect(nameList[0]['@value'], equals("Antinna Plumbing"));
+    expect(nameList[0]['@language'], equals("en"));
+    expect(nameList[1]['@value'], equals("एंटिन्ना प्लंबिंग"));
+    expect(nameList[1]['@language'], equals("hi"));
+
+    // 2. Verify YAML-LD conversion serializes cleanly
+    final yamlOutput = doc.convertToYaml(sourceJson);
+    expect(yamlOutput, contains("@context:"));
+    expect(yamlOutput, contains('@vocab: "https://schema.org/"'));
+    expect(yamlOutput, contains("en: Antinna Plumbing"));
+  });
+
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
     // Initialize SharedPreferences with mock values
     SharedPreferences.setMockInitialValues({});

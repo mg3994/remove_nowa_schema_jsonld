@@ -1832,6 +1832,68 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const SizedBox(height: 12.0),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.settings_suggest_outlined,
+                  size: 16.0,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8.0),
+                const Text(
+                  'Format Version',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                SizedBox(
+                  height: 28.0,
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: appState.selectedLdVersion,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      items: const [
+                        DropdownMenuItem<String>(
+                          value: '1.0',
+                          child: Text('JSON-LD 1.0 (Legacy)'),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: '1.1',
+                          child: Text('JSON-LD 1.1 (Modern)'),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: '1.2',
+                          child: Text('JSON-LD 1.2 (Strict)'),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'yaml-ld',
+                          child: Text('YAML-LD Format'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          appState.generateJsonLdOutputWithVersion(val);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12.0),
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(12.0),

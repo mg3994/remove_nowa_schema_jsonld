@@ -1,5 +1,6 @@
 import 'package:jsonld/schema_value.dart';
 import 'package:jsonld/schema_service.dart';
+import 'dart:math' as math;
 
 class SchemaEntity {
   bool _isEnumerationValue(String value) {
@@ -143,7 +144,11 @@ class SchemaEntity {
     }
   }
 
-  Map<String, dynamic> toJsonLd({bool isRoot = false, Map<String, String>? docIdToName}) {
+  Map<String, dynamic> toJsonLd({
+    bool isRoot = false,
+    Map<String, String>? docIdToName,
+    String targetVersion = '1.1',
+  }) {
     final Map<String, dynamic> result = {};
     if (isRoot) {
       final Set<String> usedPrefixes = {};
@@ -158,14 +163,43 @@ class SchemaEntity {
       }
 
       if (customContext != null) {
-        extraContext.addAll(customContext!);
+        customContext!.forEach((k, v) {
+          if (targetVersion == '1.0') {
+            // Strip / flatten 1.1 features
+            if (v is Map) {
+              final Map<String, dynamic> filteredTerm = {};
+              v.forEach((tk, tv) {
+                if (tk != '@protected' && tk != '@nest') {
+                  if (tk == '@container') {
+                    if (tv == '@list' || tv == '@set' || tv == '@language' || tv == '@index') {
+                      filteredTerm[tk] = tv;
+                    }
+                  } else {
+                    filteredTerm[tk] = tv;
+                  }
+                }
+              });
+              if (filteredTerm.isNotEmpty) {
+                extraContext[k] = filteredTerm;
+              }
+            } else if (v != '@nest') {
+              extraContext[k] = v;
+            }
+          } else {
+            extraContext[k] = v;
+          }
+        });
       }
 
+      final double? activeVersion = (targetVersion == '1.2')
+          ? 1.2
+          : (targetVersion == '1.1' || targetVersion == 'yaml-ld' ? 1.1 : null);
+
       if (baseUri == null || baseUri!.trim().isEmpty) {
-        if (extraContext.isNotEmpty || ldVersion != null) {
+        if (extraContext.isNotEmpty || activeVersion != null) {
           result['@context'] = {
             '@vocab': 'https://schema.org/',
-            if (ldVersion != null) '@version': ldVersion,
+            if (activeVersion != null) '@version': activeVersion,
             ...extraContext,
           };
         } else {
@@ -175,7 +209,7 @@ class SchemaEntity {
         result['@context'] = {
           '@vocab': 'https://schema.org/',
           '@base': baseUri!.trim(),
-          if (ldVersion != null) '@version': ldVersion,
+          if (activeVersion != null) '@version': activeVersion,
           ...extraContext,
         };
       }
@@ -224,7 +258,7 @@ class SchemaEntity {
       final List<dynamic> jsonValues = [];
       for (var val in values) {
         if (val.value is SchemaEntity) {
-          jsonValues.add((val.value as SchemaEntity).toJsonLd(isRoot: false, docIdToName: docIdToName));
+          jsonValues.add((val.value as SchemaEntity).toJsonLd(isRoot: false, docIdToName: docIdToName, targetVersion: targetVersion));
         } else if (val.value is Map && (val.value as Map).containsKey('@value')) {
           // Rule 1: Preserve Value Objects exactly as imported, do NOT add node metadata!
           jsonValues.add(val.value);
@@ -243,6 +277,19 @@ class SchemaEntity {
             } else {
               jsonValues.add({'@id': '#$targetDocId'});
             }
+          }
+        } else if (val.value is Map) {
+          final mapVal = val.value as Map;
+          if (targetVersion == '1.0') {
+            // Expand shorthand language maps into @value and @language array!
+            for (var entry in mapVal.entries) {
+              jsonValues.add({
+                '@value': entry.value,
+                '@language': entry.key,
+              });
+            }
+          } else {
+            jsonValues.add(mapVal);
           }
         } else if (val.value is String) {
           final String strVal = val.value as String;
@@ -497,5 +544,76 @@ class SchemaEntity {
       customContext: customCtx,
       ldVersion: parsedLdVersion,
     );
+  }
+
+  String convertToYaml(dynamic value, {int indent = 0}) {
+    final spaces = '  ' * indent;
+    if (value is Map) {
+      if (value.isEmpty) {
+        return '{}';
+      }
+      final buffer = StringBuffer();
+      var first = true;
+      value.forEach((k, v) {
+        if (!first) {
+          buffer.write('\n');
+        }
+        first = false;
+        buffer.write('$spaces$k:');
+        if (v is Map || v is List) {
+          buffer.write('\n');
+          buffer.write(convertToYaml(v, indent: indent + 1));
+        } else {
+          buffer.write(' ${_escapeYamlString(v)}');
+        }
+      });
+      return buffer.toString();
+    } else if (value is List) {
+      if (value.isEmpty) {
+        return '[]';
+      }
+      final buffer = StringBuffer();
+      var first = true;
+      for (var item in value) {
+        if (!first) {
+          buffer.write('\n');
+        }
+        first = false;
+        if (item is Map || item is List) {
+          buffer.write('$spaces- \n');
+          buffer.write(convertToYaml(item, indent: indent + 1));
+        } else {
+          buffer.write('$spaces- ${_escapeYamlString(item)}');
+        }
+      }
+      return buffer.toString();
+    } else {
+      return _escapeYamlString(value);
+    }
+  }
+
+  String _escapeYamlString(dynamic value) {
+    if (value == null) {
+      return 'null';
+    }
+    if (value is bool) {
+      return value ? 'true' : 'false';
+    }
+    if (value is num) {
+      return value.toString();
+    }
+    final str = value.toString();
+    if (str.contains(':') ||
+        str.contains('\n') ||
+        str.contains('-') ||
+        str.contains('#') ||
+        str.contains('[') ||
+        str.contains(']') ||
+        str.contains('{') ||
+        str.contains('}') ||
+        str.contains('@')) {
+      return '"${str.replaceAll('"', '\\"')}"';
+    }
+    return str;
   }
 }
