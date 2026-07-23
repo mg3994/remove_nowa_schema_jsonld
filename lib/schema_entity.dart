@@ -280,7 +280,10 @@ class SchemaEntity {
           }
         } else if (val.value is Map) {
           final mapVal = val.value as Map;
-          if (targetVersion == '1.0') {
+          final bool isLanguageMap = !propName.startsWith('@') &&
+              mapVal.isNotEmpty &&
+              mapVal.keys.every((k) => RegExp(r'^[a-z]{2,3}(-[a-zA-Z0-9]{2,4})?$').hasMatch(k.toString()));
+          if (targetVersion == '1.0' && isLanguageMap) {
             // Expand shorthand language maps into @value and @language array!
             for (var entry in mapVal.entries) {
               jsonValues.add({

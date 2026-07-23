@@ -248,6 +248,17 @@ void main() {
     final Map<String, dynamic> includedNode = (includedVal is List) ? includedVal.first as Map<String, dynamic> : includedVal as Map<String, dynamic>;
     expect(includedNode['@type'], equals("Person"));
     expect(includedNode['name'], equals("Jane Doe"));
+
+    // Verify converting to 1.0 does NOT incorrectly expand @reverse, @nest, or @included into language value/language arrays
+    final compiled10 = doc.toJsonLd(isRoot: true, targetVersion: '1.0');
+
+    expect(compiled10['@reverse'], isMap);
+    expect(compiled10['@reverse']['employee'], isMap);
+    expect(compiled10['@reverse']['employee']['@type'], equals("Organization"));
+
+    expect(compiled10['@nest'], isMap);
+    expect(compiled10['@nest']['telephone'], equals("+1-555-0199"));
+    expect(compiled10['@nest']['email'], equals("info@example.com"));
   });
 
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
