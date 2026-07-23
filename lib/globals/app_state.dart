@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jsonld/globals/themes.dart';
 import 'package:jsonld/schema_entity.dart';
 import 'package:jsonld/schema_service.dart';
@@ -97,24 +98,31 @@ class AppState extends ChangeNotifier {
       if (savedDocs.isNotEmpty) {
         _documents.clear();
         for (var d in savedDocs) {
-          final rawProps = json.decode(d.propertiesJson) as Map<String, dynamic>;
-          final props = SchemaEntity.deserializeProperties(rawProps);
-          _documents.add(SchemaEntity(
-            id: d.id,
-            name: d.name,
-            type: d.type,
-            properties: props,
-            baseUri: rawProps['_baseUri']?.toString(),
-            customContext: rawProps['_customContext'] != null ? Map<String, dynamic>.from(rawProps['_customContext'] as Map) : null,
-            ldVersion: rawProps['_ldVersion'] != null ? double.tryParse(rawProps['_ldVersion'].toString()) : null,
-          ));
+          try {
+            final rawProps = json.decode(d.propertiesJson) as Map<String, dynamic>;
+            final props = SchemaEntity.deserializeProperties(rawProps);
+            _documents.add(SchemaEntity(
+              id: d.id,
+              name: d.name,
+              type: d.type,
+              properties: props,
+              baseUri: rawProps['_baseUri']?.toString(),
+              customContext: rawProps['_customContext'] != null ? Map<String, dynamic>.from(rawProps['_customContext'] as Map) : null,
+              ldVersion: rawProps['_ldVersion'] != null ? double.tryParse(rawProps['_ldVersion'].toString()) : null,
+            ));
+          } catch (rowErr) {
+            debugPrint('Error parsing row ID ${d.id}: $rowErr');
+          }
         }
       }
     } catch (e) {
       debugPrint('Error loading documents from Drift: $e');
     }
 
-    if (_documents.isEmpty) {
+    final prefs = await SharedPreferences.getInstance();
+    final bool hasInitializedDb = prefs.getBool('has_initialized_db') ?? false;
+
+    if (_documents.isEmpty && !hasInitializedDb) {
       final doc1 = SchemaEntity(
         id: 'doc_1',
         name: 'My Personal Profile',
@@ -143,6 +151,7 @@ class AppState extends ChangeNotifier {
       _documents.add(doc2);
       await persistDocument(doc1, immediate: true);
       await persistDocument(doc2, immediate: true);
+      await prefs.setBool('has_initialized_db', true);
     }
     generateJsonLdOutput();
     notifyListeners();
