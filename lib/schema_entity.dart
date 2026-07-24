@@ -452,11 +452,14 @@ class SchemaEntity {
       void parseValue(dynamic singleVal) {
         if (singleVal is Map) {
           final bool hasValue = singleVal.containsKey('@value');
+          final bool hasList = singleVal.containsKey('@list');
+          final bool hasSet = singleVal.containsKey('@set');
+          final bool hasIndex = singleVal.containsKey('@index') && !singleVal.containsKey('@type');
           final bool hasId = singleVal.containsKey('@id');
-          final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@'));
+          final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@') && k != '@list' && k != '@set' && k != '@index');
 
-          if (hasValue || (!hasId && !hasAtKeys)) {
-            // Rule 3 & 4: Preserve Value Objects, container/language mappings as-is as raw maps!
+          if (hasValue || hasList || hasSet || hasIndex || (!hasId && !hasAtKeys)) {
+            // Rule 3 & 4: Preserve Value Objects, container/language mappings, lists, sets, and indices as-is as raw maps!
             values.add(
               SchemaValue(
                 id: DateTime.now().microsecondsSinceEpoch.toString() +

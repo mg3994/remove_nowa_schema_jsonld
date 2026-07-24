@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jsonld/main.dart';
 import 'package:jsonld/schema_entity.dart';
+import 'package:jsonld/globals/app_state.dart';
 
 void main() {
   test('Value Object preservation and custom baseUri compilation test', () {
@@ -259,6 +260,75 @@ void main() {
     expect(compiled10['@nest'], isMap);
     expect(compiled10['@nest']['telephone'], equals("+1-555-0199"));
     expect(compiled10['@nest']['email'], equals("info@example.com"));
+  });
+
+  test('Preservation of @list, @set, and @index containers', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "steps": {
+        "@list": [
+          "Turn off water supply",
+          "Replace washer"
+        ]
+      },
+      "tags": {
+        "@set": ["plumbing", "repairs"]
+      },
+      "customField": {
+        "@value": "Stashed value",
+        "@index": "draft-v1"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    final compiled = doc.toJsonLd(isRoot: true);
+
+    // Verify @list is preserved
+    expect(compiled['steps'], isMap);
+    expect(compiled['steps']['@list'], isList);
+    expect(compiled['steps']['@list'][0], equals("Turn off water supply"));
+
+    // Verify @set is preserved
+    expect(compiled['tags'], isMap);
+    expect(compiled['tags']['@set'], isList);
+    expect(compiled['tags']['@set'][0], equals("plumbing"));
+
+    // Verify @index is preserved
+    expect(compiled['customField'], isMap);
+    expect(compiled['customField']['@value'], equals("Stashed value"));
+    expect(compiled['customField']['@index'], equals("draft-v1"));
+  });
+
+  test('Importing @graph with multiple entities creates separate documents', () {
+    final state = AppState();
+    final String multiGraphJson = """
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "name": "Alice"
+        },
+        {
+          "@type": "Organization",
+          "name": "Tech Corp"
+        }
+      ]
+    }
+    """;
+
+    // Call importJsonLd
+    final success = state.importJsonLd(multiGraphJson);
+    expect(success, isTrue);
+
+    // Verify both documents are imported separately
+    expect(state.documents.length, equals(2));
+    expect(state.documents[0].type, equals("schema:Person"));
+    expect(state.documents[0].name, equals("Person Markup"));
+    expect(state.documents[1].type, equals("schema:Organization"));
+    expect(state.documents[1].name, equals("Organization Markup"));
   });
 
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
