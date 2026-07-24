@@ -262,7 +262,10 @@ class SchemaEntity {
         } else if (val.value is Map && (val.value as Map).containsKey('@value')) {
           // Rule 1: Preserve Value Objects exactly as imported, do NOT add node metadata!
           jsonValues.add(val.value);
-        } else if (val.value is Map && (val.value as Map).containsKey('@id')) {
+        } else if (val.value is Map &&
+            (val.value as Map).containsKey('@id') &&
+            !(val.value as Map).containsKey('@type') &&
+            (val.value as Map).keys.length <= 2) {
           final targetDocId = (val.value as Map)['@id'] as String;
           final targetDocName = docIdToName?[targetDocId] ?? (val.value as Map)['docName'] ?? '';
           if (isNameRenamed(targetDocName)) {

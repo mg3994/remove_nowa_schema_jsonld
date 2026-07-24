@@ -311,6 +311,7 @@ void main() {
         },
         {
           "@type": "Organization",
+          "@id": "https://example.com/about#company",
           "name": "Tech Corp"
         }
       ]
@@ -331,7 +332,10 @@ void main() {
     expect(compiled['@graph'].length, equals(2));
     expect(compiled['@graph'][0]['@type'], equals("Person"));
     expect(compiled['@graph'][0]['name'], equals("Alice"));
+
+    // Verify Organization with @id was NOT dropped or reduced to reference pointer
     expect(compiled['@graph'][1]['@type'], equals("Organization"));
+    expect(compiled['@graph'][1]['@id'], equals("https://example.com/about#company"));
     expect(compiled['@graph'][1]['name'], equals("Tech Corp"));
   });
 
