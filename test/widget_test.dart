@@ -301,10 +301,8 @@ void main() {
     expect(compiled['customField']['@index'], equals("draft-v1"));
   });
 
-  test('Importing @graph with multiple entities creates separate documents', () {
-    final state = AppState();
-    final String multiGraphJson = """
-    {
+  test('Importing @graph with multiple entities creates a single root graph document and serializes perfectly', () {
+    final Map<String, dynamic> sourceJson = {
       "@context": "https://schema.org",
       "@graph": [
         {
@@ -316,19 +314,25 @@ void main() {
           "name": "Tech Corp"
         }
       ]
-    }
-    """;
+    };
 
-    // Call importJsonLd
-    final success = state.importJsonLd(multiGraphJson);
-    expect(success, isTrue);
+    // Call fromJsonLd directly
+    final importedDoc = SchemaEntity.fromJsonLd(sourceJson);
 
-    // Verify both documents are imported separately
-    expect(state.documents.length, equals(2));
-    expect(state.documents[0].type, equals("schema:Person"));
-    expect(state.documents[0].name, equals("Person Markup"));
-    expect(state.documents[1].type, equals("schema:Organization"));
-    expect(state.documents[1].name, equals("Organization Markup"));
+    // Verify a single document of type schema:@graph is imported
+    expect(importedDoc.type, equals("schema:@graph"));
+    expect(importedDoc.properties.containsKey("schema:@graph"), isTrue);
+
+    // Verify compiling back to JSON-LD outputs the exact original structure
+    final compiled = importedDoc.toJsonLd(isRoot: true, targetVersion: '1.1');
+    expect(compiled['@context'], isMap);
+    expect(compiled['@context']['@vocab'], equals("https://schema.org/"));
+    expect(compiled['@graph'], isList);
+    expect(compiled['@graph'].length, equals(2));
+    expect(compiled['@graph'][0]['@type'], equals("Person"));
+    expect(compiled['@graph'][0]['name'], equals("Alice"));
+    expect(compiled['@graph'][1]['@type'], equals("Organization"));
+    expect(compiled['@graph'][1]['name'], equals("Tech Corp"));
   });
 
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {

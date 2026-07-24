@@ -380,38 +380,13 @@ class AppState extends ChangeNotifier {
     try {
       final dynamic decoded = json.decode(jsonString);
       if (decoded is Map<String, dynamic>) {
-        if (decoded.containsKey('@graph') && decoded['@graph'] is List) {
-          final graphList = decoded['@graph'] as List;
-          final dynamic topContext = decoded['@context'];
-          SchemaEntity? lastImported;
-          for (var item in graphList) {
-            if (item is Map<String, dynamic>) {
-              // Inject/Merge context so each graph item resolves correctly
-              if (topContext != null && !item.containsKey('@context')) {
-                item['@context'] = topContext;
-              }
-              final imported = SchemaEntity.fromJsonLd(item);
-              _documents.add(imported);
-              persistDocument(imported, immediate: true);
-              lastImported = imported;
-            }
-          }
-          if (lastImported != null) {
-            _selectedDocumentIndex = _documents.length - 1;
-            generateJsonLdOutput();
-            notifyListeners();
-            return true;
-          }
-          return false;
-        } else {
-          final imported = SchemaEntity.fromJsonLd(decoded);
-          _documents.add(imported);
-          _selectedDocumentIndex = _documents.length - 1;
-          persistDocument(imported, immediate: true);
-          generateJsonLdOutput();
-          notifyListeners();
-          return true;
-        }
+        final imported = SchemaEntity.fromJsonLd(decoded);
+        _documents.add(imported);
+        _selectedDocumentIndex = _documents.length - 1;
+        persistDocument(imported, immediate: true);
+        generateJsonLdOutput();
+        notifyListeners();
+        return true;
       }
       return false;
     } catch (e) {

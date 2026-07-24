@@ -424,6 +424,118 @@ class SchemaEntity {
     String? defaultType,
     String? docName,
   }) {
+    if (json.containsKey('@graph') && json['@graph'] is List) {
+      final List<dynamic> graphList = json['@graph'] as List;
+      final Map<String, List<SchemaValue>> properties = {};
+      final List<SchemaValue> graphValues = [];
+
+      double? parsedLdVersion;
+      Map<String, dynamic>? customCtx;
+      final ctx = json['@context'];
+      if (ctx is Map) {
+        customCtx = {};
+        ctx.forEach((k, v) {
+          if (k == '@version') {
+            parsedLdVersion = double.tryParse(v.toString());
+          } else if (k != '@vocab' && k != '@base') {
+            customCtx![k.toString()] = v;
+          }
+        });
+      }
+
+      for (var item in graphList) {
+        if (item is Map<String, dynamic>) {
+          graphValues.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + item.hashCode.toString(),
+              value: SchemaEntity.fromJsonLd(item),
+            ),
+          );
+        } else {
+          graphValues.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + item.hashCode.toString(),
+              value: item,
+            ),
+          );
+        }
+      }
+
+      properties['schema:@graph'] = graphValues;
+
+      json.forEach((key, val) {
+        if (key == '@context' || key == '@type' || key == '@graph') {
+          return;
+        }
+        final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
+        final List<SchemaValue> values = [];
+        void parseVal(dynamic singleVal) {
+          if (singleVal is Map) {
+            final bool hasValue = singleVal.containsKey('@value');
+            final bool hasList = singleVal.containsKey('@list');
+            final bool hasSet = singleVal.containsKey('@set');
+            final bool hasIndex = singleVal.containsKey('@index') && !singleVal.containsKey('@type');
+            final bool hasId = singleVal.containsKey('@id');
+            final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@') && k != '@list' && k != '@set' && k != '@index');
+
+            if (hasValue || hasList || hasSet || hasIndex || (!hasId && !hasAtKeys)) {
+              values.add(
+                SchemaValue(
+                  id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+                  value: Map<String, dynamic>.from(singleVal),
+                ),
+              );
+            } else if (hasId && !singleVal.containsKey('@type') && singleVal.keys.length <= 2) {
+              final refId = singleVal['@id'].toString().replaceAll('#', '');
+              values.add(
+                SchemaValue(
+                  id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+                  value: {
+                    '@id': refId,
+                    'docName': '${refId.replaceAll('doc_', 'Document ')} Reference',
+                  },
+                ),
+              );
+            } else {
+              values.add(
+                SchemaValue(
+                  id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+                  value: SchemaEntity.fromJsonLd(Map<String, dynamic>.from(singleVal), defaultType: key.startsWith('@') ? 'schema:$key' : null),
+                ),
+              );
+            }
+          } else if (singleVal != null) {
+            values.add(
+              SchemaValue(
+                id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+                value: singleVal,
+              ),
+            );
+          }
+        }
+
+        if (val is List) {
+          for (var item in val) {
+            parseVal(item);
+          }
+        } else {
+          parseVal(val);
+        }
+        if (values.isNotEmpty) {
+          properties[propId] = values;
+        }
+      });
+
+      return SchemaEntity(
+        id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + json.hashCode.toString(),
+        type: 'schema:@graph',
+        properties: properties,
+        name: docName ?? 'Graph Markup',
+        customContext: customCtx,
+        ldVersion: parsedLdVersion,
+      );
+    }
+
     final String type =
         json['@type']?.toString() ?? defaultType ?? 'schema:Thing';
     final String normalizedType = type.contains(':') ? type : 'schema:${type}';
