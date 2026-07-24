@@ -1,9 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jsonld/main.dart';
 import 'package:jsonld/schema_entity.dart';
-import 'package:jsonld/globals/app_state.dart';
 
 void main() {
   test('Value Object preservation and custom baseUri compilation test', () {
