@@ -422,6 +422,84 @@ class SchemaEntity {
     return parsed;
   }
 
+  static List<SchemaValue> _parseJsonLdPropertyValues(dynamic val, String key) {
+    final List<SchemaValue> values = [];
+    void parseSingle(dynamic singleVal) {
+      if (singleVal is Map) {
+        final bool hasValue = singleVal.containsKey('@value');
+        final bool hasList = singleVal.containsKey('@list');
+        final bool hasSet = singleVal.containsKey('@set');
+        final bool hasIndex = singleVal.containsKey('@index') && !singleVal.containsKey('@type');
+        final bool hasId = singleVal.containsKey('@id');
+        final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@') && k != '@list' && k != '@set' && k != '@index');
+
+        if (hasValue || hasList || hasSet || hasIndex || (!hasId && !hasAtKeys)) {
+          // Rule 3 & 4: Preserve Value Objects, container/language mappings, lists, sets, and indices as-is as raw maps!
+          values.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+              value: Map<String, dynamic>.from(singleVal),
+            ),
+          );
+        } else if (hasId && !singleVal.containsKey('@type') && singleVal.keys.length <= 2) {
+          final refId = singleVal['@id'].toString().replaceAll('#', '');
+          values.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+              value: {
+                '@id': refId,
+                'docName': '${refId.replaceAll('doc_', 'Document ')} Reference',
+              },
+            ),
+          );
+        } else {
+          values.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+              value: SchemaEntity.fromJsonLd(Map<String, dynamic>.from(singleVal), defaultType: key.startsWith('@') ? 'schema:$key' : null),
+            ),
+          );
+        }
+      } else if (singleVal != null) {
+        var parsedVal = singleVal;
+        if (singleVal is String) {
+          final String s = singleVal.trim();
+          if (s.startsWith('https://schema.org/') || s.startsWith('http://schema.org/')) {
+            final String suffix = s.substring(s.lastIndexOf('/') + 1);
+            final String candidate = 'schema:$suffix';
+            bool matched = false;
+            for (var list in SchemaService.instance.enumerationValues.values) {
+              if (list.contains(candidate)) {
+                matched = true;
+                break;
+              }
+            }
+            if (matched || suffix.isNotEmpty) {
+              if (suffix.isNotEmpty && suffix[0] == suffix[0].toUpperCase()) {
+                parsedVal = candidate;
+              }
+            }
+          }
+        }
+        values.add(
+          SchemaValue(
+            id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+            value: parsedVal,
+          ),
+        );
+      }
+    }
+
+    if (val is List) {
+      for (var item in val) {
+        parseSingle(item);
+      }
+    } else {
+      parseSingle(val);
+    }
+    return values;
+  }
+
   static SchemaEntity fromJsonLd(
     Map<String, dynamic> json, {
     String? defaultType,
@@ -471,59 +549,7 @@ class SchemaEntity {
           return;
         }
         final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
-        final List<SchemaValue> values = [];
-        void parseVal(dynamic singleVal) {
-          if (singleVal is Map) {
-            final bool hasValue = singleVal.containsKey('@value');
-            final bool hasList = singleVal.containsKey('@list');
-            final bool hasSet = singleVal.containsKey('@set');
-            final bool hasIndex = singleVal.containsKey('@index') && !singleVal.containsKey('@type');
-            final bool hasId = singleVal.containsKey('@id');
-            final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@') && k != '@list' && k != '@set' && k != '@index');
-
-            if (hasValue || hasList || hasSet || hasIndex || (!hasId && !hasAtKeys)) {
-              values.add(
-                SchemaValue(
-                  id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
-                  value: Map<String, dynamic>.from(singleVal),
-                ),
-              );
-            } else if (hasId && !singleVal.containsKey('@type') && singleVal.keys.length <= 2) {
-              final refId = singleVal['@id'].toString().replaceAll('#', '');
-              values.add(
-                SchemaValue(
-                  id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
-                  value: {
-                    '@id': refId,
-                    'docName': '${refId.replaceAll('doc_', 'Document ')} Reference',
-                  },
-                ),
-              );
-            } else {
-              values.add(
-                SchemaValue(
-                  id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
-                  value: SchemaEntity.fromJsonLd(Map<String, dynamic>.from(singleVal), defaultType: key.startsWith('@') ? 'schema:$key' : null),
-                ),
-              );
-            }
-          } else if (singleVal != null) {
-            values.add(
-              SchemaValue(
-                id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
-                value: singleVal,
-              ),
-            );
-          }
-        }
-
-        if (val is List) {
-          for (var item in val) {
-            parseVal(item);
-          }
-        } else {
-          parseVal(val);
-        }
+        final List<SchemaValue> values = _parseJsonLdPropertyValues(val, key);
         if (values.isNotEmpty) {
           properties[propId] = values;
         }
@@ -563,94 +589,7 @@ class SchemaEntity {
         return;
       }
       final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
-      final List<SchemaValue> values = [];
-      void parseValue(dynamic singleVal) {
-        if (singleVal is Map) {
-          final bool hasValue = singleVal.containsKey('@value');
-          final bool hasList = singleVal.containsKey('@list');
-          final bool hasSet = singleVal.containsKey('@set');
-          final bool hasIndex = singleVal.containsKey('@index') && !singleVal.containsKey('@type');
-          final bool hasId = singleVal.containsKey('@id');
-          final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@') && k != '@list' && k != '@set' && k != '@index');
-
-          if (hasValue || hasList || hasSet || hasIndex || (!hasId && !hasAtKeys)) {
-            // Rule 3 & 4: Preserve Value Objects, container/language mappings, lists, sets, and indices as-is as raw maps!
-            values.add(
-              SchemaValue(
-                id: DateTime.now().microsecondsSinceEpoch.toString() +
-                    '_' +
-                    singleVal.hashCode.toString(),
-                value: Map<String, dynamic>.from(singleVal),
-              ),
-            );
-          } else if (hasId && !singleVal.containsKey('@type') && singleVal.keys.length <= 2) {
-            final refId = singleVal['@id'].toString().replaceAll('#', '');
-            values.add(
-              SchemaValue(
-                id: DateTime.now().microsecondsSinceEpoch.toString() +
-                    '_' +
-                    singleVal.hashCode.toString(),
-                value: {
-                  '@id': refId,
-                  'docName':
-                      '${refId.replaceAll('doc_', 'Document ')} Reference',
-                },
-              ),
-            );
-          } else {
-            values.add(
-              SchemaValue(
-                id: DateTime.now().microsecondsSinceEpoch.toString() +
-                    '_' +
-                    singleVal.hashCode.toString(),
-                value: SchemaEntity.fromJsonLd(Map<String, dynamic>.from(singleVal), defaultType: key.startsWith('@') ? 'schema:$key' : null),
-              ),
-            );
-          }
-        } else if (singleVal != null) {
-          var parsedVal = singleVal;
-          if (singleVal is String) {
-            final String s = singleVal.trim();
-            if (s.startsWith('https://schema.org/') ||
-                s.startsWith('http://schema.org/')) {
-              final String suffix = s.substring(s.lastIndexOf('/') + 1);
-              final String candidate = 'schema:$suffix';
-              // Check if we can find this candidate in enumerationValues
-              // If empty, fall back to matching by parsing
-              bool matched = false;
-              for (var list
-                  in SchemaService.instance.enumerationValues.values) {
-                if (list.contains(candidate)) {
-                  matched = true;
-                  break;
-                }
-              }
-              if (matched || suffix.isNotEmpty) {
-                // If it looks like a capital letter enum value (e.g. InStock, Monday, CreditCard), convert to schema: format
-                if (suffix.isNotEmpty && suffix[0] == suffix[0].toUpperCase()) {
-                  parsedVal = candidate;
-                }
-              }
-            }
-          }
-          values.add(
-            SchemaValue(
-              id: DateTime.now().microsecondsSinceEpoch.toString() +
-                  '_' +
-                  singleVal.hashCode.toString(),
-              value: parsedVal,
-            ),
-          );
-        }
-      }
-
-      if (val is List) {
-        for (var item in val) {
-          parseValue(item);
-        }
-      } else {
-        parseValue(val);
-      }
+      final List<SchemaValue> values = _parseJsonLdPropertyValues(val, key);
       if (values.isNotEmpty) {
         properties[propId] = values;
       }
