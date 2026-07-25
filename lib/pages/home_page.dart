@@ -19,11 +19,38 @@ class HomePage extends StatefulWidget {
   }
 }
 
-class _HomePageState extends State<HomePage> {
+class FlatTreeNode {
+  final String id;
+  final String label;
+  final String typeLabel;
+  final int depth;
+  final SchemaEntity? entity;
+  final bool isProperty;
+  final String? propValue;
+  final bool isExpanded;
+
+  FlatTreeNode({
+    required this.id,
+    required this.label,
+    required this.typeLabel,
+    required this.depth,
+    this.entity,
+    this.isProperty = false,
+    this.propValue,
+    this.isExpanded = true,
+  });
+}
+
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<SchemaEntity> _columnStack = [];
   final ScrollController _horizontalScrollController = ScrollController();
+  TabController? _mobileTabController;
+
+  final Set<String> _collapsedEntityIds = {};
+  int _treeCurrentPage = 0;
+  static const int _treeItemsPerPage = 10;
 
   final TextEditingController _importController = TextEditingController();
 
@@ -49,6 +76,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _mobileTabController = TabController(length: 3, vsync: this);
+    _mobileTabController!.addListener(() {
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppState.of(context, listen: false).initSchemaService();
     });
@@ -161,12 +192,51 @@ class _HomePageState extends State<HomePage> {
     return ['schema:name', 'schema:description', 'schema:url', 'schema:image'];
   }
 
+  Future<bool?> _showExitConfirmationDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Exit App?'),
+        content: const Text('Are you sure you want to exit the JSON LD Visual Editor?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = AppState.of(context);
     final isWide = MediaQuery.of(context).size.width >= 1100;
-    return Scaffold(
-      key: _scaffoldKey,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final primaryFocus = FocusManager.instance.primaryFocus;
+        if (primaryFocus != null && primaryFocus.context?.widget is EditableText) {
+          primaryFocus.unfocus();
+          return;
+        }
+
+        final shouldExit = await _showExitConfirmationDialog() ?? false;
+        if (shouldExit && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
       drawer: Drawer(
         child: Column(
           children: [
@@ -530,47 +600,47 @@ class _HomePageState extends State<HomePage> {
                     ],
                   );
                 } else {
-                  return DefaultTabController(
-                    length: 3,
-                    child: Column(
-                      children: [
-                        TabBar(
-                          labelColor: Theme.of(context).colorScheme.primary,
-                          unselectedLabelColor: Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant,
-                          tabs: const [
-                            Tab(
-                              icon: Icon(Icons.folder_shared_outlined),
-                              text: 'Documents',
-                            ),
-                            Tab(
-                              icon: Icon(Icons.edit_note_outlined),
-                              text: 'Workspace',
-                            ),
-                            Tab(
-                              icon: Icon(Icons.code_outlined),
-                              text: 'JSON-LD',
-                            ),
+                  return Column(
+                    children: [
+                      TabBar(
+                        controller: _mobileTabController,
+                        labelColor: Theme.of(context).colorScheme.primary,
+                        unselectedLabelColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurfaceVariant,
+                        tabs: const [
+                          Tab(
+                            icon: Icon(Icons.folder_shared_outlined),
+                            text: 'Documents',
+                          ),
+                          Tab(
+                            icon: Icon(Icons.edit_note_outlined),
+                            text: 'Workspace',
+                          ),
+                          Tab(
+                            icon: Icon(Icons.code_outlined),
+                            text: 'JSON-LD',
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: TabBarView(
+                          controller: _mobileTabController,
+                          children: [
+                            _buildLeftSidebar(appState),
+                            _showTreeView
+                                ? _buildTreeViewWorkspace(appState)
+                                : _buildWorkspace(appState),
+                            _buildRightSidebar(appState),
                           ],
                         ),
-                        Expanded(
-                          child: TabBarView(
-                            children: [
-                              _buildLeftSidebar(appState),
-                              _showTreeView
-                                  ? _buildTreeViewWorkspace(appState)
-                                  : _buildWorkspace(appState),
-                              _buildRightSidebar(appState),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   );
                 }
               },
             ),
+          ),
     );
   }
 
@@ -985,176 +1055,237 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  List<FlatTreeNode> _flattenTree(SchemaEntity entity, int depth, Set<String> collapsedIds, {String keyName = 'Root Document'}) {
+    final List<FlatTreeNode> nodes = [];
+    final isCollapsed = collapsedIds.contains(entity.id);
+
+    nodes.add(FlatTreeNode(
+      id: entity.id,
+      label: keyName,
+      typeLabel: entity.type.startsWith('schema:') ? entity.type.substring(7) : entity.type,
+      depth: depth,
+      entity: entity,
+      isExpanded: !isCollapsed,
+    ));
+
+    if (!isCollapsed) {
+      entity.properties.forEach((propId, values) {
+        final propName = propId.startsWith('schema:') ? propId.substring(7) : propId;
+        for (var val in values) {
+          if (val.value is SchemaEntity) {
+            nodes.addAll(_flattenTree(val.value as SchemaEntity, depth + 1, collapsedIds, keyName: propName));
+          } else {
+            nodes.add(FlatTreeNode(
+              id: val.id,
+              label: propName,
+              typeLabel: '',
+              depth: depth + 1,
+              isProperty: true,
+              propValue: val.value.toString(),
+            ));
+          }
+        }
+      });
+    }
+    return nodes;
+  }
+
   Widget _buildTreeViewWorkspace(AppState appState) {
+    final root = appState.rootEntity;
+    if (root == null) return const SizedBox();
+
+    final allNodes = _flattenTree(root, 0, _collapsedEntityIds);
+
+    // Pagination calculations
+    final maxPages = (allNodes.length / _treeItemsPerPage).ceil();
+    if (_treeCurrentPage >= maxPages && _treeCurrentPage > 0) {
+      _treeCurrentPage = maxPages - 1;
+    }
+
+    final startIndex = _treeCurrentPage * _treeItemsPerPage;
+    final endIndex = (startIndex + _treeItemsPerPage < allNodes.length)
+        ? startIndex + _treeItemsPerPage
+        : allNodes.length;
+
+    final paginatedNodes = allNodes.isNotEmpty
+        ? allNodes.sublist(startIndex, endIndex)
+        : <FlatTreeNode>[];
+
     return Container(
       color: Theme.of(context).colorScheme.surface,
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Interactive Entity Graph',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          // Header
+          Row(
+            children: [
+              Icon(
+                Icons.hub,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20.0,
+              ),
+              const SizedBox(width: 8.0),
+              Text(
+                'Document Outline Map',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4.0),
-          const Text(
-            'Hierarchical visualization of your current Schema.org structured document.',
-            style: TextStyle(fontSize: 12.0, color: Colors.grey),
-          ),
-          const SizedBox(height: 16.0),
+          const SizedBox(height: 12.0),
+          // Flat list
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(12.0),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
+                  color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
                 ),
               ),
-              child: ListView(
-                children: [
-                  _buildTreeViewNode(appState, appState.rootEntity!, isRoot: true),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12.0),
+                child: allNodes.isEmpty
+                    ? const Center(child: Text('No active structured fields.'))
+                    : ListView.builder(
+                        itemCount: paginatedNodes.length,
+                        itemBuilder: (context, idx) {
+                          final node = paginatedNodes[idx];
+                          final isEntity = !node.isProperty;
+                          final double indent = (node.depth * 16.0).clamp(0.0, 160.0);
 
-  Widget _buildTreeViewNode(
-    AppState appState,
-    SchemaEntity entity, {
-    bool isRoot = false,
-    String keyName = 'Root Document',
-  }) {
-    final typeLabel = entity.type.startsWith('schema:')
-        ? entity.type.substring(7)
-        : entity.type;
-    return Card(
-      elevation: 0.0,
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          width: 0.8,
-        ),
-      ),
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        leading: Icon(
-          isRoot ? Icons.hub : Icons.subdirectory_arrow_right,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        title: Row(
-          children: [
-            Text(
-              '${keyName}: ',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13.0,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8.0,
-                vertical: 2.0,
-              ),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Text(
-                typeLabel,
-                style: TextStyle(
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8.0),
-            IconButton(
-              icon: const Icon(Icons.explore_outlined, size: 16.0),
-              tooltip: 'Focus in workspace',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: () => _navigateToEntityNode(appState, entity),
-            ),
-          ],
-        ),
-        subtitle: Text(
-          '${entity.properties.length} active fields',
-          style: const TextStyle(fontSize: 11.0),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: entity.properties.entries.map((entry) {
-                final propName = entry.key.startsWith('schema:')
-                    ? entry.key.substring(7)
-                    : entry.key;
-                final values = entry.value;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: values.map((val) {
-                    if (val.value is SchemaEntity) {
-                      return _buildTreeViewNode(
-                        appState,
-                        val.value as SchemaEntity,
-                        isRoot: false,
-                        keyName: propName,
-                      );
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 4.0,
-                        horizontal: 12.0,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.arrow_right_alt,
-                            size: 14.0,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Text(
-                            '${propName}: ',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.0,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              val.value.toString() ?? '',
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                color: Theme.of(context).colorScheme.onSurface,
+                          return InkWell(
+                            onTap: () {
+                              if (isEntity && node.entity != null) {
+                                setState(() {
+                                  if (_collapsedEntityIds.contains(node.entity!.id)) {
+                                    _collapsedEntityIds.remove(node.entity!.id);
+                                  } else {
+                                    _collapsedEntityIds.add(node.entity!.id);
+                                  }
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.only(
+                                left: 8.0 + indent,
+                                right: 8.0,
+                                top: 8.0,
+                                bottom: 8.0,
                               ),
-                              overflow: TextOverflow.ellipsis,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.08),
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Expand/Collapse/Property bullet
+                                  if (isEntity)
+                                    Icon(
+                                      node.isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                                      size: 16.0,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    )
+                                  else
+                                    Icon(
+                                      Icons.arrow_right_alt,
+                                      size: 14.0,
+                                      color: Theme.of(context).colorScheme.secondary,
+                                    ),
+                                  const SizedBox(width: 4.0),
+                                  // Label
+                                  Expanded(
+                                    child: RichText(
+                                      overflow: TextOverflow.ellipsis,
+                                      text: TextSpan(
+                                        style: TextStyle(
+                                          fontSize: 12.0,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: '${node.label}: ',
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                          if (isEntity)
+                                            TextSpan(
+                                              text: '@type=${node.typeLabel}',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                            )
+                                          else
+                                            TextSpan(
+                                              text: node.propValue ?? '',
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.outline,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // Explore Focus Button for entities
+                                  if (isEntity && node.entity != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.explore_outlined, size: 16.0),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      tooltip: 'Focus in workspace',
+                                      onPressed: () => _navigateToEntityNode(appState, node.entity!),
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  }).toList(),
-                );
-              }).toList(),
+              ),
             ),
           ),
+          const SizedBox(height: 8.0),
+          // Pagination controls
+          if (maxPages > 1)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, size: 18.0),
+                  onPressed: _treeCurrentPage > 0
+                      ? () {
+                          setState(() {
+                            _treeCurrentPage--;
+                          });
+                        }
+                      : null,
+                ),
+                Text(
+                  'Page ${_treeCurrentPage + 1} of $maxPages • Nodes ${startIndex + 1}-${endIndex} of ${allNodes.length}',
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    color: Theme.of(context).colorScheme.outline,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, size: 18.0),
+                  onPressed: _treeCurrentPage < maxPages - 1
+                      ? () {
+                          setState(() {
+                            _treeCurrentPage++;
+                          });
+                        }
+                      : null,
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -3079,6 +3210,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _mobileTabController?.dispose();
     _horizontalScrollController.dispose();
     _importController.dispose();
     _searchClassController.dispose();
