@@ -1,8 +1,7 @@
 import 'package:jsonld/schema_value.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:jsonld/schema_service.dart';
+import 'dart:math' as math;
 
-@NowaGenerated()
 class SchemaEntity {
   bool _isEnumerationValue(String value) {
     for (var list in SchemaService.instance.enumerationValues.values) {
@@ -12,11 +11,15 @@ class SchemaEntity {
     }
     return false;
   }
+
   SchemaEntity({
     required this.id,
     required this.type,
     required this.properties,
     this.name = 'Untitled Document',
+    this.baseUri,
+    this.customContext,
+    this.ldVersion,
   });
 
   final String id;
@@ -27,28 +30,273 @@ class SchemaEntity {
 
   String name;
 
-  Map<String, dynamic> toJsonLd({bool isRoot = false}) {
+  String? baseUri;
+
+  Map<String, dynamic>? customContext;
+
+  double? ldVersion;
+
+  static const Map<String, String> _namespaces = {
+    'bibo': 'http://purl.org/ontology/bibo/',
+    'brick': 'https://brickschema.org/schema/Brick#',
+    'cmns-cls': 'https://www.omg.org/spec/Commons/Classifiers/',
+    'cmns-col': 'https://www.omg.org/spec/Commons/Collections/',
+    'cmns-dt': 'https://www.omg.org/spec/Commons/DatesAndTimes/',
+    'cmns-ge': 'https://www.omg.org/spec/Commons/GeopoliticalEntities/',
+    'cmns-id': 'https://www.omg.org/spec/Commons/Identifiers/',
+    'cmns-loc': 'https://www.omg.org/spec/Commons/Locations/',
+    'cmns-q': 'https://www.omg.org/spec/Commons/Quantities/',
+    'cmns-txt': 'https://www.omg.org/spec/Commons/Text/',
+    'csvw': 'http://www.w3.org/ns/csvw#',
+    'dc': 'http://purl.org/dc/elements/1.1/',
+    'dcam': 'http://purl.org/dc/dcam/',
+    'dcat': 'http://www.w3.org/ns/dcat#',
+    'dct': 'http://purl.org/dc/terms/',
+    'dctype': 'http://purl.org/dc/dcmitype/',
+    'doap': 'http://usefulinc.com/ns/doap#',
+    'eli': 'http://data.europa.eu/eli/ontology#',
+    'fibo-be-corp-corp': 'https://spec.edmcouncil.org/fibo/ontology/BE/Corporations/Corporations/',
+    'fibo-be-ge-ge': 'https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/',
+    'fibo-be-le-cb': 'https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/CorporateBodies/',
+    'fibo-be-le-lp': 'https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/',
+    'fibo-be-nfp-nfp': 'https://spec.edmcouncil.org/fibo/ontology/BE/NotForProfitOrganizations/NotForProfitOrganizations/',
+    'fibo-be-oac-cctl': 'https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/CorporateControl/',
+    'fibo-fbc-dae-dbt': 'https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/',
+    'fibo-fbc-pas-fpas': 'https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/',
+    'fibo-fnd-acc-cur': 'https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/',
+    'fibo-fnd-agr-ctr': 'https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/',
+    'fibo-fnd-arr-doc': 'https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Documents/',
+    'fibo-fnd-arr-lif': 'https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Lifecycles/',
+    'fibo-fnd-dt-oc': 'https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/Occurrences/',
+    'fibo-fnd-org-org': 'https://spec.edmcouncil.org/fibo/ontology/FND/Organizations/Organizations/',
+    'fibo-fnd-pas-pas': 'https://spec.edmcouncil.org/fibo/ontology/FND/ProductsAndServices/ProductsAndServices/',
+    'fibo-fnd-plc-adr': 'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/',
+    'fibo-fnd-plc-fac': 'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Facilities/',
+    'fibo-fnd-plc-loc': 'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/',
+    'fibo-fnd-pty-pty': 'https://spec.edmcouncil.org/fibo/ontology/FND/Parties/Parties/',
+    'fibo-fnd-rel-rel': 'https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/',
+    'fibo-pay-ps-ps': 'https://spec.edmcouncil.org/fibo/ontology/PAY/PaymentServices/PaymentServices/',
+    'foaf': 'http://xmlns.com/foaf/0.1/',
+    'geo': 'http://www.opengis.net/ont/geosparql#',
+    'gleif-L1': 'https://www.gleif.org/ontology/L1/',
+    'gs1': 'https://ref.gs1.org/voc/',
+    'hydra': 'http://www.w3.org/ns/hydra/core#',
+    'lcc-3166-1': 'https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/',
+    'lcc-4217': 'https://www.omg.org/spec/LCC/Countries/ISO4217-CurrencyCodes/',
+    'lcc-cr': 'https://www.omg.org/spec/LCC/Countries/CountryRepresentation/',
+    'lcc-lr': 'https://www.omg.org/spec/LCC/Languages/LanguageRepresentation/',
+    'lrmoo': 'http://iflastandards.info/ns/lrm/lrmoo/',
+    'mo': 'http://purl.org/ontology/mo/',
+    'odrl': 'http://www.w3.org/ns/odrl/2/',
+    'og': 'http://ogp.me/ns#',
+    'org': 'http://www.w3.org/ns/org#',
+    'owl': 'http://www.w3.org/2002/07/owl#',
+    'prof': 'http://www.w3.org/ns/dx/prof/',
+    'prov': 'http://www.w3.org/ns/prov#',
+    'qb': 'http://purl.org/linked-data/cube#',
+    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+    'sarif': 'http://sarif.info/',
+    'schema': 'https://schema.org/',
+    'sh': 'http://www.w3.org/ns/shacl#',
+    'skos': 'http://www.w3.org/2004/02/skos/core#',
+    'snomed': 'http://purl.bioontology.org/ontology/SNOMEDCT/',
+    'sosa': 'http://www.w3.org/ns/sosa/',
+    'ssn': 'http://www.w3.org/ns/ssn/',
+    'time': 'http://www.w3.org/2006/time#',
+    'unece': 'http://unece.org/vocab#',
+    'vann': 'http://purl.org/vocab/vann/',
+    'vcard': 'http://www.w3.org/2006/vcard/ns#',
+    'void': 'http://rdfs.org/ns/void#',
+    'wgs': 'https://www.w3.org/2003/01/geo/wgs84_pos#',
+    'xsd': 'http://www.w3.org/2001/XMLSchema#',
+  };
+
+  void _collectUsedNamespaces(dynamic val, Set<String> used) {
+    if (val is SchemaEntity) {
+      final t = val.type;
+      if (t.contains(':')) {
+        final prefix = t.split(':').first;
+        if (_namespaces.containsKey(prefix)) {
+          used.add(prefix);
+        }
+      }
+      for (var values in val.properties.values) {
+        for (var sv in values) {
+          _collectUsedNamespaces(sv.value, used);
+        }
+      }
+    } else if (val is Map) {
+      final t = val['@type']?.toString();
+      if (t != null && t.contains(':')) {
+        final prefix = t.split(':').first;
+        if (_namespaces.containsKey(prefix)) {
+          used.add(prefix);
+        }
+      }
+      for (var entry in val.entries) {
+        _collectUsedNamespaces(entry.value, used);
+      }
+    } else if (val is List) {
+      for (var item in val) {
+        _collectUsedNamespaces(item, used);
+      }
+    }
+  }
+
+  Map<String, dynamic> toJsonLd({
+    bool isRoot = false,
+    Map<String, String>? docIdToName,
+    String targetVersion = '1.1',
+  }) {
     final Map<String, dynamic> result = {};
     if (isRoot) {
-      result['@context'] = 'https://schema.org';
+      final Set<String> usedPrefixes = {};
+      _collectUsedNamespaces(this, usedPrefixes);
+
+      final Map<String, dynamic> extraContext = {};
+      for (var prefix in usedPrefixes) {
+        final nsUrl = _namespaces[prefix];
+        if (nsUrl != null) {
+          extraContext[prefix] = nsUrl;
+        }
+      }
+
+      if (customContext != null) {
+        customContext!.forEach((k, v) {
+          if (targetVersion == '1.0') {
+            // Strip / flatten 1.1 features
+            if (v is Map) {
+              final Map<String, dynamic> filteredTerm = {};
+              v.forEach((tk, tv) {
+                if (tk != '@protected' && tk != '@nest') {
+                  if (tk == '@container') {
+                    if (tv == '@list' || tv == '@set' || tv == '@language' || tv == '@index') {
+                      filteredTerm[tk] = tv;
+                    }
+                  } else {
+                    filteredTerm[tk] = tv;
+                  }
+                }
+              });
+              if (filteredTerm.isNotEmpty) {
+                extraContext[k] = filteredTerm;
+              }
+            } else if (v != '@nest') {
+              extraContext[k] = v;
+            }
+          } else {
+            extraContext[k] = v;
+          }
+        });
+      }
+
+      final double? activeVersion = (targetVersion == '1.2')
+          ? 1.2
+          : (targetVersion == '1.1' || targetVersion == 'yaml-ld' ? 1.1 : null);
+
+      if (baseUri == null || baseUri!.trim().isEmpty) {
+        if (extraContext.isNotEmpty || activeVersion != null) {
+          result['@context'] = {
+            '@vocab': 'https://schema.org/',
+            if (activeVersion != null) '@version': activeVersion,
+            ...extraContext,
+          };
+        } else {
+          result['@context'] = 'https://schema.org';
+        }
+      } else {
+        result['@context'] = {
+          '@vocab': 'https://schema.org/',
+          '@base': baseUri!.trim(),
+          if (activeVersion != null) '@version': activeVersion,
+          ...extraContext,
+        };
+      }
     }
-    final String typeName = type.startsWith('schema:')
-        ? type.substring(7)
-        : type;
-    result['@type'] = typeName;
+    final String typeName =
+        type.startsWith('schema:') ? type.substring(7) : type;
+    final bool isKeyword = typeName.startsWith('@');
+
+    if (!isKeyword) {
+      result['@type'] = typeName;
+    }
+
+    // Helper to check if a name represents a custom renamed node
+    bool isNameRenamed(String nameValue) {
+      final clean = nameValue.trim();
+      return clean.isNotEmpty &&
+          clean != 'Untitled Document' &&
+          clean != 'Untitled Object' &&
+          clean != 'Schema Document' &&
+          !clean.startsWith('New ') &&
+          !clean.endsWith(' Reference') &&
+          !clean.endsWith(' Markup');
+    }
+
+    final String effectiveBase = (baseUri != null && baseUri!.trim().isNotEmpty) ? baseUri!.trim() : 'https://example.com/things/';
+
+    // Dynamic @id generation based on renamed name or preserved absolute URIs
+    if (!isKeyword) {
+      if (isNameRenamed(name)) {
+        final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
+        result['@id'] = '#$safeId';
+      } else if (id.startsWith(effectiveBase)) {
+        // Form relative ID if it matches the base URL
+        result['@id'] = id.substring(effectiveBase.length);
+      } else if (id.startsWith('http://') || id.startsWith('https://')) {
+        result['@id'] = id;
+      }
+    }
+
     properties.forEach((propId, values) {
       if (values.isEmpty) {
         return;
       }
-      final propName = propId.startsWith('schema:')
-          ? propId.substring(7)
-          : propId;
+      final propName =
+          propId.startsWith('schema:') ? propId.substring(7) : propId;
       final List<dynamic> jsonValues = [];
       for (var val in values) {
         if (val.value is SchemaEntity) {
-          jsonValues.add((val.value as SchemaEntity).toJsonLd(isRoot: false));
-        } else if (val.value is Map && (val.value as Map).containsKey('@id')) {
-          jsonValues.add({'@id': '#${(val.value as Map)['@id']}'});
+          jsonValues.add((val.value as SchemaEntity).toJsonLd(isRoot: false, docIdToName: docIdToName, targetVersion: targetVersion));
+        } else if (val.value is Map && (val.value as Map).containsKey('@value')) {
+          // Rule 1: Preserve Value Objects exactly as imported, do NOT add node metadata!
+          jsonValues.add(val.value);
+        } else if (val.value is Map &&
+            (val.value as Map).containsKey('@id') &&
+            !(val.value as Map).containsKey('@type') &&
+            (val.value as Map).keys.length <= 2) {
+          final targetDocId = (val.value as Map)['@id'] as String;
+          final targetDocName = docIdToName?[targetDocId] ?? (val.value as Map)['docName'] ?? '';
+          if (isNameRenamed(targetDocName)) {
+            final safeLinkedId = targetDocName.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
+            jsonValues.add({'@id': '#$safeLinkedId'});
+          } else {
+            // Keep absolute URLs and pre-anchored IDs exactly as-is without adding '#' double prefixes
+            if (targetDocId.startsWith(effectiveBase)) {
+              jsonValues.add({'@id': targetDocId.substring(effectiveBase.length)});
+            } else if (targetDocId.startsWith('http://') || targetDocId.startsWith('https://') || targetDocId.startsWith('#')) {
+              jsonValues.add({'@id': targetDocId});
+            } else {
+              jsonValues.add({'@id': '#$targetDocId'});
+            }
+          }
+        } else if (val.value is Map) {
+          final mapVal = val.value as Map;
+          final bool isLanguageMap = !propName.startsWith('@') &&
+              mapVal.isNotEmpty &&
+              mapVal.keys.every((k) => RegExp(r'^[a-z]{2,3}(-[a-zA-Z0-9]{2,4})?$').hasMatch(k.toString()));
+          if (targetVersion == '1.0' && isLanguageMap) {
+            // Expand shorthand language maps into @value and @language array!
+            for (var entry in mapVal.entries) {
+              jsonValues.add({
+                '@value': entry.value,
+                '@language': entry.key,
+              });
+            }
+          } else {
+            jsonValues.add(mapVal);
+          }
         } else if (val.value is String) {
           final String strVal = val.value as String;
           if (strVal.startsWith('schema:') && _isEnumerationValue(strVal)) {
@@ -61,9 +309,8 @@ class SchemaEntity {
         }
       }
       if (jsonValues.isNotEmpty) {
-        result[propName] = jsonValues.length == 1
-            ? jsonValues.first
-            : jsonValues;
+        result[propName] =
+            jsonValues.length == 1 ? jsonValues.first : jsonValues;
       }
     });
     return result;
@@ -87,11 +334,23 @@ class SchemaEntity {
       type: type,
       properties: clonedProps,
       name: name,
+      baseUri: baseUri,
+      customContext: customContext != null ? Map<String, dynamic>.from(customContext!) : null,
+      ldVersion: ldVersion,
     );
   }
 
   Map<String, dynamic> serializeProperties() {
     final Map<String, dynamic> serialized = {};
+    if (baseUri != null) {
+      serialized['_baseUri'] = baseUri;
+    }
+    if (customContext != null) {
+      serialized['_customContext'] = customContext;
+    }
+    if (ldVersion != null) {
+      serialized['_ldVersion'] = ldVersion;
+    }
     properties.forEach((propId, values) {
       final List<dynamic> listData = [];
       for (var val in values) {
@@ -120,7 +379,8 @@ class SchemaEntity {
     return serialized;
   }
 
-  static Map<String, List<SchemaValue>> deserializeProperties(Map<String, dynamic> data) {
+  static Map<String, List<SchemaValue>> deserializeProperties(
+      Map<String, dynamic> data) {
     final Map<String, List<SchemaValue>> parsed = {};
     data.forEach((propId, valList) {
       if (valList is List) {
@@ -130,10 +390,12 @@ class SchemaEntity {
             final type = item['type']?.toString();
             if (type == 'entity') {
               final nested = SchemaEntity(
-                id: item['id']?.toString() ?? 'nest_${DateTime.now().microsecondsSinceEpoch}',
+                id: item['id']?.toString() ??
+                    'nest_${DateTime.now().microsecondsSinceEpoch}',
                 name: item['name']?.toString() ?? 'Untitled Nested',
                 type: item['schemaType']?.toString() ?? 'schema:Thing',
-                properties: deserializeProperties(item['properties'] as Map<String, dynamic>? ?? {}),
+                properties: deserializeProperties(
+                    item['properties'] as Map<String, dynamic>? ?? {}),
               );
               sValues.add(SchemaValue(
                 id: 'val_${DateTime.now().microsecondsSinceEpoch}_${item.hashCode}',
@@ -160,105 +422,258 @@ class SchemaEntity {
     return parsed;
   }
 
+  static List<SchemaValue> _parseJsonLdPropertyValues(dynamic val, String key) {
+    final List<SchemaValue> values = [];
+    void parseSingle(dynamic singleVal) {
+      if (singleVal is Map) {
+        final bool hasValue = singleVal.containsKey('@value');
+        final bool hasList = singleVal.containsKey('@list');
+        final bool hasSet = singleVal.containsKey('@set');
+        final bool hasIndex = singleVal.containsKey('@index') && !singleVal.containsKey('@type');
+        final bool hasId = singleVal.containsKey('@id');
+        final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@') && k != '@list' && k != '@set' && k != '@index');
+
+        if (hasValue || hasList || hasSet || hasIndex || (!hasId && !hasAtKeys)) {
+          // Rule 3 & 4: Preserve Value Objects, container/language mappings, lists, sets, and indices as-is as raw maps!
+          values.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+              value: Map<String, dynamic>.from(singleVal),
+            ),
+          );
+        } else if (hasId && !singleVal.containsKey('@type') && singleVal.keys.length <= 2) {
+          final refId = singleVal['@id'].toString().replaceAll('#', '');
+          values.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+              value: {
+                '@id': refId,
+                'docName': '${refId.replaceAll('doc_', 'Document ')} Reference',
+              },
+            ),
+          );
+        } else {
+          values.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+              value: SchemaEntity.fromJsonLd(Map<String, dynamic>.from(singleVal), defaultType: key.startsWith('@') ? 'schema:$key' : null),
+            ),
+          );
+        }
+      } else if (singleVal != null) {
+        var parsedVal = singleVal;
+        if (singleVal is String) {
+          final String s = singleVal.trim();
+          if (s.startsWith('https://schema.org/') || s.startsWith('http://schema.org/')) {
+            final String suffix = s.substring(s.lastIndexOf('/') + 1);
+            final String candidate = 'schema:$suffix';
+            bool matched = false;
+            for (var list in SchemaService.instance.enumerationValues.values) {
+              if (list.contains(candidate)) {
+                matched = true;
+                break;
+              }
+            }
+            if (matched || suffix.isNotEmpty) {
+              if (suffix.isNotEmpty && suffix[0] == suffix[0].toUpperCase()) {
+                parsedVal = candidate;
+              }
+            }
+          }
+        }
+        values.add(
+          SchemaValue(
+            id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+            value: parsedVal,
+          ),
+        );
+      }
+    }
+
+    if (val is List) {
+      for (var item in val) {
+        parseSingle(item);
+      }
+    } else {
+      parseSingle(val);
+    }
+    return values;
+  }
+
   static SchemaEntity fromJsonLd(
     Map<String, dynamic> json, {
     String? defaultType,
     String? docName,
   }) {
-    final String type =
-        json['@type']?.toString() ?? defaultType ?? 'schema:Thing';
-    final String normalizedType = type.contains(':') ? type : 'schema:${type}';
-    final Map<String, List<SchemaValue>> properties = {};
-    json.forEach((key, val) {
-      if (key == '@context' || key == '@type') {
-        return;
+    if (json.containsKey('@graph') && json['@graph'] is List) {
+      final List<dynamic> graphList = json['@graph'] as List;
+      final Map<String, List<SchemaValue>> properties = {};
+      final List<SchemaValue> graphValues = [];
+
+      double? parsedLdVersion;
+      Map<String, dynamic>? customCtx;
+      final ctx = json['@context'];
+      if (ctx is Map) {
+        customCtx = {};
+        ctx.forEach((k, v) {
+          if (k == '@version') {
+            parsedLdVersion = double.tryParse(v.toString());
+          } else if (k != '@vocab' && k != '@base') {
+            customCtx![k.toString()] = v;
+          }
+        });
       }
-      final String propId = key.contains(':') ? key : 'schema:${key}';
-      final List<SchemaValue> values = [];
-      @NowaGenerated()
-      void parseValue(dynamic singleVal) {
-        if (singleVal is Map<String, dynamic>) {
-          if (singleVal.containsKey('@id')) {
-            final refId = singleVal['@id'].toString().replaceAll('#', '');
-            values.add(
-              SchemaValue(
-                id:
-                    DateTime.now().microsecondsSinceEpoch.toString() +
-                    '_' +
-                    singleVal.hashCode.toString(),
-                value: {
-                  '@id': refId,
-                  'docName':
-                      '${refId.replaceAll('doc_', 'Document ')} Reference',
-                },
-              ),
-            );
-          } else {
-            values.add(
-              SchemaValue(
-                id:
-                    DateTime.now().microsecondsSinceEpoch.toString() +
-                    '_' +
-                    singleVal.hashCode.toString(),
-                value: SchemaEntity.fromJsonLd(singleVal),
-              ),
-            );
-          }
-        } else if (singleVal != null) {
-          var parsedVal = singleVal;
-          if (singleVal is String) {
-            final String s = singleVal.trim();
-            if (s.startsWith('https://schema.org/') || s.startsWith('http://schema.org/')) {
-              final String suffix = s.substring(s.lastIndexOf('/') + 1);
-              final String candidate = 'schema:$suffix';
-              // Check if we can find this candidate in enumerationValues
-              // If empty, fall back to matching by parsing
-              bool matched = false;
-              for (var list in SchemaService.instance.enumerationValues.values) {
-                if (list.contains(candidate)) {
-                  matched = true;
-                  break;
-                }
-              }
-              if (matched || suffix.isNotEmpty) {
-                // If it looks like a capital letter enum value (e.g. InStock, Monday, CreditCard), convert to schema: format
-                if (suffix.isNotEmpty && suffix[0] == suffix[0].toUpperCase()) {
-                  parsedVal = candidate;
-                }
-              }
-            }
-          }
-          values.add(
+
+      for (var item in graphList) {
+        if (item is Map<String, dynamic>) {
+          graphValues.add(
             SchemaValue(
-              id:
-                  DateTime.now().microsecondsSinceEpoch.toString() +
-                  '_' +
-                  singleVal.hashCode.toString(),
-              value: parsedVal,
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + item.hashCode.toString(),
+              value: SchemaEntity.fromJsonLd(item),
+            ),
+          );
+        } else {
+          graphValues.add(
+            SchemaValue(
+              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + item.hashCode.toString(),
+              value: item,
             ),
           );
         }
       }
 
-      if (val is List) {
-        for (var item in val) {
-          parseValue(item);
+      properties['schema:@graph'] = graphValues;
+
+      json.forEach((key, val) {
+        if (key == '@context' || key == '@type' || key == '@graph') {
+          return;
         }
-      } else {
-        parseValue(val);
+        final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
+        final List<SchemaValue> values = _parseJsonLdPropertyValues(val, key);
+        if (values.isNotEmpty) {
+          properties[propId] = values;
+        }
+      });
+
+      return SchemaEntity(
+        id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + json.hashCode.toString(),
+        type: 'schema:@graph',
+        properties: properties,
+        name: docName ?? 'Graph Markup',
+        customContext: customCtx,
+        ldVersion: parsedLdVersion,
+      );
+    }
+
+    final String type =
+        json['@type']?.toString() ?? defaultType ?? 'schema:Thing';
+    final String normalizedType = type.contains(':') ? type : 'schema:${type}';
+    final Map<String, List<SchemaValue>> properties = {};
+
+    double? parsedLdVersion;
+    Map<String, dynamic>? customCtx;
+    final ctx = json['@context'];
+    if (ctx is Map) {
+      customCtx = {};
+      ctx.forEach((k, v) {
+        if (k == '@version') {
+          parsedLdVersion = double.tryParse(v.toString());
+        } else if (k != '@vocab' && k != '@base') {
+          customCtx![k.toString()] = v;
+        }
+      });
+    }
+
+    json.forEach((key, val) {
+      if (key == '@context' || key == '@type') {
+        return;
       }
+      final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
+      final List<SchemaValue> values = _parseJsonLdPropertyValues(val, key);
       if (values.isNotEmpty) {
         properties[propId] = values;
       }
     });
     return SchemaEntity(
-      id:
-          DateTime.now().microsecondsSinceEpoch.toString() +
+      id: DateTime.now().microsecondsSinceEpoch.toString() +
           '_' +
           json.hashCode.toString(),
       type: normalizedType,
       properties: properties,
       name: docName ?? '${type.split(':').last} Markup',
+      customContext: customCtx,
+      ldVersion: parsedLdVersion,
     );
+  }
+
+  String convertToYaml(dynamic value, {int indent = 0}) {
+    final spaces = '  ' * indent;
+    if (value is Map) {
+      if (value.isEmpty) {
+        return '{}';
+      }
+      final buffer = StringBuffer();
+      var first = true;
+      value.forEach((k, v) {
+        if (!first) {
+          buffer.write('\n');
+        }
+        first = false;
+        buffer.write('$spaces$k:');
+        if (v is Map || v is List) {
+          buffer.write('\n');
+          buffer.write(convertToYaml(v, indent: indent + 1));
+        } else {
+          buffer.write(' ${_escapeYamlString(v)}');
+        }
+      });
+      return buffer.toString();
+    } else if (value is List) {
+      if (value.isEmpty) {
+        return '[]';
+      }
+      final buffer = StringBuffer();
+      var first = true;
+      for (var item in value) {
+        if (!first) {
+          buffer.write('\n');
+        }
+        first = false;
+        if (item is Map || item is List) {
+          buffer.write('$spaces- \n');
+          buffer.write(convertToYaml(item, indent: indent + 1));
+        } else {
+          buffer.write('$spaces- ${_escapeYamlString(item)}');
+        }
+      }
+      return buffer.toString();
+    } else {
+      return _escapeYamlString(value);
+    }
+  }
+
+  String _escapeYamlString(dynamic value) {
+    if (value == null) {
+      return 'null';
+    }
+    if (value is bool) {
+      return value ? 'true' : 'false';
+    }
+    if (value is num) {
+      return value.toString();
+    }
+    final str = value.toString();
+    if (str.contains(':') ||
+        str.contains('\n') ||
+        str.contains('-') ||
+        str.contains('#') ||
+        str.contains('[') ||
+        str.contains(']') ||
+        str.contains('{') ||
+        str.contains('}') ||
+        str.contains('@')) {
+      return '"${str.replaceAll('"', '\\"')}"';
+    }
+    return str;
   }
 }

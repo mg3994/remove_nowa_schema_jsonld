@@ -1,3 +1,3 @@
-void downloadFile(String content, String filename) {
+Future<String?> downloadFile(String content, String filename) {
   throw UnsupportedError('downloadFile is not supported');
 }

@@ -2,7 +2,7 @@ import 'dart:convert';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 
-void downloadFile(String content, String filename) {
+Future<String?> downloadFile(String content, String filename) async {
   final bytes = utf8.encode(content);
   final blob = html.Blob([bytes]);
   final url = html.Url.createObjectUrlFromBlob(blob);
@@ -14,4 +14,5 @@ void downloadFile(String content, String filename) {
   anchor.click();
   html.document.body?.children.remove(anchor);
   html.Url.revokeObjectUrl(url);
+  return 'Downloads folder';
 }

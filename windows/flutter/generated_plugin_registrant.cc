@@ -6,19 +6,13 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <audioplayers_windows/audioplayers_windows_plugin.h>
-#include <file_selector_windows/file_selector_windows.h>
-#include <flutter_inappwebview_windows/flutter_inappwebview_windows_plugin_c_api.h>
+#include <downloadsfolder/downloadsfolder_plugin_c_api.h>
 #include <sqlite3_flutter_libs/sqlite3_flutter_libs_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  AudioplayersWindowsPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("AudioplayersWindowsPlugin"));
-  FileSelectorWindowsRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("FileSelectorWindows"));
-  FlutterInappwebviewWindowsPluginCApiRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("FlutterInappwebviewWindowsPluginCApi"));
+  DownloadsfolderPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("DownloadsfolderPluginCApi"));
   Sqlite3FlutterLibsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("Sqlite3FlutterLibsPlugin"));
   UrlLauncherWindowsRegisterWithRegistrar(

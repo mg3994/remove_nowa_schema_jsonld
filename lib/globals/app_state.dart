@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jsonld/globals/themes.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:jsonld/schema_entity.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:jsonld/schema_service.dart';
 import 'package:jsonld/schema_value.dart';
 import 'dart:convert';
@@ -13,7 +12,6 @@ import 'package:drift/drift.dart' as drift;
 import 'package:jsonld/globals/database_instance.dart';
 import 'package:jsonld/database/database.dart';
 
-@NowaGenerated()
 class AppState extends ChangeNotifier {
   AppState();
 
@@ -36,6 +34,16 @@ class AppState extends ChangeNotifier {
   String? _loadError;
 
   String _jsonLdOutput = '';
+
+  String _selectedLdVersion = '1.1';
+
+  String get selectedLdVersion => _selectedLdVersion;
+
+  void generateJsonLdOutputWithVersion(String version) {
+    _selectedLdVersion = version;
+    generateJsonLdOutput();
+    notifyListeners();
+  }
 
   Timer? _debounceTimer;
   String _saveStatus = 'Saved';
@@ -72,10 +80,6 @@ class AppState extends ChangeNotifier {
     super.dispose();
   }
 
-  InterstitialAd? _interstitialAd;
-
-  bool _isInterstitialAdLoading = false;
-
   void changeTheme(ThemeData theme) {
     _theme = theme;
     notifyListeners();
@@ -94,22 +98,31 @@ class AppState extends ChangeNotifier {
       if (savedDocs.isNotEmpty) {
         _documents.clear();
         for (var d in savedDocs) {
-          final props = SchemaEntity.deserializeProperties(
-            json.decode(d.propertiesJson) as Map<String, dynamic>,
-          );
-          _documents.add(SchemaEntity(
-            id: d.id,
-            name: d.name,
-            type: d.type,
-            properties: props,
-          ));
+          try {
+            final rawProps = json.decode(d.propertiesJson) as Map<String, dynamic>;
+            final props = SchemaEntity.deserializeProperties(rawProps);
+            _documents.add(SchemaEntity(
+              id: d.id,
+              name: d.name,
+              type: d.type,
+              properties: props,
+              baseUri: rawProps['_baseUri']?.toString(),
+              customContext: rawProps['_customContext'] != null ? Map<String, dynamic>.from(rawProps['_customContext'] as Map) : null,
+              ldVersion: rawProps['_ldVersion'] != null ? double.tryParse(rawProps['_ldVersion'].toString()) : null,
+            ));
+          } catch (rowErr) {
+            debugPrint('Error parsing row ID ${d.id}: $rowErr');
+          }
         }
       }
     } catch (e) {
       debugPrint('Error loading documents from Drift: $e');
     }
 
-    if (_documents.isEmpty) {
+    final prefs = await SharedPreferences.getInstance();
+    final bool hasInitializedDb = prefs.getBool('has_initialized_db') ?? false;
+
+    if (_documents.isEmpty && !hasInitializedDb) {
       final doc1 = SchemaEntity(
         id: 'doc_1',
         name: 'My Personal Profile',
@@ -138,13 +151,14 @@ class AppState extends ChangeNotifier {
       _documents.add(doc2);
       await persistDocument(doc1, immediate: true);
       await persistDocument(doc2, immediate: true);
+      await prefs.setBool('has_initialized_db', true);
     }
     generateJsonLdOutput();
-    loadInterstitialAd();
     notifyListeners();
   }
 
-  Future<void> persistDocument(SchemaEntity entity, {bool immediate = false}) async {
+  Future<void> persistDocument(SchemaEntity entity,
+      {bool immediate = false}) async {
     _saveStatus = 'Saving...';
     notifyListeners();
     _debounceTimer?.cancel();
@@ -153,14 +167,14 @@ class AppState extends ChangeNotifier {
       try {
         final serialized = json.encode(entity.serializeProperties());
         await db.into(db.localDocuments).insertOnConflictUpdate(
-          LocalDocument(
-            id: entity.id,
-            name: entity.name,
-            type: entity.type,
-            propertiesJson: serialized,
-            updatedAt: DateTime.now(),
-          ),
-        );
+              LocalDocument(
+                id: entity.id,
+                name: entity.name,
+                type: entity.type,
+                propertiesJson: serialized,
+                updatedAt: DateTime.now(),
+              ),
+            );
         _saveStatus = 'Saved';
         notifyListeners();
       } catch (e) {
@@ -210,7 +224,6 @@ class AppState extends ChangeNotifier {
     _selectedDocumentIndex = _documents.length - 1;
     persistDocument(doc);
     generateJsonLdOutput();
-    showInterstitialAd();
     notifyListeners();
   }
 
@@ -221,7 +234,6 @@ class AppState extends ChangeNotifier {
       _selectedDocumentIndex = _documents.length - 1;
       persistDocument(doc);
       generateJsonLdOutput();
-      showInterstitialAd();
       notifyListeners();
     }
   }
@@ -231,6 +243,7 @@ class AppState extends ChangeNotifier {
       final doc = _documents[index];
       doc.name = newName;
       persistDocument(doc);
+      generateJsonLdOutput();
       notifyListeners();
     }
   }
@@ -342,9 +355,21 @@ class AppState extends ChangeNotifier {
       _jsonLdOutput = '{}';
     } else {
       try {
-        final map = root.toJsonLd(isRoot: true);
-        final encoder = const JsonEncoder.withIndent('  ');
-        _jsonLdOutput = encoder.convert(map);
+        final Map<String, String> idToName = {};
+        for (final doc in _documents) {
+          idToName[doc.id] = doc.name;
+        }
+        final map = root.toJsonLd(
+          isRoot: true,
+          docIdToName: idToName,
+          targetVersion: _selectedLdVersion,
+        );
+        if (_selectedLdVersion == 'yaml-ld') {
+          _jsonLdOutput = root.convertToYaml(map);
+        } else {
+          final encoder = const JsonEncoder.withIndent('  ');
+          _jsonLdOutput = encoder.convert(map);
+        }
       } catch (e) {
         _jsonLdOutput = 'Error generating JSON-LD: ${e}';
       }
@@ -360,7 +385,6 @@ class AppState extends ChangeNotifier {
         _selectedDocumentIndex = _documents.length - 1;
         persistDocument(imported, immediate: true);
         generateJsonLdOutput();
-        showInterstitialAd();
         notifyListeners();
         return true;
       }
@@ -368,64 +392,6 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error importing JSON-LD: ${e}');
       return false;
-    }
-  }
-
-  void loadInterstitialAd() {
-    if (_interstitialAd != null || _isInterstitialAdLoading) {
-      return;
-    }
-    if (defaultTargetPlatform != TargetPlatform.android &&
-        defaultTargetPlatform != TargetPlatform.iOS) {
-      return;
-    }
-    _isInterstitialAdLoading = true;
-    String adUnitId = '';
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      adUnitId = 'ca-app-pub-3940256099942544/1033173712';
-    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      adUnitId = 'ca-app-pub-3940256099942544/4411468910';
-    }
-    InterstitialAd.load(
-      adUnitId: adUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialAdLoading = false;
-          debugPrint('InterstitialAd loaded.');
-        },
-        onAdFailedToLoad: (error) {
-          _interstitialAd = null;
-          _isInterstitialAdLoading = false;
-          debugPrint('InterstitialAd failed to load: ${error}');
-        },
-      ),
-    );
-  }
-
-  void showInterstitialAd() {
-    if (defaultTargetPlatform != TargetPlatform.android &&
-        defaultTargetPlatform != TargetPlatform.iOS) {
-      return;
-    }
-    final ad = _interstitialAd;
-    if (ad != null) {
-      ad.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _interstitialAd = null;
-          loadInterstitialAd();
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _interstitialAd = null;
-          loadInterstitialAd();
-        },
-      );
-      ad.show();
-    } else {
-      loadInterstitialAd();
     }
   }
 
@@ -437,9 +403,8 @@ class AppState extends ChangeNotifier {
     if (entity.properties[propertyId] == null) {
       entity.properties[propertyId] = [];
     }
-    final dynamic valueToAdd = (initialValue is SchemaEntity)
-        ? initialValue.clone()
-        : initialValue;
+    final dynamic valueToAdd =
+        (initialValue is SchemaEntity) ? initialValue.clone() : initialValue;
     entity.properties[propertyId]?.add(
       SchemaValue(
         id: 'val_${DateTime.now().microsecondsSinceEpoch}',
