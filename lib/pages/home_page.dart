@@ -1022,6 +1022,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
+  List<MapEntry<String, List<SchemaValue>>> _sortPropertiesByNesting(
+      Map<String, List<SchemaValue>> properties) {
+    final entries = properties.entries.toList();
+    entries.sort((a, b) {
+      final aHasEntity = a.value.any((v) => v.value is SchemaEntity);
+      final bHasEntity = b.value.any((v) => v.value is SchemaEntity);
+      if (aHasEntity && !bHasEntity) return 1; // Put complex nested nodes last
+      if (!aHasEntity && bHasEntity) return -1; // Put simple primitive/map values first
+      return a.key.compareTo(b.key); // Alphabetical fallback
+    });
+    return entries;
+  }
+
   bool _findEntityPath(SchemaEntity current, String targetId, List<SchemaEntity> path) {
     path.add(current);
     if (current.id == targetId) {
@@ -1069,7 +1082,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     ));
 
     if (!isCollapsed) {
-      entity.properties.forEach((propId, values) {
+      final sortedEntries = _sortPropertiesByNesting(entity.properties);
+      for (var entry in sortedEntries) {
+        final propId = entry.key;
+        final values = entry.value;
         final propName = propId.startsWith('schema:') ? propId.substring(7) : propId;
         for (var val in values) {
           if (val.value is SchemaEntity) {
@@ -1085,7 +1101,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ));
           }
         }
-      });
+      }
     }
     return nodes;
   }
@@ -1394,7 +1410,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
             )
           else
-            ...entity.properties.entries.map((entry) {
+            ..._sortPropertiesByNesting(entity.properties).map((entry) {
               final propId = entry.key;
               final values = entry.value;
               return _buildPropertyRow(appState, entity, propId, values, colIndex);
