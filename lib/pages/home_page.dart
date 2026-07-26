@@ -216,6 +216,101 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
+  void _showRenameNodeDialog(AppState appState, SchemaEntity entity) {
+    final controller = TextEditingController(text: entity.name);
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final currentInput = controller.text.trim();
+          final isDefault = currentInput.isEmpty ||
+              currentInput == 'Untitled Document' ||
+              currentInput == 'Untitled Object' ||
+              currentInput == 'Schema Document' ||
+              currentInput.startsWith('New ') ||
+              currentInput.endsWith(' Reference') ||
+              currentInput.endsWith(' Markup');
+
+          final safeId = isDefault
+              ? '(not assigned - using default)'
+              : '#' + currentInput.toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
+
+          return AlertDialog(
+            title: const Text('Rename & Assign @id'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Renaming this node automatically generates and assigns a clean, compliant, space-free semantic @id anchor reference.',
+                  style: TextStyle(fontSize: 12.0),
+                ),
+                const SizedBox(height: 16.0),
+                TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Node/Document Name',
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (text) {
+                    setDialogState(() {});
+                  },
+                ),
+                const SizedBox(height: 12.0),
+                Container(
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6.0),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Assigned @id Preview:',
+                        style: TextStyle(fontSize: 10.0, fontWeight: FontWeight.bold, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 4.0),
+                      Text(
+                        safeId,
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.bold,
+                          color: isDefault ? Colors.grey : Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final newName = controller.text.trim();
+                  if (newName.isNotEmpty) {
+                    setState(() {
+                      entity.name = newName;
+                    });
+                    appState.generateJsonLdOutput();
+                    appState.persistDocument(appState.rootEntity!, immediate: true);
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = AppState.of(context);
@@ -1260,6 +1355,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       ),
                                     ),
                                   ),
+                                  // Rename & assign @id button
+                                  if (isEntity && node.entity != null) ...[
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_note_outlined, size: 18.0),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      tooltip: 'Rename & assign @id',
+                                      onPressed: () => _showRenameNodeDialog(appState, node.entity!),
+                                    ),
+                                    const SizedBox(width: 8.0),
+                                  ],
                                   // Explore Focus Button for entities
                                   if (isEntity && node.entity != null)
                                     IconButton(
@@ -1351,6 +1457,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.primary,
                 ),
+              ),
+              const SizedBox(width: 8.0),
+              IconButton(
+                icon: const Icon(Icons.edit_note_outlined, size: 20.0),
+                tooltip: 'Rename & assign @id',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () => _showRenameNodeDialog(appState, entity),
               ),
               const Spacer(),
               if (!isRoot)
