@@ -1111,6 +1111,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ? allNodes.sublist(startIndex, endIndex)
         : <FlatTreeNode>[];
 
+    // Calculate minimum depth of visible nodes on this page to serve as the baseline (left anchor)
+    int minDepth = 999;
+    for (var node in paginatedNodes) {
+      if (node.depth < minDepth) {
+        minDepth = node.depth;
+      }
+    }
+    if (minDepth == 999) {
+      minDepth = 0;
+    }
+
     return Container(
       color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.all(16.0),
@@ -1154,7 +1165,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         itemBuilder: (context, idx) {
                           final node = paginatedNodes[idx];
                           final isEntity = !node.isProperty;
-                          final double indent = (node.depth * 16.0).clamp(0.0, 160.0);
+                          final relativeDepth = node.depth - minDepth;
+                          final double indent = (relativeDepth * 16.0).clamp(0.0, 160.0);
 
                           return InkWell(
                             onTap: () {
