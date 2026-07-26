@@ -1539,6 +1539,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 ),
               ],
               IconButton(
+                icon: const Icon(Icons.settings_suggest_outlined, size: 16.0),
+                tooltip: 'Add Value Object (With Metadata)',
+                onPressed: () {
+                  appState.addPropertyToEntity(
+                    entity,
+                    propId,
+                    {
+                      '@value': '',
+                      '@language': 'en',
+                    },
+                  );
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.add_circle_outline, size: 16.0),
                 tooltip: 'Add compliant value',
                 onPressed: () {
@@ -1908,6 +1922,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   ) {
     if (sValue.value is SchemaEntity) {
       return _buildCascadingNestedEntityLinkCard(appState, sValue.value as SchemaEntity, parentEntity, colIndex);
+    }
+    if (sValue.value is Map && (sValue.value as Map).containsKey('@value')) {
+      return _ValueObjectEditorCard(
+        appState: appState,
+        parentEntity: parentEntity,
+        propId: propId,
+        sValue: sValue,
+        valueObj: Map<String, dynamic>.from(sValue.value as Map),
+      );
     }
     if (sValue.value is Map && (sValue.value as Map).containsKey('@id')) {
       final mapVal = sValue.value as Map;
@@ -3590,6 +3613,234 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ValueObjectEditorCard extends StatefulWidget {
+  final AppState appState;
+  final SchemaEntity parentEntity;
+  final String propId;
+  final SchemaValue sValue;
+  final Map<String, dynamic> valueObj;
+
+  const _ValueObjectEditorCard({
+    required this.appState,
+    required this.parentEntity,
+    required this.propId,
+    required this.sValue,
+    required this.valueObj,
+  });
+
+  @override
+  State<_ValueObjectEditorCard> createState() => _ValueObjectEditorCardState();
+}
+
+class _ValueObjectEditorCardState extends State<_ValueObjectEditorCard> {
+  late TextEditingController _valueController;
+
+  @override
+  void initState() {
+    super.initState();
+    _valueController = TextEditingController(text: widget.valueObj['@value']?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _ValueObjectEditorCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newVal = widget.valueObj['@value']?.toString() ?? '';
+    if (_valueController.text != newVal) {
+      final oldSelection = _valueController.selection;
+      _valueController.text = newVal;
+      try {
+        _valueController.selection = oldSelection;
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void dispose() {
+    _valueController.dispose();
+    super.dispose();
+  }
+
+  void _updateObj(String key, dynamic val) {
+    final Map<String, dynamic> newMap = Map<String, dynamic>.from(widget.valueObj);
+    if (val == null || val.toString().isEmpty) {
+      newMap.remove(key);
+    } else {
+      newMap[key] = val;
+    }
+    widget.appState.updatePropertyValue(widget.parentEntity, widget.propId, widget.sValue.id, newMap);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final language = widget.valueObj['@language']?.toString();
+    final direction = widget.valueObj['@direction']?.toString();
+    final dataType = widget.valueObj['@type']?.toString();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(10.0),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.settings_suggest_outlined,
+                size: 15.0,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8.0),
+              const Text(
+                'Value Object (With Metadata)',
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8.0),
+          // Value string
+          Row(
+            children: [
+              const SizedBox(
+                width: 75.0,
+                child: Text('Value:', style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.bold)),
+              ),
+              Expanded(
+                child: SizedBox(
+                  height: 32.0,
+                  child: TextField(
+                    controller: _valueController,
+                    style: const TextStyle(fontSize: 12.0),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (text) {
+                      _updateObj('@value', text);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8.0),
+          // Language
+          Row(
+            children: [
+              const SizedBox(
+                width: 75.0,
+                child: Text('Language:', style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.bold)),
+              ),
+              Expanded(
+                child: SizedBox(
+                  height: 32.0,
+                  child: DropdownButtonFormField<String>(
+                    value: language,
+                    isExpanded: true,
+                    style: TextStyle(fontSize: 12.0, color: Theme.of(context).colorScheme.onSurface),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('None (Blank)')),
+                      DropdownMenuItem(value: 'en', child: Text('English (en)')),
+                      DropdownMenuItem(value: 'hi', child: Text('Hindi (hi)')),
+                      DropdownMenuItem(value: 'fr', child: Text('French (fr)')),
+                      DropdownMenuItem(value: 'es', child: Text('Spanish (es)')),
+                      DropdownMenuItem(value: 'ar', child: Text('Arabic (ar)')),
+                      DropdownMenuItem(value: 'zh', child: Text('Chinese (zh)')),
+                    ],
+                    onChanged: (val) {
+                      _updateObj('@language', val);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8.0),
+          // Direction
+          Row(
+            children: [
+              const SizedBox(
+                width: 75.0,
+                child: Text('Direction:', style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.bold)),
+              ),
+              Expanded(
+                child: SizedBox(
+                  height: 32.0,
+                  child: DropdownButtonFormField<String>(
+                    value: direction,
+                    isExpanded: true,
+                    style: TextStyle(fontSize: 12.0, color: Theme.of(context).colorScheme.onSurface),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('None (Blank)')),
+                      DropdownMenuItem(value: 'ltr', child: Text('Left-to-Right (ltr)')),
+                      DropdownMenuItem(value: 'rtl', child: Text('Right-to-Left (rtl)')),
+                    ],
+                    onChanged: (val) {
+                      _updateObj('@direction', val);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8.0),
+          // Data Type
+          Row(
+            children: [
+              const SizedBox(
+                width: 75.0,
+                child: Text('Data Type:', style: TextStyle(fontSize: 11.0, fontWeight: FontWeight.bold)),
+              ),
+              Expanded(
+                child: SizedBox(
+                  height: 32.0,
+                  child: DropdownButtonFormField<String>(
+                    value: dataType,
+                    isExpanded: true,
+                    style: TextStyle(fontSize: 12.0, color: Theme.of(context).colorScheme.onSurface),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('None (Blank)')),
+                      DropdownMenuItem(value: 'xsd:date', child: Text('Date (xsd:date)')),
+                      DropdownMenuItem(value: 'xsd:dateTime', child: Text('DateTime (xsd:dateTime)')),
+                      DropdownMenuItem(value: 'xsd:integer', child: Text('Integer (xsd:integer)')),
+                      DropdownMenuItem(value: 'xsd:decimal', child: Text('Decimal (xsd:decimal)')),
+                    ],
+                    onChanged: (val) {
+                      _updateObj('@type', val);
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
