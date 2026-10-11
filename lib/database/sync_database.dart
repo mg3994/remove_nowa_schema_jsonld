@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -118,6 +119,8 @@ class SyncDatabase {
     return _syncSession!;
   }
 
+  UuidValue? get persistentUserId => _persistentUserId;
+
   Future<void> init() async {
     if (_syncSession != null) return;
 
@@ -139,28 +142,67 @@ class SyncDatabase {
       }
     }
 
-    final clientSession = await ClientDatabaseSession.open(
-      dbPath,
-      AppProtocol.instance,
-      clientMigrations: [
-        MigrationVersionSql(
-          moduleName: 'jsonld',
-          version: '20260101000000',
-          definitionSql: _initialSqlSchema,
-          migrationSql: _initialSqlSchema,
-        ),
-      ],
-      runMigrations: true,
-      isDebugMode: kDebugMode,
-    );
+    var retry = true;
+    while (true) {
+      try {
+        final clientSession = await ClientDatabaseSession.open(
+          dbPath,
+          AppProtocol.instance,
+          clientMigrations: [
+            MigrationVersionSql(
+              moduleName: 'jsonld',
+              version: '20260101000000',
+              definitionSql: _initialSqlSchema,
+              migrationSql: _initialSqlSchema,
+            ),
+          ],
+          runMigrations: true,
+          isDebugMode: kDebugMode,
+        );
 
-    _syncSession = OfflineSyncDatabaseSession.wraps(
-      clientSession,
-      syncTables: [LocalDocument.t],
-      persistentUserId: _persistentUserId,
-    );
+        _syncSession = OfflineSyncDatabaseSession.wraps(
+          clientSession,
+          syncTables: [LocalDocument.t],
+          persistentUserId: _persistentUserId,
+        );
 
-    await _syncSession!.db.initialize();
+        await _syncSession!.db.initialize();
+        break;
+      } catch (e) {
+        if (!retry || kIsWeb) rethrow;
+        retry = false;
+        for (final suffix in const ['', '-wal', '-shm']) {
+          final file = File('$dbPath$suffix');
+          if (file.existsSync()) {
+            file.deleteSync();
+          }
+        }
+        debugPrint('SyncDatabase: discarded stale database file and retrying.');
+      }
+    }
+  }
+
+  Future<void> resetSpace() async {
+    if (_syncSession == null || _persistentUserId == null) return;
+    final space = await OfflineSyncSpace.db.findFirstRow(
+      session,
+      where: (t) => t.uuidSpaceId.equals(_persistentUserId!),
+    );
+    final spaceId = space?.id;
+    if (spaceId != null) {
+      await session.db.transaction((transaction) async {
+        await session.db.unsafeExecute(
+          'PRAGMA defer_foreign_keys = ON',
+          transaction: transaction,
+        );
+        await OfflineSyncSpace.db.deleteWhere(
+          session,
+          where: (t) => t.id.equals(spaceId),
+          transaction: transaction,
+        );
+      });
+    }
+    await session.db.initialize();
   }
 
   static const String _initialSqlSchema = '''
