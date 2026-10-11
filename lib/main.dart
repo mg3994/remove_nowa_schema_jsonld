@@ -1,11 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:jsonld/globals/app_state.dart';
 import 'package:jsonld/globals/router.dart';
-import 'package:jsonld/database/database.dart';
-import 'package:jsonld/globals/database_instance.dart';
 
 late final SharedPreferences sharedPrefs;
 

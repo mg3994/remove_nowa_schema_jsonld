@@ -3756,6 +3756,88 @@ class _ValueObjectEditorCard extends StatefulWidget {
 class _ValueObjectEditorCardState extends State<_ValueObjectEditorCard> {
   late TextEditingController _valueController;
 
+  static const List<MapEntry<String, String>> _languages = [
+    MapEntry('en', 'English (en)'),
+    MapEntry('en-US', 'English - US (en-US)'),
+    MapEntry('en-GB', 'English - UK (en-GB)'),
+    MapEntry('hi', 'Hindi (hi)'),
+    MapEntry('es', 'Spanish (es)'),
+    MapEntry('es-419', 'Spanish - Latin America (es-419)'),
+    MapEntry('fr', 'French (fr)'),
+    MapEntry('fr-FR', 'French - France (fr-FR)'),
+    MapEntry('ar', 'Arabic (ar)'),
+    MapEntry('zh', 'Chinese (zh)'),
+    MapEntry('zh-CN', 'Chinese - Simplified (zh-CN)'),
+    MapEntry('zh-TW', 'Chinese - Traditional (zh-TW)'),
+    MapEntry('ja', 'Japanese (ja)'),
+    MapEntry('ja-JP', 'Japanese - Japan (ja-JP)'),
+    MapEntry('de', 'German (de)'),
+    MapEntry('de-DE', 'German - Germany (de-DE)'),
+    MapEntry('pt', 'Portuguese (pt)'),
+    MapEntry('pt-BR', 'Portuguese - Brazil (pt-BR)'),
+    MapEntry('ru', 'Russian (ru)'),
+    MapEntry('ko', 'Korean (ko)'),
+    MapEntry('it', 'Italian (it)'),
+    MapEntry('nl', 'Dutch (nl)'),
+    MapEntry('pl', 'Polish (pl)'),
+    MapEntry('tr', 'Turkish (tr)'),
+    MapEntry('uk', 'Ukrainian (uk)'),
+    MapEntry('vi', 'Vietnamese (vi)'),
+    MapEntry('th', 'Thai (th)'),
+    MapEntry('id', 'Indonesian (id)'),
+    MapEntry('ms', 'Malay (ms)'),
+    MapEntry('bn', 'Bengali (bn)'),
+    MapEntry('pa', 'Punjabi (pa)'),
+    MapEntry('ta', 'Tamil (ta)'),
+    MapEntry('tel', 'Telugu (tel)'),
+    MapEntry('mr', 'Marathi (mr)'),
+    MapEntry('ur', 'Urdu (ur)'),
+    MapEntry('fa', 'Persian (fa)'),
+    MapEntry('he', 'Hebrew (he)'),
+    MapEntry('sv', 'Swedish (sv)'),
+    MapEntry('da', 'Danish (da)'),
+    MapEntry('fi', 'Finnish (fi)'),
+    MapEntry('no', 'Norwegian (no)'),
+    MapEntry('cs', 'Czech (cs)'),
+    MapEntry('el', 'Greek (el)'),
+    MapEntry('hu', 'Hungarian (hu)'),
+    MapEntry('ro', 'Romanian (ro)'),
+    MapEntry('sk', 'Slovak (sk)'),
+    MapEntry('sr', 'Serbian (sr)'),
+    MapEntry('sr-Latn', 'Serbian - Latin (sr-Latn)'),
+    MapEntry('bg', 'Bulgarian (bg)'),
+    MapEntry('hr', 'Croatian (hr)'),
+    MapEntry('ca', 'Catalan (ca)'),
+    MapEntry('sw', 'Swahili (sw)'),
+  ];
+
+  static const List<MapEntry<String, String>> _dataTypes = [
+    MapEntry('xsd:string', 'String (xsd:string)'),
+    MapEntry('xsd:boolean', 'Boolean (xsd:boolean)'),
+    MapEntry('xsd:decimal', 'Decimal (xsd:decimal)'),
+    MapEntry('xsd:float', 'Float (xsd:float)'),
+    MapEntry('xsd:double', 'Double (xsd:double)'),
+    MapEntry('xsd:integer', 'Integer (xsd:integer)'),
+    MapEntry('xsd:nonNegativeInteger', 'Non-Negative Int (xsd:nonNegativeInteger)'),
+    MapEntry('xsd:positiveInteger', 'Positive Int (xsd:positiveInteger)'),
+    MapEntry('xsd:date', 'Date (xsd:date)'),
+    MapEntry('xsd:dateTime', 'DateTime (xsd:dateTime)'),
+    MapEntry('xsd:time', 'Time (xsd:time)'),
+    MapEntry('xsd:gYear', 'Year (xsd:gYear)'),
+    MapEntry('xsd:gYearMonth', 'YearMonth (xsd:gYearMonth)'),
+    MapEntry('xsd:duration', 'Duration (xsd:duration)'),
+    MapEntry('xsd:anyURI', 'URI (xsd:anyURI)'),
+    MapEntry('xsd:base64Binary', 'Base64 (xsd:base64Binary)'),
+    MapEntry('rdf:JSON', 'JSON Object (rdf:JSON)'),
+    MapEntry('rdf:HTML', 'HTML String (rdf:HTML)'),
+    MapEntry('rdf:langString', 'Language String (rdf:langString)'),
+    MapEntry('schema:URL', 'Schema URL (schema:URL)'),
+    MapEntry('schema:Text', 'Schema Text (schema:Text)'),
+    MapEntry('schema:Number', 'Schema Number (schema:Number)'),
+    MapEntry('schema:Date', 'Schema Date (schema:Date)'),
+    MapEntry('schema:DateTime', 'Schema DateTime (schema:DateTime)'),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -3862,7 +3944,7 @@ class _ValueObjectEditorCardState extends State<_ValueObjectEditorCard> {
               Expanded(
                 child: SizedBox(
                   height: 32.0,
-                  child: DropdownButtonFormField<String>(
+                  child: DropdownButtonFormField<String?>(
                     value: language,
                     isExpanded: true,
                     style: TextStyle(fontSize: 12.0, color: Theme.of(context).colorScheme.onSurface),
@@ -3871,15 +3953,20 @@ class _ValueObjectEditorCardState extends State<_ValueObjectEditorCard> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                       border: OutlineInputBorder(),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('None (Blank)')),
-                      DropdownMenuItem(value: 'en', child: Text('English (en)')),
-                      DropdownMenuItem(value: 'hi', child: Text('Hindi (hi)')),
-                      DropdownMenuItem(value: 'fr', child: Text('French (fr)')),
-                      DropdownMenuItem(value: 'es', child: Text('Spanish (es)')),
-                      DropdownMenuItem(value: 'ar', child: Text('Arabic (ar)')),
-                      DropdownMenuItem(value: 'zh', child: Text('Chinese (zh)')),
-                    ],
+                    items: () {
+                      final List<DropdownMenuItem<String?>> items = [
+                        const DropdownMenuItem(value: null, child: Text('None (Blank)')),
+                      ];
+                      final knownValues = <String>{};
+                      for (var entry in _languages) {
+                        knownValues.add(entry.key);
+                        items.add(DropdownMenuItem(value: entry.key, child: Text(entry.value)));
+                      }
+                      if (language != null && !knownValues.contains(language)) {
+                        items.add(DropdownMenuItem(value: language, child: Text('Custom ($language)')));
+                      }
+                      return items;
+                    }(),
                     onChanged: (val) {
                       _updateObj('@language', val);
                     },
@@ -3932,7 +4019,7 @@ class _ValueObjectEditorCardState extends State<_ValueObjectEditorCard> {
               Expanded(
                 child: SizedBox(
                   height: 32.0,
-                  child: DropdownButtonFormField<String>(
+                  child: DropdownButtonFormField<String?>(
                     value: dataType,
                     isExpanded: true,
                     style: TextStyle(fontSize: 12.0, color: Theme.of(context).colorScheme.onSurface),
@@ -3941,13 +4028,20 @@ class _ValueObjectEditorCardState extends State<_ValueObjectEditorCard> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                       border: OutlineInputBorder(),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('None (Blank)')),
-                      DropdownMenuItem(value: 'xsd:date', child: Text('Date (xsd:date)')),
-                      DropdownMenuItem(value: 'xsd:dateTime', child: Text('DateTime (xsd:dateTime)')),
-                      DropdownMenuItem(value: 'xsd:integer', child: Text('Integer (xsd:integer)')),
-                      DropdownMenuItem(value: 'xsd:decimal', child: Text('Decimal (xsd:decimal)')),
-                    ],
+                    items: () {
+                      final List<DropdownMenuItem<String?>> items = [
+                        const DropdownMenuItem(value: null, child: Text('None (Blank)')),
+                      ];
+                      final knownValues = <String>{};
+                      for (var entry in _dataTypes) {
+                        knownValues.add(entry.key);
+                        items.add(DropdownMenuItem(value: entry.key, child: Text(entry.value)));
+                      }
+                      if (dataType != null && !knownValues.contains(dataType)) {
+                        items.add(DropdownMenuItem(value: dataType, child: Text('Custom ($dataType)')));
+                      }
+                      return items;
+                    }(),
                     onChanged: (val) {
                       _updateObj('@type', val);
                     },

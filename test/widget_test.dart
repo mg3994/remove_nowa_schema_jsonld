@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jsonld/main.dart';
 import 'package:jsonld/schema_entity.dart';
+import 'package:jsonld/database/sync_database.dart';
+import 'package:jsonld/database/local_document.dart';
+import 'package:uuid/uuid.dart';
 
 void main() {
   test('Value Object preservation and custom baseUri compilation test', () {
@@ -47,6 +51,28 @@ void main() {
     expect(descObj['@language'], equals("en"));
     expect(descObj.containsKey('@id'), isFalse);
     expect(descObj['@type'], isNull);
+  });
+
+  test('Value Object with schema:DateTime type includes schema namespace in @context', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "dateCreated": {
+        "@value": "2026-10-11T12:00:00Z",
+        "@type": "schema:DateTime"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    final compiled = doc.toJsonLd(isRoot: true);
+    expect(compiled['@context'], isMap);
+    expect(compiled['@context']['schema'], equals("https://schema.org/"));
+
+    final dateObj = compiled['dateCreated'];
+    expect(dateObj, isMap);
+    expect(dateObj['@value'], equals("2026-10-11T12:00:00Z"));
+    expect(dateObj['@type'], equals("schema:DateTime"));
   });
 
   test('Value Object with xsd:date type includes xsd namespace in @context', () {
@@ -335,6 +361,90 @@ void main() {
     expect(compiled['@graph'][1]['@type'], equals("Organization"));
     expect(compiled['@graph'][1]['@id'], equals("https://example.com/about#company"));
     expect(compiled['@graph'][1]['name'], equals("Tech Corp"));
+  });
+
+  test('Extended BCP-47 language maps, URI-to-IRI normalization, and context lists', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": [
+        "https://schema.org/",
+        {
+          "bibo": "http://purl.org/ontology/bibo/",
+          "xsd": "http://www.w3.org/2001/XMLSchema#",
+          "@language": "en"
+        }
+      ],
+      "@type": "http://purl.org/ontology/bibo/Article",
+      "name": {
+        "zh-Hans-CN": "Simplified Chinese Title",
+        "en-US": "American English Title",
+        "sr-Latn": "Latin Serbian Title"
+      },
+      "datePublished": {
+        "@value": "2026-10-11",
+        "@type": "http://www.w3.org/2001/XMLSchema#date"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    // Verify type was normalized from full URI to IRI
+    expect(doc.type, equals("bibo:Article"));
+
+    final compiled = doc.toJsonLd(isRoot: true, targetVersion: '1.1');
+
+    // Verify @context contains bibo namespace
+    expect(compiled['@context'], isMap);
+    expect(compiled['@context']['bibo'], equals("http://purl.org/ontology/bibo/"));
+    expect(compiled['@context']['@language'], equals("en"));
+
+    // Verify language map with subtags is preserved
+    final nameMap = compiled['name'];
+    expect(nameMap, isMap);
+    expect(nameMap['zh-Hans-CN'], equals("Simplified Chinese Title"));
+    expect(nameMap['en-US'], equals("American English Title"));
+    expect(nameMap['sr-Latn'], equals("Latin Serbian Title"));
+  });
+
+  test('SyncDatabase LocalDocument CRUD test with Serverpod Offline Sync', () async {
+    SharedPreferences.setMockInitialValues({});
+    for (final dbName in ['jsonld_database.db', '${Directory.systemTemp.path}/jsonld_database.db']) {
+      final file = File(dbName);
+      if (file.existsSync()) {
+        try { file.deleteSync(); } catch (_) {}
+      }
+      for (final suffix in const ['-wal', '-shm']) {
+        final f = File('$dbName$suffix');
+        if (f.existsSync()) {
+          try { f.deleteSync(); } catch (_) {}
+        }
+      }
+    }
+    await SyncDatabase.instance.init();
+
+    final docId = Uuid().v7obj();
+    final doc = LocalDocument(
+      id: docId,
+      name: 'Test Article Markup',
+      type: 'schema:Article',
+      propertiesJson: '{"schema:headline":[{"type":"primitive","value":"Serverpod Sync Works"}]}',
+      updatedAt: DateTime.now(),
+    );
+
+    // Save
+    await SyncDatabase.instance.saveDocument(doc);
+
+    // Fetch
+    final docs = await SyncDatabase.instance.getDocuments();
+    expect(docs.any((d) => d.id == docId), isTrue);
+
+    final fetched = await SyncDatabase.instance.getDocumentById(docId);
+    expect(fetched, isNotNull);
+    expect(fetched!.name, equals('Test Article Markup'));
+
+    // Delete
+    await SyncDatabase.instance.deleteDocument(docId);
+    final afterDelete = await SyncDatabase.instance.getDocumentById(docId);
+    expect(afterDelete, isNull);
   });
 
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
