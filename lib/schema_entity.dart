@@ -156,7 +156,7 @@ class SchemaEntity {
       final t = val.type;
       if (t.contains(':')) {
         final prefix = t.split(':').first;
-        if (_namespaces.containsKey(prefix)) {
+        if (_namespaces.containsKey(prefix) && prefix != 'schema') {
           used.add(prefix);
         }
       }
@@ -164,7 +164,7 @@ class SchemaEntity {
         final propId = entry.key;
         if (propId.contains(':')) {
           final prefix = propId.split(':').first;
-          if (_namespaces.containsKey(prefix)) {
+          if (_namespaces.containsKey(prefix) && prefix != 'schema') {
             used.add(prefix);
           }
         }
@@ -177,6 +177,7 @@ class SchemaEntity {
       if (t != null && t.contains(':')) {
         final prefix = t.split(':').first;
         if (_namespaces.containsKey(prefix)) {
+          // If a map (e.g. Value Object) explicitly uses "schema:..." @type, collect "schema"
           used.add(prefix);
         }
       }
@@ -184,7 +185,7 @@ class SchemaEntity {
         final keyStr = entry.key.toString();
         if (keyStr.contains(':')) {
           final prefix = keyStr.split(':').first;
-          if (_namespaces.containsKey(prefix)) {
+          if (_namespaces.containsKey(prefix) && prefix != 'schema') {
             used.add(prefix);
           }
         }
