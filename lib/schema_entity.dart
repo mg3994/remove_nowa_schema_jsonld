@@ -1,6 +1,5 @@
 import 'package:jsonld/schema_value.dart';
 import 'package:jsonld/schema_service.dart';
-import 'dart:math' as math;
 
 class SchemaEntity {
   bool _isEnumerationValue(String value) {
@@ -55,36 +54,60 @@ class SchemaEntity {
     'dctype': 'http://purl.org/dc/dcmitype/',
     'doap': 'http://usefulinc.com/ns/doap#',
     'eli': 'http://data.europa.eu/eli/ontology#',
-    'fibo-be-corp-corp': 'https://spec.edmcouncil.org/fibo/ontology/BE/Corporations/Corporations/',
-    'fibo-be-ge-ge': 'https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/',
-    'fibo-be-le-cb': 'https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/CorporateBodies/',
-    'fibo-be-le-lp': 'https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/',
-    'fibo-be-nfp-nfp': 'https://spec.edmcouncil.org/fibo/ontology/BE/NotForProfitOrganizations/NotForProfitOrganizations/',
-    'fibo-be-oac-cctl': 'https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/CorporateControl/',
-    'fibo-fbc-dae-dbt': 'https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/',
-    'fibo-fbc-pas-fpas': 'https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/',
-    'fibo-fnd-acc-cur': 'https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/',
-    'fibo-fnd-agr-ctr': 'https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/',
-    'fibo-fnd-arr-doc': 'https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Documents/',
-    'fibo-fnd-arr-lif': 'https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Lifecycles/',
-    'fibo-fnd-dt-oc': 'https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/Occurrences/',
-    'fibo-fnd-org-org': 'https://spec.edmcouncil.org/fibo/ontology/FND/Organizations/Organizations/',
-    'fibo-fnd-pas-pas': 'https://spec.edmcouncil.org/fibo/ontology/FND/ProductsAndServices/ProductsAndServices/',
-    'fibo-fnd-plc-adr': 'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/',
-    'fibo-fnd-plc-fac': 'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Facilities/',
-    'fibo-fnd-plc-loc': 'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/',
-    'fibo-fnd-pty-pty': 'https://spec.edmcouncil.org/fibo/ontology/FND/Parties/Parties/',
-    'fibo-fnd-rel-rel': 'https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/',
-    'fibo-pay-ps-ps': 'https://spec.edmcouncil.org/fibo/ontology/PAY/PaymentServices/PaymentServices/',
+    'fibo-be-corp-corp':
+        'https://spec.edmcouncil.org/fibo/ontology/BE/Corporations/Corporations/',
+    'fibo-be-ge-ge':
+        'https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/',
+    'fibo-be-le-cb':
+        'https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/CorporateBodies/',
+    'fibo-be-le-lp':
+        'https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/',
+    'fibo-be-nfp-nfp':
+        'https://spec.edmcouncil.org/fibo/ontology/BE/NotForProfitOrganizations/NotForProfitOrganizations/',
+    'fibo-be-oac-cctl':
+        'https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/CorporateControl/',
+    'fibo-fbc-dae-dbt':
+        'https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/',
+    'fibo-fbc-pas-fpas':
+        'https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/',
+    'fibo-fnd-acc-cur':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/',
+    'fibo-fnd-agr-ctr':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/',
+    'fibo-fnd-arr-doc':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Documents/',
+    'fibo-fnd-arr-lif':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Lifecycles/',
+    'fibo-fnd-dt-oc':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/Occurrences/',
+    'fibo-fnd-org-org':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Organizations/Organizations/',
+    'fibo-fnd-pas-pas':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/ProductsAndServices/ProductsAndServices/',
+    'fibo-fnd-plc-adr':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/',
+    'fibo-fnd-plc-fac':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Facilities/',
+    'fibo-fnd-plc-loc':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Places/Locations/',
+    'fibo-fnd-pty-pty':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Parties/Parties/',
+    'fibo-fnd-rel-rel':
+        'https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/',
+    'fibo-pay-ps-ps':
+        'https://spec.edmcouncil.org/fibo/ontology/PAY/PaymentServices/PaymentServices/',
     'foaf': 'http://xmlns.com/foaf/0.1/',
     'geo': 'http://www.opengis.net/ont/geosparql#',
     'gleif-L1': 'https://www.gleif.org/ontology/L1/',
     'gs1': 'https://ref.gs1.org/voc/',
     'hydra': 'http://www.w3.org/ns/hydra/core#',
-    'lcc-3166-1': 'https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/',
+    'lcc-3166-1':
+        'https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/',
     'lcc-4217': 'https://www.omg.org/spec/LCC/Countries/ISO4217-CurrencyCodes/',
-    'lcc-cr': 'https://www.omg.org/spec/LCC/Countries/CountryRepresentation/',
-    'lcc-lr': 'https://www.omg.org/spec/LCC/Languages/LanguageRepresentation/',
+    'lcc-cr':
+        'https://www.omg.org/spec/LCC/Countries/CountryRepresentation/',
+    'lcc-lr':
+        'https://www.omg.org/spec/LCC/Languages/LanguageRepresentation/',
     'lrmoo': 'http://iflastandards.info/ns/lrm/lrmoo/',
     'mo': 'http://purl.org/ontology/mo/',
     'odrl': 'http://www.w3.org/ns/odrl/2/',
@@ -112,12 +135,28 @@ class SchemaEntity {
     'xsd': 'http://www.w3.org/2001/XMLSchema#',
   };
 
+  static String _normalizeFullUriToIri(String uriStr) {
+    final str = uriStr.trim();
+    if (str.startsWith('https://schema.org/') ||
+        str.startsWith('http://schema.org/')) {
+      final suffix = str.substring(str.lastIndexOf('/') + 1);
+      return 'schema:$suffix';
+    }
+    for (var entry in _namespaces.entries) {
+      if (entry.key != 'schema' && str.startsWith(entry.value)) {
+        final suffix = str.substring(entry.value.length);
+        return '${entry.key}:$suffix';
+      }
+    }
+    return str;
+  }
+
   void _collectUsedNamespaces(dynamic val, Set<String> used) {
     if (val is SchemaEntity) {
       final t = val.type;
       if (t.contains(':')) {
         final prefix = t.split(':').first;
-        if (_namespaces.containsKey(prefix)) {
+        if (_namespaces.containsKey(prefix) && prefix != 'schema') {
           used.add(prefix);
         }
       }
@@ -130,7 +169,7 @@ class SchemaEntity {
       final t = val['@type']?.toString();
       if (t != null && t.contains(':')) {
         final prefix = t.split(':').first;
-        if (_namespaces.containsKey(prefix)) {
+        if (_namespaces.containsKey(prefix) && prefix != 'schema') {
           used.add(prefix);
         }
       }
@@ -171,7 +210,10 @@ class SchemaEntity {
               v.forEach((tk, tv) {
                 if (tk != '@protected' && tk != '@nest') {
                   if (tk == '@container') {
-                    if (tv == '@list' || tv == '@set' || tv == '@language' || tv == '@index') {
+                    if (tv == '@list' ||
+                        tv == '@set' ||
+                        tv == '@language' ||
+                        tv == '@index') {
                       filteredTerm[tk] = tv;
                     }
                   } else {
@@ -234,12 +276,18 @@ class SchemaEntity {
           !clean.endsWith(' Markup');
     }
 
-    final String effectiveBase = (baseUri != null && baseUri!.trim().isNotEmpty) ? baseUri!.trim() : 'https://example.com/things/';
+    final String effectiveBase = (baseUri != null && baseUri!.trim().isNotEmpty)
+        ? baseUri!.trim()
+        : 'https://example.com/things/';
 
     // Dynamic @id generation based on renamed name or preserved absolute URIs
     if (!isKeyword) {
       if (isNameRenamed(name)) {
-        final safeId = name.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
+        final safeId = name
+            .trim()
+            .toLowerCase()
+            .replaceAll(RegExp(r'[^\w\s\-]'), '')
+            .replaceAll(RegExp(r'\s+'), '-');
         result['@id'] = '#$safeId';
       } else if (id.startsWith(effectiveBase)) {
         // Form relative ID if it matches the base URL
@@ -258,8 +306,12 @@ class SchemaEntity {
       final List<dynamic> jsonValues = [];
       for (var val in values) {
         if (val.value is SchemaEntity) {
-          jsonValues.add((val.value as SchemaEntity).toJsonLd(isRoot: false, docIdToName: docIdToName, targetVersion: targetVersion));
-        } else if (val.value is Map && (val.value as Map).containsKey('@value')) {
+          jsonValues.add((val.value as SchemaEntity).toJsonLd(
+              isRoot: false,
+              docIdToName: docIdToName,
+              targetVersion: targetVersion));
+        } else if (val.value is Map &&
+            (val.value as Map).containsKey('@value')) {
           // Rule 1: Preserve Value Objects exactly as imported, do NOT add node metadata!
           jsonValues.add(val.value);
         } else if (val.value is Map &&
@@ -267,15 +319,24 @@ class SchemaEntity {
             !(val.value as Map).containsKey('@type') &&
             (val.value as Map).keys.length <= 2) {
           final targetDocId = (val.value as Map)['@id'] as String;
-          final targetDocName = docIdToName?[targetDocId] ?? (val.value as Map)['docName'] ?? '';
+          final targetDocName = docIdToName?[targetDocId] ??
+              (val.value as Map)['docName'] ??
+              '';
           if (isNameRenamed(targetDocName)) {
-            final safeLinkedId = targetDocName.trim().toLowerCase().replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(RegExp(r'\s+'), '-');
+            final safeLinkedId = targetDocName
+                .trim()
+                .toLowerCase()
+                .replaceAll(RegExp(r'[^\w\s\-]'), '')
+                .replaceAll(RegExp(r'\s+'), '-');
             jsonValues.add({'@id': '#$safeLinkedId'});
           } else {
             // Keep absolute URLs and pre-anchored IDs exactly as-is without adding '#' double prefixes
             if (targetDocId.startsWith(effectiveBase)) {
-              jsonValues.add({'@id': targetDocId.substring(effectiveBase.length)});
-            } else if (targetDocId.startsWith('http://') || targetDocId.startsWith('https://') || targetDocId.startsWith('#')) {
+              jsonValues
+                  .add({'@id': targetDocId.substring(effectiveBase.length)});
+            } else if (targetDocId.startsWith('http://') ||
+                targetDocId.startsWith('https://') ||
+                targetDocId.startsWith('#')) {
               jsonValues.add({'@id': targetDocId});
             } else {
               jsonValues.add({'@id': '#$targetDocId'});
@@ -285,7 +346,10 @@ class SchemaEntity {
           final mapVal = val.value as Map;
           final bool isLanguageMap = !propName.startsWith('@') &&
               mapVal.isNotEmpty &&
-              mapVal.keys.every((k) => RegExp(r'^[a-z]{2,3}(-[a-zA-Z0-9]{2,4})?$').hasMatch(k.toString()));
+              mapVal.keys.every((k) => RegExp(
+                    r'^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$',
+                    caseSensitive: false,
+                  ).hasMatch(k.toString()));
           if (targetVersion == '1.0' && isLanguageMap) {
             // Expand shorthand language maps into @value and @language array!
             for (var entry in mapVal.entries) {
@@ -335,7 +399,8 @@ class SchemaEntity {
       properties: clonedProps,
       name: name,
       baseUri: baseUri,
-      customContext: customContext != null ? Map<String, dynamic>.from(customContext!) : null,
+      customContext:
+          customContext != null ? Map<String, dynamic>.from(customContext!) : null,
       ldVersion: ldVersion,
     );
   }
@@ -422,41 +487,57 @@ class SchemaEntity {
     return parsed;
   }
 
-  static List<SchemaValue> _parseJsonLdPropertyValues(dynamic val, String key) {
+  static List<SchemaValue> _parseJsonLdPropertyValues(
+      dynamic val, String key) {
     final List<SchemaValue> values = [];
     void parseSingle(dynamic singleVal) {
       if (singleVal is Map) {
         final bool hasValue = singleVal.containsKey('@value');
         final bool hasList = singleVal.containsKey('@list');
         final bool hasSet = singleVal.containsKey('@set');
-        final bool hasIndex = singleVal.containsKey('@index') && !singleVal.containsKey('@type');
+        final bool hasIndex =
+            singleVal.containsKey('@index') && !singleVal.containsKey('@type');
         final bool hasId = singleVal.containsKey('@id');
-        final bool hasAtKeys = singleVal.keys.any((k) => k.toString().startsWith('@') && k != '@list' && k != '@set' && k != '@index');
+        final bool hasAtKeys = singleVal.keys.any((k) =>
+            k.toString().startsWith('@') &&
+            k != '@list' &&
+            k != '@set' &&
+            k != '@index');
 
-        if (hasValue || hasList || hasSet || hasIndex || (!hasId && !hasAtKeys)) {
+        if (hasValue ||
+            hasList ||
+            hasSet ||
+            hasIndex ||
+            (!hasId && !hasAtKeys)) {
           // Rule 3 & 4: Preserve Value Objects, container/language mappings, lists, sets, and indices as-is as raw maps!
           values.add(
             SchemaValue(
-              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+              id: '${DateTime.now().microsecondsSinceEpoch}_${singleVal.hashCode}',
               value: Map<String, dynamic>.from(singleVal),
             ),
           );
-        } else if (hasId && !singleVal.containsKey('@type') && singleVal.keys.length <= 2) {
+        } else if (hasId &&
+            !singleVal.containsKey('@type') &&
+            singleVal.keys.length <= 2) {
           final refId = singleVal['@id'].toString().replaceAll('#', '');
           values.add(
             SchemaValue(
-              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+              id: '${DateTime.now().microsecondsSinceEpoch}_${singleVal.hashCode}',
               value: {
                 '@id': refId,
-                'docName': '${refId.replaceAll('doc_', 'Document ')} Reference',
+                'docName':
+                    '${refId.replaceAll('doc_', 'Document ')} Reference',
               },
             ),
           );
         } else {
           values.add(
             SchemaValue(
-              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
-              value: SchemaEntity.fromJsonLd(Map<String, dynamic>.from(singleVal), defaultType: key.startsWith('@') ? 'schema:$key' : null),
+              id: '${DateTime.now().microsecondsSinceEpoch}_${singleVal.hashCode}',
+              value: SchemaEntity.fromJsonLd(
+                Map<String, dynamic>.from(singleVal),
+                defaultType: key.startsWith('@') ? 'schema:$key' : null,
+              ),
             ),
           );
         }
@@ -464,7 +545,8 @@ class SchemaEntity {
         var parsedVal = singleVal;
         if (singleVal is String) {
           final String s = singleVal.trim();
-          if (s.startsWith('https://schema.org/') || s.startsWith('http://schema.org/')) {
+          if (s.startsWith('https://schema.org/') ||
+              s.startsWith('http://schema.org/')) {
             final String suffix = s.substring(s.lastIndexOf('/') + 1);
             final String candidate = 'schema:$suffix';
             bool matched = false;
@@ -483,7 +565,7 @@ class SchemaEntity {
         }
         values.add(
           SchemaValue(
-            id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + singleVal.hashCode.toString(),
+            id: '${DateTime.now().microsecondsSinceEpoch}_${singleVal.hashCode}',
             value: parsedVal,
           ),
         );
@@ -505,37 +587,60 @@ class SchemaEntity {
     String? defaultType,
     String? docName,
   }) {
+    double? parsedLdVersion;
+    String? parsedBaseUri;
+    Map<String, dynamic>? customCtx;
+
+    void parseContextElement(dynamic ctxElement) {
+      if (ctxElement is Map) {
+        customCtx ??= {};
+        ctxElement.forEach((k, v) {
+          if (k == '@version') {
+            parsedLdVersion = double.tryParse(v.toString());
+          } else if (k == '@base') {
+            parsedBaseUri = v.toString();
+          } else if (k != '@vocab') {
+            customCtx![k.toString()] = v;
+          }
+        });
+      } else if (ctxElement is String) {
+        final s = ctxElement.trim();
+        if (s != 'https://schema.org' &&
+            s != 'https://schema.org/' &&
+            s != 'http://schema.org' &&
+            s != 'http://schema.org/') {
+          customCtx ??= {};
+          customCtx!['@import'] = s;
+        }
+      }
+    }
+
+    final ctx = json['@context'];
+    if (ctx is List) {
+      for (var item in ctx) {
+        parseContextElement(item);
+      }
+    } else if (ctx != null) {
+      parseContextElement(ctx);
+    }
+
     if (json.containsKey('@graph') && json['@graph'] is List) {
       final List<dynamic> graphList = json['@graph'] as List;
       final Map<String, List<SchemaValue>> properties = {};
       final List<SchemaValue> graphValues = [];
 
-      double? parsedLdVersion;
-      Map<String, dynamic>? customCtx;
-      final ctx = json['@context'];
-      if (ctx is Map) {
-        customCtx = {};
-        ctx.forEach((k, v) {
-          if (k == '@version') {
-            parsedLdVersion = double.tryParse(v.toString());
-          } else if (k != '@vocab' && k != '@base') {
-            customCtx![k.toString()] = v;
-          }
-        });
-      }
-
       for (var item in graphList) {
         if (item is Map<String, dynamic>) {
           graphValues.add(
             SchemaValue(
-              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + item.hashCode.toString(),
+              id: '${DateTime.now().microsecondsSinceEpoch}_${item.hashCode}',
               value: SchemaEntity.fromJsonLd(item),
             ),
           );
         } else {
           graphValues.add(
             SchemaValue(
-              id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + item.hashCode.toString(),
+              id: '${DateTime.now().microsecondsSinceEpoch}_${item.hashCode}',
               value: item,
             ),
           );
@@ -548,7 +653,9 @@ class SchemaEntity {
         if (key == '@context' || key == '@type' || key == '@graph') {
           return;
         }
-        final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
+        final String propId = key.startsWith('@')
+            ? 'schema:$key'
+            : (key.contains(':') ? key : 'schema:$key');
         final List<SchemaValue> values = _parseJsonLdPropertyValues(val, key);
         if (values.isNotEmpty) {
           properties[propId] = values;
@@ -556,51 +663,43 @@ class SchemaEntity {
       });
 
       return SchemaEntity(
-        id: DateTime.now().microsecondsSinceEpoch.toString() + '_' + json.hashCode.toString(),
+        id: '${DateTime.now().microsecondsSinceEpoch}_${json.hashCode}',
         type: 'schema:@graph',
         properties: properties,
         name: docName ?? 'Graph Markup',
+        baseUri: parsedBaseUri,
         customContext: customCtx,
         ldVersion: parsedLdVersion,
       );
     }
 
-    final String type =
+    final String rawType =
         json['@type']?.toString() ?? defaultType ?? 'schema:Thing';
-    final String normalizedType = type.contains(':') ? type : 'schema:${type}';
-    final Map<String, List<SchemaValue>> properties = {};
+    final String normalizedType = _normalizeFullUriToIri(rawType).contains(':')
+        ? _normalizeFullUriToIri(rawType)
+        : 'schema:${_normalizeFullUriToIri(rawType)}';
 
-    double? parsedLdVersion;
-    Map<String, dynamic>? customCtx;
-    final ctx = json['@context'];
-    if (ctx is Map) {
-      customCtx = {};
-      ctx.forEach((k, v) {
-        if (k == '@version') {
-          parsedLdVersion = double.tryParse(v.toString());
-        } else if (k != '@vocab' && k != '@base') {
-          customCtx![k.toString()] = v;
-        }
-      });
-    }
+    final Map<String, List<SchemaValue>> properties = {};
 
     json.forEach((key, val) {
       if (key == '@context' || key == '@type') {
         return;
       }
-      final String propId = key.startsWith('@') ? 'schema:$key' : (key.contains(':') ? key : 'schema:${key}');
+      final String propId = key.startsWith('@')
+          ? 'schema:$key'
+          : (key.contains(':') ? key : 'schema:$key');
       final List<SchemaValue> values = _parseJsonLdPropertyValues(val, key);
       if (values.isNotEmpty) {
         properties[propId] = values;
       }
     });
+
     return SchemaEntity(
-      id: DateTime.now().microsecondsSinceEpoch.toString() +
-          '_' +
-          json.hashCode.toString(),
+      id: '${DateTime.now().microsecondsSinceEpoch}_${json.hashCode}',
       type: normalizedType,
       properties: properties,
-      name: docName ?? '${type.split(':').last} Markup',
+      name: docName ?? '${normalizedType.split(':').last} Markup',
+      baseUri: parsedBaseUri,
       customContext: customCtx,
       ldVersion: parsedLdVersion,
     );

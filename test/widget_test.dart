@@ -337,6 +337,48 @@ void main() {
     expect(compiled['@graph'][1]['name'], equals("Tech Corp"));
   });
 
+  test('Extended BCP-47 language maps, URI-to-IRI normalization, and context lists', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": [
+        "https://schema.org/",
+        {
+          "bibo": "http://purl.org/ontology/bibo/",
+          "xsd": "http://www.w3.org/2001/XMLSchema#",
+          "@language": "en"
+        }
+      ],
+      "@type": "http://purl.org/ontology/bibo/Article",
+      "name": {
+        "zh-Hans-CN": "Simplified Chinese Title",
+        "en-US": "American English Title",
+        "sr-Latn": "Latin Serbian Title"
+      },
+      "datePublished": {
+        "@value": "2026-10-11",
+        "@type": "http://www.w3.org/2001/XMLSchema#date"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    // Verify type was normalized from full URI to IRI
+    expect(doc.type, equals("bibo:Article"));
+
+    final compiled = doc.toJsonLd(isRoot: true, targetVersion: '1.1');
+
+    // Verify @context contains bibo namespace
+    expect(compiled['@context'], isMap);
+    expect(compiled['@context']['bibo'], equals("http://purl.org/ontology/bibo/"));
+    expect(compiled['@context']['@language'], equals("en"));
+
+    // Verify language map with subtags is preserved
+    final nameMap = compiled['name'];
+    expect(nameMap, isMap);
+    expect(nameMap['zh-Hans-CN'], equals("Simplified Chinese Title"));
+    expect(nameMap['en-US'], equals("American English Title"));
+    expect(nameMap['sr-Latn'], equals("Latin Serbian Title"));
+  });
+
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {
     // Initialize SharedPreferences with mock values
     SharedPreferences.setMockInitialValues({});
