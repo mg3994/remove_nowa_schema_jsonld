@@ -160,8 +160,15 @@ class SchemaEntity {
           used.add(prefix);
         }
       }
-      for (var values in val.properties.values) {
-        for (var sv in values) {
+      for (var entry in val.properties.entries) {
+        final propId = entry.key;
+        if (propId.contains(':')) {
+          final prefix = propId.split(':').first;
+          if (_namespaces.containsKey(prefix)) {
+            used.add(prefix);
+          }
+        }
+        for (var sv in entry.value) {
           _collectUsedNamespaces(sv.value, used);
         }
       }
@@ -174,6 +181,13 @@ class SchemaEntity {
         }
       }
       for (var entry in val.entries) {
+        final keyStr = entry.key.toString();
+        if (keyStr.contains(':')) {
+          final prefix = keyStr.split(':').first;
+          if (_namespaces.containsKey(prefix)) {
+            used.add(prefix);
+          }
+        }
         _collectUsedNamespaces(entry.value, used);
       }
     } else if (val is List) {
