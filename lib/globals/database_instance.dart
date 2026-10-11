@@ -1,8 +1,5 @@
-import 'package:jsonld/database/database.dart';
+import 'package:jsonld/database/sync_database.dart';
 
-AppDatabase? _db;
-
-AppDatabase get db {
-  _db ??= AppDatabase();
-  return _db!;
+SyncDatabase get syncDb {
+  return SyncDatabase.instance;
 }

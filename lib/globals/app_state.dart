@@ -8,9 +8,10 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
-import 'package:drift/drift.dart' as drift;
+import 'package:uuid/uuid.dart';
+
 import 'package:jsonld/globals/database_instance.dart';
-import 'package:jsonld/database/database.dart';
+import 'package:jsonld/database/local_document.dart';
 
 class AppState extends ChangeNotifier {
   AppState();
@@ -85,6 +86,14 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  UuidValue _parseOrConvertUuid(String id) {
+    try {
+      return UuidValue.fromString(id);
+    } catch (_) {
+      return UuidValue.fromString(Uuid().v5(Namespace.url.value, 'jsonld:$id'));
+    }
+  }
+
   Future<void> initSchemaService() async {
     _isSchemaLoading = true;
     notifyListeners();
@@ -92,23 +101,29 @@ class AppState extends ChangeNotifier {
     _isSchemaLoading = SchemaService.instance.isLoadingFullSchema;
     _loadError = SchemaService.instance.loadError;
 
-    // Load from Drift database
+    // Load from Serverpod Offline Sync database
     try {
-      final savedDocs = await db.select(db.localDocuments).get();
+      await syncDb.init();
+      final savedDocs = await syncDb.getDocuments();
       if (savedDocs.isNotEmpty) {
         _documents.clear();
         for (var d in savedDocs) {
           try {
-            final rawProps = json.decode(d.propertiesJson) as Map<String, dynamic>;
+            final rawProps =
+                json.decode(d.propertiesJson) as Map<String, dynamic>;
             final props = SchemaEntity.deserializeProperties(rawProps);
             _documents.add(SchemaEntity(
-              id: d.id,
+              id: d.id.uuid,
               name: d.name,
               type: d.type,
               properties: props,
               baseUri: rawProps['_baseUri']?.toString(),
-              customContext: rawProps['_customContext'] != null ? Map<String, dynamic>.from(rawProps['_customContext'] as Map) : null,
-              ldVersion: rawProps['_ldVersion'] != null ? double.tryParse(rawProps['_ldVersion'].toString()) : null,
+              customContext: rawProps['_customContext'] != null
+                  ? Map<String, dynamic>.from(rawProps['_customContext'] as Map)
+                  : null,
+              ldVersion: rawProps['_ldVersion'] != null
+                  ? double.tryParse(rawProps['_ldVersion'].toString())
+                  : null,
             ));
           } catch (rowErr) {
             debugPrint('Error parsing row ID ${d.id}: $rowErr');
@@ -116,7 +131,7 @@ class AppState extends ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint('Error loading documents from Drift: $e');
+      debugPrint('Error loading documents from SyncDatabase: $e');
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -124,7 +139,7 @@ class AppState extends ChangeNotifier {
 
     if (_documents.isEmpty && !hasInitializedDb) {
       final doc1 = SchemaEntity(
-        id: 'doc_1',
+        id: Uuid().v7(),
         name: 'My Personal Profile',
         type: 'schema:Person',
         properties: {
@@ -135,7 +150,7 @@ class AppState extends ChangeNotifier {
         },
       );
       final doc2 = SchemaEntity(
-        id: 'doc_2',
+        id: Uuid().v7(),
         name: 'Company Website',
         type: 'schema:WebSite',
         properties: {
@@ -166,19 +181,20 @@ class AppState extends ChangeNotifier {
     Future<void> performSave() async {
       try {
         final serialized = json.encode(entity.serializeProperties());
-        await db.into(db.localDocuments).insertOnConflictUpdate(
-              LocalDocument(
-                id: entity.id,
-                name: entity.name,
-                type: entity.type,
-                propertiesJson: serialized,
-                updatedAt: DateTime.now(),
-              ),
-            );
+        final docUuid = _parseOrConvertUuid(entity.id);
+        await syncDb.saveDocument(
+          LocalDocument(
+            id: docUuid,
+            name: entity.name,
+            type: entity.type,
+            propertiesJson: serialized,
+            updatedAt: DateTime.now(),
+          ),
+        );
         _saveStatus = 'Saved';
         notifyListeners();
       } catch (e) {
-        debugPrint('Error persisting document to Drift: $e');
+        debugPrint('Error persisting document to SyncDatabase: $e');
         _saveStatus = 'Error saving';
         notifyListeners();
       }
@@ -215,7 +231,7 @@ class AppState extends ChangeNotifier {
 
   void createNewDocument(String name, String typeId) {
     final doc = SchemaEntity(
-      id: 'doc_${DateTime.now().millisecondsSinceEpoch}',
+      id: Uuid().v7(),
       name: name.isEmpty ? '${typeId.split(':').last} Markup' : name,
       type: typeId,
       properties: {},
@@ -229,7 +245,18 @@ class AppState extends ChangeNotifier {
 
   void duplicateDocument(int index) {
     if (index >= 0 && index < _documents.length) {
-      final doc = _documents[index].clone();
+      final original = _documents[index];
+      final doc = SchemaEntity(
+        id: Uuid().v7(),
+        name: '${original.name} Copy',
+        type: original.type,
+        properties: original.clone().properties,
+        baseUri: original.baseUri,
+        customContext: original.customContext != null
+            ? Map<String, dynamic>.from(original.customContext!)
+            : null,
+        ldVersion: original.ldVersion,
+      );
       _documents.add(doc);
       _selectedDocumentIndex = _documents.length - 1;
       persistDocument(doc);
@@ -253,11 +280,10 @@ class AppState extends ChangeNotifier {
       final doc = _documents[index];
       _documents.removeAt(index);
       try {
-        final stmt = db.delete(db.localDocuments);
-        stmt.where((tbl) => tbl.id.equals(doc.id));
-        await stmt.go();
+        final docUuid = _parseOrConvertUuid(doc.id);
+        await syncDb.deleteDocument(docUuid);
       } catch (e) {
-        debugPrint('Error deleting document from Drift: $e');
+        debugPrint('Error deleting document from SyncDatabase: $e');
       }
       if (_selectedDocumentIndex >= _documents.length) {
         _selectedDocumentIndex = _documents.length - 1;
@@ -267,14 +293,13 @@ class AppState extends ChangeNotifier {
     } else if (_documents.length == 1) {
       final oldDoc = _documents[0];
       try {
-        final stmt = db.delete(db.localDocuments);
-        stmt.where((tbl) => tbl.id.equals(oldDoc.id));
-        await stmt.go();
+        final docUuid = _parseOrConvertUuid(oldDoc.id);
+        await syncDb.deleteDocument(docUuid);
       } catch (e) {
-        debugPrint('Error deleting document from Drift: $e');
+        debugPrint('Error deleting document from SyncDatabase: $e');
       }
       final newDoc = SchemaEntity(
-        id: 'doc_${DateTime.now().millisecondsSinceEpoch}',
+        id: Uuid().v7(),
         name: 'Untitled Document',
         type: 'schema:Person',
         properties: {},
