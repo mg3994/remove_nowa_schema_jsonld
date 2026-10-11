@@ -53,6 +53,28 @@ void main() {
     expect(descObj['@type'], isNull);
   });
 
+  test('Value Object with schema:DateTime type includes schema namespace in @context', () {
+    final Map<String, dynamic> sourceJson = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "dateCreated": {
+        "@value": "2026-10-11T12:00:00Z",
+        "@type": "schema:DateTime"
+      }
+    };
+
+    final doc = SchemaEntity.fromJsonLd(sourceJson);
+
+    final compiled = doc.toJsonLd(isRoot: true);
+    expect(compiled['@context'], isMap);
+    expect(compiled['@context']['schema'], equals("https://schema.org/"));
+
+    final dateObj = compiled['dateCreated'];
+    expect(dateObj, isMap);
+    expect(dateObj['@value'], equals("2026-10-11T12:00:00Z"));
+    expect(dateObj['@type'], equals("schema:DateTime"));
+  });
+
   test('Value Object with xsd:date type includes xsd namespace in @context', () {
     final Map<String, dynamic> sourceJson = {
       "@context": "https://schema.org",

@@ -156,7 +156,7 @@ class SchemaEntity {
       final t = val.type;
       if (t.contains(':')) {
         final prefix = t.split(':').first;
-        if (_namespaces.containsKey(prefix) && prefix != 'schema') {
+        if (_namespaces.containsKey(prefix)) {
           used.add(prefix);
         }
       }
@@ -169,7 +169,7 @@ class SchemaEntity {
       final t = val['@type']?.toString();
       if (t != null && t.contains(':')) {
         final prefix = t.split(':').first;
-        if (_namespaces.containsKey(prefix) && prefix != 'schema') {
+        if (_namespaces.containsKey(prefix)) {
           used.add(prefix);
         }
       }
