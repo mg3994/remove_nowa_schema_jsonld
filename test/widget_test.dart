@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jsonld/main.dart';
 import 'package:jsonld/schema_entity.dart';
+import 'package:jsonld/database/sync_database.dart';
+import 'package:jsonld/database/local_document.dart';
+import 'package:uuid/uuid.dart';
 
 void main() {
   test('Value Object preservation and custom baseUri compilation test', () {
@@ -377,6 +381,48 @@ void main() {
     expect(nameMap['zh-Hans-CN'], equals("Simplified Chinese Title"));
     expect(nameMap['en-US'], equals("American English Title"));
     expect(nameMap['sr-Latn'], equals("Latin Serbian Title"));
+  });
+
+  test('SyncDatabase LocalDocument CRUD test with Serverpod Offline Sync', () async {
+    SharedPreferences.setMockInitialValues({});
+    for (final dbName in ['jsonld_database.db', '${Directory.systemTemp.path}/jsonld_database.db']) {
+      final file = File(dbName);
+      if (file.existsSync()) {
+        try { file.deleteSync(); } catch (_) {}
+      }
+      for (final suffix in const ['-wal', '-shm']) {
+        final f = File('$dbName$suffix');
+        if (f.existsSync()) {
+          try { f.deleteSync(); } catch (_) {}
+        }
+      }
+    }
+    await SyncDatabase.instance.init();
+
+    final docId = Uuid().v7obj();
+    final doc = LocalDocument(
+      id: docId,
+      name: 'Test Article Markup',
+      type: 'schema:Article',
+      propertiesJson: '{"schema:headline":[{"type":"primitive","value":"Serverpod Sync Works"}]}',
+      updatedAt: DateTime.now(),
+    );
+
+    // Save
+    await SyncDatabase.instance.saveDocument(doc);
+
+    // Fetch
+    final docs = await SyncDatabase.instance.getDocuments();
+    expect(docs.any((d) => d.id == docId), isTrue);
+
+    final fetched = await SyncDatabase.instance.getDocumentById(docId);
+    expect(fetched, isNotNull);
+    expect(fetched!.name, equals('Test Article Markup'));
+
+    // Delete
+    await SyncDatabase.instance.deleteDocument(docId);
+    final afterDelete = await SyncDatabase.instance.getDocumentById(docId);
+    expect(afterDelete, isNull);
   });
 
   testWidgets('Visual Editor loads smoke test', (WidgetTester tester) async {

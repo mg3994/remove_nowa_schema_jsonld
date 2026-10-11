@@ -75,18 +75,29 @@ class AppProtocol extends DatabaseSerializationManager
           ),
           ColumnDefinition(
             name: 'updatedAt',
-            columnType: ColumnType.timestampWithoutTimeZone,
+            columnType: ColumnType.bigint,
             isNullable: false,
             dartType: 'DateTime',
           ),
           ColumnDefinition(
             name: 'spaceId',
-            columnType: ColumnType.uuid,
+            columnType: ColumnType.bigint,
             isNullable: true,
-            dartType: 'UuidValue?',
+            dartType: 'int?',
           ),
         ],
-        foreignKeys: [],
+        foreignKeys: [
+          ForeignKeyDefinition(
+            constraintName: 'local_document_fk_0',
+            columns: ['spaceId'],
+            referenceTable: 'offline_sync_spaces',
+            referenceTableSchema: 'public',
+            referenceColumns: ['id'],
+            onUpdate: ForeignKeyAction.noAction,
+            onDelete: ForeignKeyAction.cascade,
+            matchType: null,
+          ),
+        ],
         indexes: [],
         managed: true,
       ),
@@ -97,6 +108,14 @@ class AppProtocol extends DatabaseSerializationManager
   @override
   T deserialize<T>(dynamic data, [Type? t]) {
     t ??= T;
+    if (t == DateTime || t == getType<DateTime?>()) {
+      if (data is String) {
+        final ms = int.tryParse(data);
+        if (ms != null) {
+          return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true) as T;
+        }
+      }
+    }
     if (t == LocalDocument) {
       return LocalDocument.fromJson(data as Map<String, dynamic>) as T;
     }
@@ -138,7 +157,7 @@ class SyncDatabase {
         final dir = await getApplicationDocumentsDirectory();
         dbPath = p.join(dir.path, 'jsonld_database.db');
       } catch (e) {
-        debugPrint('Could not resolve application documents directory: $e');
+        dbPath = p.join(Directory.systemTemp.path, 'jsonld_database.db');
       }
     }
 
@@ -157,7 +176,7 @@ class SyncDatabase {
             ),
           ],
           runMigrations: true,
-          isDebugMode: kDebugMode,
+          isDebugMode: false,
         );
 
         _syncSession = OfflineSyncDatabaseSession.wraps(
@@ -206,13 +225,27 @@ class SyncDatabase {
   }
 
   static const String _initialSqlSchema = '''
+CREATE TABLE IF NOT EXISTS "serverpod_sqlite_schema" (
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "module" TEXT NOT NULL,
+  "version" TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "serverpod_migrations" (
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "module" TEXT NOT NULL,
+  "version" TEXT NOT NULL,
+  "timestamp" INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS "local_document" (
   "id" TEXT PRIMARY KEY,
   "name" TEXT NOT NULL,
   "type" TEXT NOT NULL,
   "propertiesJson" TEXT NOT NULL,
-  "updatedAt" TEXT NOT NULL,
-  "spaceId" TEXT
+  "updatedAt" INTEGER NOT NULL,
+  "spaceId" INTEGER,
+  FOREIGN KEY ("spaceId") REFERENCES "offline_sync_spaces" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "crdt_nodes" (
@@ -244,7 +277,7 @@ CREATE TABLE IF NOT EXISTS "crdt_schema_columns" (
 
 CREATE TABLE IF NOT EXISTS "crdt_data_rows" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-  "hlcDatetime" TEXT NOT NULL,
+  "hlcDatetime" INTEGER NOT NULL,
   "hlcCounter" INTEGER NOT NULL,
   "spaceId" INTEGER NOT NULL,
   "tblId" INTEGER NOT NULL,
@@ -256,7 +289,7 @@ CREATE TABLE IF NOT EXISTS "crdt_data_rows" (
 
 CREATE TABLE IF NOT EXISTS "crdt_data_fields" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-  "hlcDatetime" TEXT NOT NULL,
+  "hlcDatetime" INTEGER NOT NULL,
   "hlcCounter" INTEGER NOT NULL,
   "rowId" INTEGER NOT NULL,
   "columnId" INTEGER NOT NULL,
@@ -266,7 +299,7 @@ CREATE TABLE IF NOT EXISTS "crdt_data_fields" (
 
 CREATE TABLE IF NOT EXISTS "crdt_data_tombstone" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-  "hlcDatetime" TEXT NOT NULL,
+  "hlcDatetime" INTEGER NOT NULL,
   "hlcCounter" INTEGER NOT NULL,
   "rowId" INTEGER NOT NULL UNIQUE,
   "nodeId" INTEGER NOT NULL,
@@ -307,10 +340,10 @@ CREATE TABLE IF NOT EXISTS "offline_sync_integrity_violations" (
   "operation" TEXT NOT NULL,
   "uuidNodeId" TEXT,
   "crdtDataRowId" INTEGER,
-  "hlcDatetime" TEXT,
+  "hlcDatetime" INTEGER,
   "hlcCounter" INTEGER,
-  "firstSeenAt" TEXT NOT NULL,
-  "lastSeenAt" TEXT NOT NULL,
+  "firstSeenAt" INTEGER NOT NULL,
+  "lastSeenAt" INTEGER NOT NULL,
   "occurrences" INTEGER NOT NULL,
   UNIQUE("type", "operation", "domainTableName", "uuidRowId", "ownerSpaceUuid", "incomingSpaceUuid")
 );

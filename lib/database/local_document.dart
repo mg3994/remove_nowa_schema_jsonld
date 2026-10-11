@@ -8,14 +8,14 @@ class LocalDocumentTable extends Table<UuidValue> {
     type = ColumnString('type', this);
     propertiesJson = ColumnString('propertiesJson', this);
     updatedAt = ColumnDateTime('updatedAt', this);
-    spaceId = ColumnUuid('spaceId', this, hasDefault: true);
+    spaceId = ColumnInt('spaceId', this, hasDefault: true);
   }
 
   late final ColumnString name;
   late final ColumnString type;
   late final ColumnString propertiesJson;
   late final ColumnDateTime updatedAt;
-  late final ColumnUuid spaceId;
+  late final ColumnInt spaceId;
 
   @override
   List<Column> get columns => [
@@ -44,7 +44,7 @@ class LocalDocument implements TableRow<UuidValue> {
   String type;
   String propertiesJson;
   DateTime updatedAt;
-  UuidValue? spaceId;
+  int? spaceId;
 
   static final t = LocalDocumentTable();
 
@@ -58,12 +58,30 @@ class LocalDocument implements TableRow<UuidValue> {
       'name': name,
       'type': type,
       'propertiesJson': propertiesJson,
-      'updatedAt': updatedAt.toIso8601String(),
-      if (spaceId != null) 'spaceId': spaceId!.uuid,
+      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      if (spaceId != null) 'spaceId': spaceId,
     };
   }
 
   static LocalDocument fromJson(Map<String, dynamic> json) {
+    DateTime parsedDate;
+    if (json['updatedAt'] is DateTime) {
+      parsedDate = json['updatedAt'] as DateTime;
+    } else if (json['updatedAt'] is int) {
+      parsedDate = DateTime.fromMillisecondsSinceEpoch(
+        json['updatedAt'] as int,
+        isUtc: true,
+      );
+    } else {
+      final str = json['updatedAt']?.toString() ?? '';
+      final ms = int.tryParse(str);
+      if (ms != null) {
+        parsedDate = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
+      } else {
+        parsedDate = DateTime.tryParse(str) ?? DateTime.now();
+      }
+    }
+
     return LocalDocument(
       id: json['id'] != null
           ? UuidValue.fromString(json['id'].toString())
@@ -71,11 +89,9 @@ class LocalDocument implements TableRow<UuidValue> {
       name: json['name'] as String,
       type: json['type'] as String,
       propertiesJson: json['propertiesJson'] as String,
-      updatedAt: json['updatedAt'] is DateTime
-          ? json['updatedAt'] as DateTime
-          : DateTime.parse(json['updatedAt'].toString()),
+      updatedAt: parsedDate,
       spaceId: json['spaceId'] != null
-          ? UuidValue.fromString(json['spaceId'].toString())
+          ? int.tryParse(json['spaceId'].toString())
           : null,
     );
   }
@@ -86,7 +102,7 @@ class LocalDocument implements TableRow<UuidValue> {
     String? type,
     String? propertiesJson,
     DateTime? updatedAt,
-    UuidValue? spaceId,
+    int? spaceId,
   }) {
     return LocalDocument(
       id: id ?? this.id,
